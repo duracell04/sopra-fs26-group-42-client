@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Student XX-XXX-XXX",
-  description: "sopra-fs26-template-client",
+  title: "Math Invaders - Group 42",
+  description: "Math Invaders client for SoPra FS26 Group 42",
 };
 
 export default function RootLayout({
