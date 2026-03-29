@@ -35,6 +35,7 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
   const [users, setUsers] = useState<User[] | null>(null);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   // useLocalStorage hook example use
   // The hook returns an object with the value and two functions
   // Simply choose what you need from the hook:
@@ -60,16 +61,31 @@ const Dashboard: React.FC = () => {
     // Clear stored user data regardless of whether the backend call succeeded
     clearToken();
     clearUserId();
-    router.push("/login");
+    // replace() removes this protected page from the immediate history entry.
+    // That avoids navigating "back" into a stale /users screen after logout.
+    router.replace("/login");
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUsers = async () => {
       try {
+        // Read localStorage directly before fetching protected data.
+        // The custom hook hydrates after the first render, so relying on its
+        // initial state here could redirect valid sessions by mistake.
+        const storedToken = globalThis.localStorage.getItem("token");
+        if (!storedToken) {
+          router.replace("/login");
+          return;
+        }
+
         // apiService.get<User[]> returns the parsed JSON object directly,
         // thus we can simply assign it to our users variable.
         const users: User[] = await apiService.get<User[]>("/users");
-        setUsers(users);
+        if (isMounted) {
+          setUsers(users);
+        }
         console.log("Fetched users:", users);
       } catch (error) {
         if (error instanceof Error) {
@@ -77,14 +93,26 @@ const Dashboard: React.FC = () => {
         } else {
           console.error("An unknown error occurred while fetching users.");
         }
+      } finally {
+        if (isMounted) {
+          setIsCheckingAccess(false);
+        }
       }
     };
 
     fetchUsers();
-  }, [apiService]); // dependency apiService does not re-trigger the useEffect on every render because the hook uses memoization (check useApi.tsx in the hooks).
+    return () => {
+      isMounted = false;
+    };
+  }, [apiService, router]); // dependency apiService does not re-trigger the useEffect on every render because the hook uses memoization (check useApi.tsx in the hooks).
   // if the dependency array is left empty, the useEffect will trigger exactly once
   // if the dependency array is left away, the useEffect will run on every state change. Since we do a state change to users in the useEffect, this results in an infinite loop.
   // read more here: https://react.dev/reference/react/useEffect#specifying-reactive-dependencies
+
+  // Do not render the protected page until the access check finished.
+  if (isCheckingAccess) {
+    return null;
+  }
 
   return (
     <div className="card-container">
