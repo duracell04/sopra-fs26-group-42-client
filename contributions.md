@@ -37,7 +37,7 @@ reason).
 | **[@remy20cent]** | 29.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/5377434d302032526b3a41c0bdb2f3ea9186794c | Implemented user profile screen | core implementation |
 |                    | 29.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/9efa6d73ee9633c91150217891725a411da09b25 | Added navigation from main menu to profile screen | Required for accessing profile functionality |
 |                    | 29.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/028c54fba3573a0afa694247c7cf511e68efdc72 | Added ("X") button to return from profile screen to main menu | necessary feature |
-| **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **[@duracell04]** | 30.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/173ca0a | Protected `/users` for logged-out users by adding an access check and login redirect before fetching protected data | Blocks direct manual access after logout and ensures the protected page does not render for users without a token |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
