@@ -52,9 +52,19 @@ export default function ProfilePage() {
     <div className="profile-container">
       <Card className="profile-card">
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <Title level={2} className="profile-title">
-            User Profile
-          </Title>
+          <div className="profile-header">
+            <Title level={2} className="profile-title">
+              User Profile
+            </Title>
+
+            <Button
+              type="text"
+              className="profile-close-button"
+              onClick={() => router.push("/menu")}
+            >
+              X
+            </Button>
+          </div>
 
           {loading && <Spin size="large" />}
 
@@ -87,13 +97,6 @@ export default function ProfilePage() {
             </Space>
           )}
 
-          <Button
-            type="primary"
-            className="profile-button"
-            onClick={() => router.push("/menu")}
-          >
-            Back
-          </Button>
         </Space>
       </Card>
     </div>
