@@ -13,6 +13,7 @@ const Login: React.FC = () => {
   const apiService = useApi();
   const [form] = Form.useForm();
   const { set: setToken } = useLocalStorage<string>("token", "");
+  const { set: setUserId } = useLocalStorage<string>("id", "");
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {
@@ -20,6 +21,10 @@ const Login: React.FC = () => {
 
       if (response.token) {
         setToken(response.token);
+      }
+
+      if (response.id) {
+        setUserId(String(response.id));
       }
 
       router.push("/users");

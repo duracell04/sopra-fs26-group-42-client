@@ -43,10 +43,23 @@ const Dashboard: React.FC = () => {
     // set: setToken, // is commented out because we dont need to set or update the token value
     clear: clearToken, // all we need in this scenario is a method to clear the token
   } = useLocalStorage<string>("token", ""); // if you wanted to select a different token, i.e "lobby", useLocalStorage<string>("lobby", "");
+  const {
+    value: userId, // we need the user id to tell the backend which user is logging out
+    clear: clearUserId,
+  } = useLocalStorage<string>("id", "");
 
-  const handleLogout = (): void => {
-    // Clear token using the returned function 'clear' from the hook
+  const handleLogout = async (): Promise<void> => {
+    try {
+      // Tell the backend the user logged out so the status gets updated
+      await apiService.put(`/users/${userId}/logout`, {});
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Logout request failed:", error.message);
+      }
+    }
+    // Clear stored user data regardless of whether the backend call succeeded
     clearToken();
+    clearUserId();
     router.push("/login");
   };
 
