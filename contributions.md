@@ -38,11 +38,15 @@ reason).
 |                    | 29.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/9efa6d73ee9633c91150217891725a411da09b25 | Added navigation from main menu to profile screen | Required for accessing profile functionality |
 |                    | 29.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/028c54fba3573a0afa694247c7cf511e68efdc72 | Added ("X") button to return from profile screen to main menu | necessary feature |
 | **[@duracell04]** | 30.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/173ca0a | Protected `/users` for logged-out users by adding an access check and login redirect before fetching protected data | Blocks direct manual access after logout and ensures the protected page does not render for users without a token |
+| **[@yang0731]** | 27.03.2026   | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/6421a94d54601e809c473fda85af05841c791f05] | Implemented a simple user registration page | This allows new users to register and send their credentials to the server for subsequent logins |
+|                 | 27.03.2026   | [https://github.com/duracell04/sopra-fs26-group-42-server/compare/main...user-registration-form] | Adapt user entity and DTO to include pwd hash (and creation date) | The server now stores hashed user pwd for security/privacy |
+| **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+
 
 ---
 
