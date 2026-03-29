@@ -8,36 +8,20 @@ import { Button, Form, Input } from "antd";
 // Optionally, you can import a CSS module or file for additional styling:
 // import styles from "@/styles/page.module.css";
 
-interface FormFieldProps {
-  label: string;
-  value: string;
-}
-
 const Login: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
   const [form] = Form.useForm();
-  // useLocalStorage hook example use
-  // The hook returns an object with the value and two functions
-  // Simply choose what you need from the hook:
-  const {
-    // value: token, // is commented out because we do not need the token value
-    set: setToken, // we need this method to set the value of the token to the one we receive from the POST request to the backend server API
-    // clear: clearToken, // is commented out because we do not need to clear the token when logging in
-  } = useLocalStorage<string>("token", ""); // note that the key we are selecting is "token" and the default value we are setting is an empty string
-  // if you want to pick a different token, i.e "usertoken", the line above would look as follows: } = useLocalStorage<string>("usertoken", "");
+  const { set: setToken } = useLocalStorage<string>("token", "");
 
-  const handleLogin = async (values: FormFieldProps) => {
+  const handleLogin = async (values: { username: string; password: string }) => {
     try {
-      // Call the API service and let it handle JSON serialization and error handling
-      const response = await apiService.post<User>("/users", values);
+      const response = await apiService.post<User>("/users/login", values);
 
-      // Use the useLocalStorage hook that returned a setter function (setToken in line 41) to store the token if available
       if (response.token) {
         setToken(response.token);
       }
 
-      // Navigate to the user overview
       router.push("/users");
     } catch (error) {
       if (error instanceof Error) {
@@ -50,6 +34,8 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
+<div className="login-card">
+        <h1 className="login-title">Login</h1>
       <Form
         form={form}
         name="login"
@@ -66,11 +52,11 @@ const Login: React.FC = () => {
           <Input placeholder="Enter username" />
         </Form.Item>
         <Form.Item
-          name="name"
-          label="Name"
-          rules={[{ required: true, message: "Please input your name!" }]}
+          name="password"
+          label="Password"
+          rules={[{ required: true, message: "Please input your password!" }]}
         >
-          <Input placeholder="Enter name" />
+          <Input.Password placeholder="Enter password" />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" className="login-button">
@@ -78,6 +64,7 @@ const Login: React.FC = () => {
           </Button>
         </Form.Item>
       </Form>
+      </div>
     </div>
   );
 };

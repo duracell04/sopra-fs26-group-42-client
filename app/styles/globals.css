@@ -41,15 +41,44 @@ a {
   }
 }
 
-.login-container {
+.login-container,
+.register-container {
+  position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: rgb(41, 44, 59);
+  background-image: url('/images/2513478.jpg');
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
 }
 
-.login-button {
+.login-card,
+.register-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  backdrop-filter: blur(6px);
+}
+
+.login-title,
+.register-title {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 28px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.login-button,
+.register-button {
   width: 100%;
 }
 

@@ -14,7 +14,7 @@ const Register: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { set: setToken } = useLocalStorage<string>("token", "");
 
-  const handleRegister = async (values: { username: string; password: string }) => {
+  const handleRegister = async (values: { username: string; password: string; name: string }) => {
     try {
       setError(null);
       const response = await apiService.post<User>("/users", values);
@@ -34,9 +34,10 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="register-container" style={{ maxWidth: "400px", margin: "50px auto" }}>
-      <h1>Register</h1>
-      {error && <Alert message="Registration Error" description={error} type="error" showIcon style={{ marginBottom: "20px" }} />}
+    <div className="register-container">
+<div className="register-card">
+        <h1 className="register-title">Register</h1>
+        {error && <Alert message="Registration Error" description={error} type="error" showIcon style={{ marginBottom: "20px" }} />}
       <Form
         form={form}
         name="register"
@@ -45,6 +46,16 @@ const Register: React.FC = () => {
         onFinish={handleRegister}
         layout="vertical"
       >
+        <Form.Item
+          name="name"
+          label="Name"
+          rules={[
+            { required: true, message: "Name is required" },
+          ]}
+        >
+          <Input placeholder="Enter your name" />
+        </Form.Item>
+
         <Form.Item
           name="username"
           label="Username"
@@ -75,6 +86,7 @@ const Register: React.FC = () => {
           </Button>
         </Form.Item>
       </Form>
+      </div>
     </div>
   );
 };
