@@ -40,9 +40,9 @@ reason).
 | **[@duracell04]** | 30.03.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/173ca0a | Protected `/users` for logged-out users by adding an access check and login redirect before fetching protected data | Blocks direct manual access after logout and ensures the protected page does not render for users without a token |
 | **[@yang0731]** | 27.03.2026   | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/6421a94d54601e809c473fda85af05841c791f05] | Implemented a simple user registration page | This allows new users to register and send their credentials to the server for subsequent logins |
 |                 | 27.03.2026   | [https://github.com/duracell04/sopra-fs26-group-42-server/compare/main...user-registration-form] | Adapt user entity and DTO to include pwd hash (and creation date) | The server now stores hashed user pwd for security/privacy |
-| **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
-| **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **[csaba_vi]** | [29.03.2026]   | [https://github.com/duracell04/sopra-fs26-group-42-server/commit/9e8f96771c4d200d5377be3a791ffaa03e441391] | [Implemented log-in functionallity (backend validation)]| [Allows users to login to acces their profile page after registration] |
+|                    | [29.03.2026]   | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/4939a6b1a3605ccf68058d1df0e0450c1b9c82dd] | [Implemented log-in functionallity (front end token validation)] | [Allows users to login to acces their profile page after registration] |
+| **[@liroAV]** | [29.03.2026]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
