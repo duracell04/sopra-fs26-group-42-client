@@ -14,6 +14,7 @@ const Register: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { set: setToken } = useLocalStorage<string>("token", "");
 
+  // automatic log in after successful registration
   const handleRegister = async (values: { username: string; password: string }) => {
     try {
       setError(null);
@@ -28,7 +29,7 @@ const Register: React.FC = () => {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("An unknown error occurred during registration.");
+        setError("An error occurred during registration.");
       }
     }
   };
