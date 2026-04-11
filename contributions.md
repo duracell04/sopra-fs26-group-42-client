@@ -54,8 +54,13 @@ reason).
 |------------|---------------------|----------|--------------------|-----------------|---------------|
 | **Remy Klemenz** | **[@remy20cent]** |01.04.26|https://github.com/duracell04/sopra-fs26-group-42-server/commit/467e65aac2db268881023567ee4723dc27d7a51a | Backend implementation of userstats | Required for working frontend |
 | **Enrique Georg Zbinden** | **[@duracell04]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+<<<<<<< HEAD
 | **Siyang Jiang** | **[@yang0731]** | [05.04.2026] | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/d0c9c2f3351c1e17f633fa98d66ed47facecad6a] | implement gameBlockObject in frontend | frontend should be able to change the status of the blocks |
 |                 |                   |[10.04.2026]  | [https://github.com/duracell04/sopra-fs26-group-42-server/commit/a20701746895b6c36e996bb3173733f3ef933d31] | Add game logic checks to backend game service and initialize GameBlock entity | The backend should have a block entity and be able to validate block selections (in GameService) to determine the status of each gameblock. |
+=======
+| **Siyang Jiang** | **[@yang0731]** | [05.04.2026] | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/d0c9c2f3351c1e17f633fa98d66ed47facecad6a] | [implement gameBlockObject in frontend] | [frontend should be able to change the status of the blocks] |
+|                 |                  | [10.04.2026]  | [https://github.com/duracell04/sopra-fs26-group-42-server/commit/a20701746895b6c36e996bb3173733f3ef933d31] | Add game logic checks to backend game service and initialize GameBlock entity | The backend should have a block entity and be able to validate block selections (in GameService) to determine the status of each gameblock. |
+>>>>>>> origin/feature/eliminating-gameblocks
 | **Csaba Vizhanyo** | **[@csaba_vi]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 | **Attila Vizhanyo** | **[@liroAV]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 
