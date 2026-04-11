@@ -20,13 +20,15 @@ export default function ProfilePage() {
   const router = useRouter();
   const apiService = useApi();
 
-  const { value: userId } = useLocalStorage<string>("userId", "");
+  const { value: userId } = useLocalStorage<string>("id", "");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setError(null);
+      setLoading(true);
       try {
         if (!userId) {
           throw new Error("No user id found. Please log in first.");
