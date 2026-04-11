@@ -32,6 +32,16 @@ export default function MenuPage() {
             </Button>
 
             <Button
+              type="primary"
+              variant="solid"
+              className="menu-button"
+              onClick={() => router.push("/play_test")}
+            >
+              Play Test
+
+            </Button>
+
+            <Button
               type="default"
               variant="solid"
               className="menu-button"
