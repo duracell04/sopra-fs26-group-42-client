@@ -1,6 +1,6 @@
 # SoPra FS26 Assignment 3
 
-Source PDF: `SoPraFS26_Assignment_3 (1).pdf`
+Source PDF: `SoPraFS26_Assignment_3.pdf`
 
 ## Page 1
 
