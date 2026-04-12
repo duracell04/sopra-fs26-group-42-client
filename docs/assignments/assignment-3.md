@@ -2,180 +2,328 @@
 
 Source PDF: `SoPraFS26_Assignment_3.pdf`
 
-## Page 1
+## 1. General Information
 
-Software Praktikum (SoPra) - FS25
-Milestone 3 - Assignment
-1 General Information
-With Milestone 3, we enter the implementation phase of SoPra. The deadline is on Friday,24.04.2026
-23:59 CET, and includes the deliverables listed below. On the following Monday, 27.04.2026, you
-will present a short progress update for Milestone 3.
-1.1 Deliverables Overview
-We will check your last deployment after the deadline. Pleasedo not deploybetween the deadline
-and the presentation the following Monday!
-Report: as PDF with a name of form FS26-Group-XX-M3-Report.pdf.
-Presentation Slides: as PDF with a name of form FS26-Group-XX-M3-Slides.pdf.
-Source Code and Project Boardhosted on GitHub (git tag "M3").
-Continuous Progress (weekly, individually):completion of 2 meaningful development tasks.
-Team Questionnaire and Brownie Points (individually):submitted via OLAT.
-2 Assignment Description
-Based on the previous assignment of Milestone 2, you should have specifications, diagrams, user
-interface mock-ups, Sprint planning, and a deployment pipeline ready to support the upcoming
-implementation phase. In this milestone, we will focus on implementation and testing.
-2.1 Implementation and Testing
-At the end of Milestone 3, you are expected to have a running and usable version of your appli-
-cation (even if not all features are implemented yet). We expect you to develop your application
-for a modern browser. The target platforms are Google Chrome and Vercel.
-Advice: We strongly recommend finishing all tasks you specified as required/critical by the end
-of Milestone 3. Milestone 4 will be about finishing up and polishing your application for the final
-1
+With Milestone 3, SoPra enters the implementation phase.
 
-## Page 2
+The deadline is **Friday, 24.04.2026, 23:59 CET** and includes the deliverables listed below.
 
-presentation. Depending on progress, you can start with optional features, but you will also have
-time to work on them in Milestone 4.
-After Milestone 3, there will be a beta testing phase where you will get a project URL of another
-group to provide feedback. Likewise, another group will test your application and prepare feed-
-back. Notice that beta testing requires a certain maturity of your project by the end of Milestone 3.
-Proper software implementations include rigorous and extensive testing, too. You must have a
-high degree of test coverage for the server in terms of unit, integration, and REST interface tests.
-As an indication of how much code you should test, we require the test coverage to be at least
-50%. Check SonarQube for test the coverage metric. We expect every task (from the back-end) to
-have at least 1 test associated with it.
-2.2 Project Maintenance with GitHub
-While programming, you are required to ensure traceability of your progress. Your GitHub Issues
-and project boards should always be up to date and your Git commits should be linked to a
-GitHub Issue. There are two ways to achieve consistency and traceability between your source
-code and your development tasks:
-• Manual: Open a GitHub Issue and type the SHA1 of the commit as an Issue comment.
-• Automated: Reference GitHub Issues in your git commit message2.
-Note: We expect every completed development task to link to at least one commit.
-2.3 Weekly TA Meetings
-During the Sprint of Milestone 3, you will have regular weekly meetings with your teaching as-
-sistant. During the implementation phase, they should be held in the shape and form of a "Daily
-Scrum"3. This specific Scrum event is a short status update for your Scrum Master (TA) and your
-team.
-Before each meeting, each team member is required to manually append the two development
-tasks they completed during the previous week to a markdown file named “contributions.md”
-in the client repository. This markdown file will form a log of your individual contributions
-throughout the remainder of the course. Every member has to complete at least 2 meaningful
-tasks per week, where a single development task should have a granularity of 0.5-1 day. The
-completed tasks have to be shown in the weekly TA meetings. You have one "Joker" to miss
-one weekly TA meeting and another "Joker" to once skip continuous progress over the remaining
-weeks of the course. Please note that you cannot make up for "missed" continuous progress, but
-you can "work ahead" by completing twice the amount of work in one week to skip progress on
-a subsequent week without using your "Joker". Please communicate your planning ahead of time.
-During the meeting, every team member should provide a 3-minute update where they an-
-swer the following questions:
-• What did I do last week?
-1https://docs.github.com/en/github/writing-on-github/autolinked-references-and-urls#
-commit-shas
-2https://github.com/gitbucket/gitbucket/wiki/How-to-Close-Reference-issues-and-pull-request
-3https://scrumguides.org/docs/scrumguide/v2020/2020-Scrum-Guide-US.pdf
-2
+On the following Monday, **27.04.2026**, you will present a short progress update for Milestone 3.
 
-## Page 3
+### 1.1 Deliverables Overview
 
-• What will I do this week?
-• What are the obstacles to progress?
-We suggest discussing your progress using the "Sprint Backlog View" which was created as part
-of assignment 2 and/or your “contributions.md” log.
-2.4 Planning of Sprint 2
-Towards the end of this milestone, you should start planning for the second and final Sprint. Go
-through the remaining user stories and decide which ones to implement for Milestone 4. Set a
-GitHub Milestone (e.g., "Sprint 2") to mark selected stories. Follow the guidelines provided in the
-previous assignment sheet for instructions on how to decompose these stories into development
-tasks.
-3 Grading and Deliverables
-SoPra is a pass/fail course, and the grade for M3 will be pass/fail as well. Overall, you have to
-pass 3 out of 4 milestones, where M1 and M4 have to be passed. You need to hand in reasonable
-reports for all the milestones. You will receive feedback on your deliverables, including an assess-
-ment (either pass, borderline pass or fail) in the upcoming weeks after the deadline.
-Report
-The report should be submitted as PDF to OLAT with a name of formFS26-Group-XX-M3-Report.pdf
-by the group leader. Please make sure the title page contains the group name, group leader, and
-information about all group members (name and matriculation number). In the report, please in-
-clude a diagram showing your latest database layout/structure and 2-3 screenshots of your user
-interface. Moreover, include one complex unit, one integration, and one REST interface test with
-descriptions of their use cases in the report. Explain why these particular tests are well-written
-for the tested functionality, how they are able to capture future regressions, and elaborate on why
-the three examples are good representatives of their categories. We will evaluate the quality of
-your database structure diagram, the user interface screenshots, and the 3 test cases.
-Presentation (Slides)
-The slides should be submitted as PDF to OLAT with the name of the form FS26-Group-XX-M3-
-Slides.pdf by the group leader. The presentation should not take more than 3 minutes (hard cut-off)
-and should consist of 2 components: project introduction and motivation (30 secs) and a live demo
-(2:30 mins). Notice that we expect the demo to be live, using the deployed version(but take some
-backup screenshots in case anything goes wrong). Further, we suggest you focus on the exciting
-parts of your application during the demo: feel free to skip the setup phase (e.g., registering users
-or setting up a lobby) to have more time to showcase the core parts of your project.
-Finally, the title slide should consist of the group name and the names of all group members.
-Underline the name of the presenter(s) on the title slide. The slides and the presentations have to
-be in English. Please note that each team member has to present at least once (M1+M2, M3, or M4).
-Source Code and Project Board
-The source code on GitHub is submitted by adding git tags "M3" to commits in the "main"
-branches that should be taken into consideration for grading. We will partially assess the source
-code of your application and the implementation progress. By the end of Milestone 3, we expect
-a deployed and reasonable prototype which is ready for beta testing. In terms of testing, we will
-3
+Important:
 
-## Page 4
+The staff will check your **last deployment after the deadline**. Do **not** deploy between the deadline and the presentation on the following Monday.
 
-check whether your tests are meaningful, i.e., they serve the purpose of identifying bugs. Tests
-that cover getter/setter are not valuable. Aim for tests that deal with the core logic of your appli-
-cation. We expect that every task (from the back-end) has at least 1 test associated with it and that
-you achieve a test coverage of 50% on SonarCube.
-Similarly, your GitHub Projects board is submitted implicitly and should already be set to
-"public". The board should show your Product Backlog, including user stories and development
-tasks, and provide a view of your upcoming Sprint Backlog. We will assess your Sprint planning
-in terms of the covered development effort, the user stories decomposition into development
-tasks, and the overall quality and consistency of your project management activities.
-Continuous Progress
-During the remaining milestones, each team member has to contribute to the project continuously.
-More specifically, every member has to complete at least 2 meaningful tasks per week, where a
-single development task should have a granularity of 0.5-1 day. The completed tasks have to
-be shown in the weekly TA meetings, and you are required to ensure traceability of your work
-by linking git commits to development tasks and updating the “contributions.md“ log file. You
-have one "Joker" to miss one weekly TA meeting and another "Joker" to skip continuous progress
-once over the remaining weeks of the course. Please note that you cannot make up for "missed"
-continuous progress, but you can "work ahead" by completing twice the amount of work in one
-week to skip progress on a subsequent week without using your "Joker". Please communicate
-your planning ahead of time.
-Note: If a team member fails to show continuous progress after using their Joker, they will indi-
-vidually fail the overall course (unless there is a valid reason).
-Team Questions and Brownie Points
-In addition to the group assessment, we will use a “brownie points” system for which you have to
-distribute brownie points to you and your team members. The brownie points should reflect how
-you feel about your contribution to others and the contribution of other team members to your
-learning, the assignment, and team’s performance. Distributing brownie points will be an oppor-
-tunity to reward the members of your team who worked hard on your behalf. You can split the
-brownie points equally if you think everyone did the same. Every student has 50 brownie points
-to distribute to the 5 team members (if your team has 4 members, only distribute 40 brownie
-points). These brownie points will also allow us to notice any concerns in a team early on. The
-brownie points can decide whether individual group members pass or fail for borderline submis-
-sions.
-4 Important
-In order to ensure a smooth and successful progression throughout the SoPra course, it is crucial
-to adhere to certain guidelines. Keep the following points in mind for all assignments:
-1. Continuous contribution is essential. Your TA will assess your weekly progress before each
-TA meeting (except for the week of spring break).
-2. Effective use of joker for continuous contribution: You can use a joker for continuous con-
-tribution once throughout the semester. Ensure you announce it in advance; failure to do so
-will result in a fail for the respective week.
-3. Communication with TAs: Discuss with your TA about their availability to answer ques-
-tions and respond to your queries. Remember, it is not their responsibility to be available
-24/7, especially on weekends.
-4
+- **Report**: PDF named `FS26-Group-XX-M3-Report.pdf`
+- **Presentation Slides**: PDF named `FS26-Group-XX-M3-Slides.pdf`
+- **Source Code and Project Board**: hosted on GitHub with git tag `M3`
+- **Continuous Progress**: weekly, individual completion of 2 meaningful development tasks
+- **Team Questionnaire and Brownie Points**: individually submitted via OLAT
 
-## Page 5
+## 2. Assignment Description
 
-4. Deployment policy: You are only allowed to deploy before the deadline. Deploying after
-the deadline, regardless of changes made, will result in an automatic fail for the milestone.
-5. Repository privacy: Setting your repositories to private prevents TAs from reviewing your
-work and will result in an automatic fail for the duration it is set to private.
-6. Commit standards: TAs will only consider commits with a task/issue number. Ensure your
-commits are appropriately labeled for evaluation.
-7. Persistence in project work: Students are expected to continue working on their application
-until they receive a clear fail. Using the lack of assessment from the last milestone as an
-excuse is not acceptable.
-5
+Based on Milestone 2, you should now have:
+
+- specifications
+- diagrams
+- UI mockups
+- Sprint planning
+- a deployment pipeline
+
+These artifacts should support the implementation phase.
+
+In this milestone, the focus is on:
+
+- implementation
+- testing
+
+### 2.1 Implementation and Testing
+
+By the end of Milestone 3, you are expected to have a running and usable version of your application, even if not all features are implemented yet.
+
+The application should target a modern browser.
+
+Target platforms:
+
+- `Google Chrome`
+- `Vercel`
+
+Advice:
+
+It is strongly recommended to finish all required or critical tasks by the end of Milestone 3. Milestone 4 should focus on finishing and polishing the application for the final presentation.
+
+Depending on your progress, you may begin optional features during Milestone 3, but there will also be time for them in Milestone 4.
+
+After Milestone 3, there will be a beta testing phase:
+
+- your group will receive another group's project URL and provide feedback
+- another group will test your application and prepare feedback
+
+This means your project should already have a reasonable level of maturity by the end of Milestone 3.
+
+Proper software development also requires rigorous testing.
+
+For the server, you must have a high degree of test coverage in:
+
+- unit tests
+- integration tests
+- REST interface tests
+
+Required minimum:
+
+- at least `50%` test coverage on the server
+- SonarQube should be used to check the coverage metric
+- every back-end task should have at least `1` associated test
+
+### 2.2 Project Maintenance with GitHub
+
+While programming, you are required to maintain traceability of your progress.
+
+Your GitHub issues and project boards should always be up to date, and your git commits should be linked to a GitHub issue.
+
+There are two ways to achieve consistency and traceability between source code and development tasks:
+
+- **Manual**: open a GitHub issue and add the commit SHA1 as an issue comment
+- **Automated**: reference GitHub issues in the git commit message
+
+Note:
+
+Every completed development task is expected to link to at least one commit.
+
+### 2.3 Weekly TA Meetings
+
+During the Sprint of Milestone 3, you will have regular weekly meetings with your teaching assistant.
+
+During the implementation phase, these meetings should resemble a `Daily Scrum`:
+
+- a short status update for your Scrum Master (TA) and your team
+
+Before each meeting, each team member must manually append the **two development tasks completed in the previous week** to a Markdown file named:
+
+`contributions.md`
+
+This file must be stored in the client repository.
+
+The file acts as a log of your individual contributions for the remainder of the course.
+
+Each member has to complete at least `2` meaningful tasks per week.
+
+Expected task granularity:
+
+- each development task should be about `0.5` to `1` day of work
+
+The completed tasks must be shown during the weekly TA meetings.
+
+You have:
+
+- one `Joker` to miss one weekly TA meeting
+- one `Joker` to skip continuous progress once during the remaining weeks of the course
+
+Important:
+
+- you cannot make up missed continuous progress later
+- you can work ahead by completing twice the amount of work in one week, then skip progress in a later week without using a joker
+- communicate this planning ahead of time
+
+During the meeting, every team member should provide a `3-minute` update answering:
+
+- What did I do last week?
+- What will I do this week?
+- What are the obstacles to progress?
+
+Suggested discussion basis:
+
+- the `Sprint Backlog View` created in Assignment 2
+- the `contributions.md` log
+
+### 2.4 Planning of Sprint 2
+
+Toward the end of this milestone, you should begin planning the second and final Sprint.
+
+Go through the remaining user stories and decide which ones to implement in Milestone 4.
+
+Set a GitHub Milestone such as `Sprint 2` to mark the selected stories.
+
+Follow the guidelines from the previous assignment sheet to decompose these stories into development tasks.
+
+## 3. Grading and Deliverables
+
+SoPra is a pass/fail course, and the grade for M3 is pass/fail as well.
+
+Overall:
+
+- you must pass `3 out of 4` milestones
+- Milestones `1` and `4` must be passed
+- reasonable reports are expected for all milestones
+
+You will receive feedback on your deliverables in the weeks after the deadline, including one of:
+
+- pass
+- borderline pass
+- fail
+
+### Report
+
+Submit the report as a PDF to OLAT using the filename:
+
+`FS26-Group-XX-M3-Report.pdf`
+
+The group leader submits it.
+
+The title page must contain:
+
+- group name
+- group leader
+- all group members
+- each member's name and matriculation number
+
+The report must include:
+
+- a diagram showing the latest database layout or structure
+- `2-3` screenshots of the user interface
+- one complex unit test
+- one integration test
+- one REST interface test
+- descriptions of the use cases for those tests
+
+For the three test examples, explain:
+
+- why they are well written for the tested functionality
+- how they can capture future regressions
+- why they are good representatives of their category
+
+Assessment focuses on:
+
+- quality of the database structure diagram
+- quality of the UI screenshots
+- quality of the 3 test cases
+
+### Presentation (Slides)
+
+Submit the slides as a PDF to OLAT using the filename:
+
+`FS26-Group-XX-M3-Slides.pdf`
+
+The group leader submits them.
+
+The presentation must:
+
+- stay within `3 minutes` total
+- be in English
+- contain 2 components:
+  - project introduction and motivation: `30 seconds`
+  - live demo: `2 minutes 30 seconds`
+
+Important:
+
+- the demo is expected to be live
+- use the deployed version
+- keep backup screenshots in case something goes wrong
+
+Suggested focus:
+
+- highlight the exciting parts of your application
+- feel free to skip setup steps such as registration or lobby setup to preserve time for the core features
+
+The title slide must contain:
+
+- group name
+- names of all group members
+
+Underline the presenter names on the title slide.
+
+Each team member must present at least once across:
+
+- M1 + M2
+- M3
+- M4
+
+### Source Code and Project Board
+
+Submit the source code by adding git tags `M3` to commits on the `main` branches that should be graded.
+
+The staff will partially assess:
+
+- the source code
+- overall implementation progress
+
+By the end of Milestone 3, the expectation is a deployed and reasonable prototype that is ready for beta testing.
+
+Testing expectations:
+
+- tests must be meaningful and help identify bugs
+- getter and setter tests are not considered valuable
+- tests should focus on core application logic
+- every back-end task should have at least `1` associated test
+- SonarQube coverage should reach `50%`
+
+The GitHub Projects board is submitted implicitly and should already be `public`.
+
+The board should show:
+
+- the Product Backlog
+- user stories
+- development tasks
+- a view of the upcoming Sprint Backlog
+
+Assessment focuses on:
+
+- covered development effort
+- decomposition of user stories into development tasks
+- quality and consistency of project management
+
+### Continuous Progress
+
+During the remaining milestones, each team member must contribute continuously.
+
+Specifically:
+
+- each member must complete at least `2` meaningful tasks per week
+- each task should have a granularity of `0.5` to `1` day
+- completed tasks must be shown in weekly TA meetings
+- work must be traceable through linked commits and task references
+- the `contributions.md` log must be kept up to date
+
+Joker rules:
+
+- one joker can be used to miss one weekly TA meeting
+- one joker can be used to skip continuous progress once over the remaining weeks
+- missed continuous progress cannot be made up later
+- working ahead is allowed if you communicate the plan in advance
+
+Note:
+
+If a team member fails to show continuous progress after using their joker, they will individually fail the course unless there is a valid reason.
+
+### Team Questions and Brownie Points
+
+Each student must distribute brownie points to themselves and their team members.
+
+The points should reflect how you evaluate:
+
+- your own contribution to others
+- the contribution of other team members to your learning
+- the contribution of other team members to the assignment
+- the contribution of other team members to the team's performance
+
+Guidelines:
+
+- you may distribute points equally if everyone contributed equally
+- each student has `50` brownie points to distribute to `5` team members
+- if your team has `4` members, only distribute `40` points
+
+Brownie points help identify team concerns early and may affect pass/fail decisions in borderline cases.
+
+## 4. Important
+
+To ensure smooth and successful progression throughout the SoPra course, keep the following points in mind for all assignments:
+
+1. **Continuous contribution is essential**. Your TA will assess your weekly progress before each TA meeting, except during the week of spring break.
+2. **Effective use of the joker for continuous contribution**: you can use one joker throughout the semester. Announce it in advance. Failing to do so results in a fail for that week.
+3. **Communication with TAs**: discuss their availability to answer questions and respond to your queries. They are not expected to be available `24/7`, especially on weekends.
+4. **Deployment policy**: you may only deploy before the deadline. Deploying after the deadline results in an automatic fail for the milestone.
+5. **Repository privacy**: setting repositories to private prevents TAs from reviewing your work and results in an automatic fail for the duration they remain private.
+6. **Commit standards**: TAs will only consider commits that include a task or issue number. Make sure commits are labeled appropriately.
+7. **Persistence in project work**: students are expected to continue working on the application until they receive a clear fail. Lack of assessment from the last milestone is not a valid excuse to stop.
