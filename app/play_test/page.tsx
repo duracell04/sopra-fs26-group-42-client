@@ -6,6 +6,10 @@ import { NumberBlockObject, GameBlockState } from "@/utils/gameObject/gameBlockO
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { BulletObject } from "@/utils/gameObject/bullet";
 
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+const SHIP_HALF_WIDTH = 15;
+const SHIP_MOVE_STEP = 10;
 
 const ship = new ShipObject({
   uuid: "ship-1",
@@ -42,6 +46,10 @@ export default function PlayTest() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -55,8 +63,8 @@ export default function PlayTest() {
       ctx.fillStyle = "lime";
       ctx.beginPath();
       ctx.moveTo(ship.xPosition, ship.yPosition - 20);
-      ctx.lineTo(ship.xPosition - 15, ship.yPosition + 10);
-      ctx.lineTo(ship.xPosition + 15, ship.yPosition + 10);
+      ctx.lineTo(ship.xPosition - SHIP_HALF_WIDTH, ship.yPosition + 10);
+      ctx.lineTo(ship.xPosition + SHIP_HALF_WIDTH, ship.yPosition + 10);
       ctx.closePath();
       ctx.fill();
 
@@ -83,6 +91,17 @@ export default function PlayTest() {
     animationId = requestAnimationFrame(gameLoop);
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const minShipX = SHIP_HALF_WIDTH;
+      const maxShipX = canvas.width - SHIP_HALF_WIDTH;
+      
+      if (e.code === "KeyA" || e.code === "ArrowLeft") {
+        ship.moveLeft(SHIP_MOVE_STEP, minShipX);
+      }
+
+      if (e.code === "KeyD" || e.code === "ArrowRight") {
+        ship.moveRight(SHIP_MOVE_STEP, maxShipX);
+      }
+      
       if (e.code === "Space") {
         sendMessage("/app/shoot", {
           playerId: ship.playerId,
@@ -103,8 +122,8 @@ export default function PlayTest() {
     <div style={{ width: "100vw", height: "100vh", backgroundColor: "black", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <canvas
         ref={canvasRef}
-        width={800}
-        height={600}
+        width={CANVAS_WIDTH}
+        height={CANVAS_HEIGHT}
         style={{ border: "1px solid white" }}
       />
     </div>
