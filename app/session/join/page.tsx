@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, Input, Space, Spin, Tag, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
@@ -11,7 +11,7 @@ const { Title, Text } = Typography;
 const normalizeSessionCode = (value: string) =>
   value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 
-export default function JoinSessionPage() {
+function JoinSessionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const apiService = useApi();
@@ -275,5 +275,19 @@ export default function JoinSessionPage() {
         </Space>
       </Card>
     </div>
+  );
+}
+
+export default function JoinSessionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
+          <Spin size="large" />
+        </div>
+      }
+    >
+      <JoinSessionContent />
+    </Suspense>
   );
 }
