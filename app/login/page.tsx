@@ -27,7 +27,7 @@ const Login: React.FC = () => {
         setUserId(String(response.id));
       }
 
-      router.push("/menu");
+      router.push("/users");
     } catch (error) {
       if (error instanceof Error) {
         alert(`Something went wrong during the login:\n${error.message}`);

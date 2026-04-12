@@ -23,7 +23,7 @@ const Register: React.FC = () => {
         setToken(response.token);
       }
 
-      router.push("/menu");
+      router.push("/users");
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
