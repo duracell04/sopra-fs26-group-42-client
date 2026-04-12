@@ -54,6 +54,8 @@ reason).
 | **Student** | **Github Username** | **Date** | **Link to Commit** | **Description** | **Relevance** |
 |------------|---------------------|----------|--------------------|-----------------|---------------|
 | **Remy Klemenz** | **[@remy20cent]** |01.04.26|https://github.com/duracell04/sopra-fs26-group-42-server/commit/467e65aac2db268881023567ee4723dc27d7a51a | Backend implementation of userstats | Required for working frontend |
+|                  |                   |12.04.26|https://github.com/duracell04/sopra-fs26-group-42-client/commit/b74e6a93b8187f654e9703753912713578a743ec | Implement left and right movement within canvas | simple requirement |
+|                  |                   |12.04.26|https://github.com/duracell04/sopra-fs26-group-42-client/commit/3bce282e615a242ea4fc9179a968bb70d71afd3e | Implementation of keyboard controls left and right | only frontend keyboard controls, not working with websocket |
 | **Enrique Georg Zbinden** | **[@duracell04]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 <<<<<<< HEAD
 | **Siyang Jiang** | **[@yang0731]** | [05.04.2026] | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/d0c9c2f3351c1e17f633fa98d66ed47facecad6a] | implement gameBlockObject in frontend | frontend should be able to change the status of the blocks |
