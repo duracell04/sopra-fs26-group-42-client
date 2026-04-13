@@ -63,7 +63,7 @@ reason).
 | **Csaba Vizhanyo** | **[@csaba_vi]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/37bc48fa8b2d3e12efec564f55359bfde4a5d811 | creating websocket backend setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
 |                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/721bc045a3ade41e2aa66fb1a68738b91a525838 | create ship entity and render it on the frontend | creating player for later gameplay |
 |                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/1fd57ab10081706c9ad1516790d5f06e575412ec | creating frontend websocket setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
-| **Attila Vizhanyo** | **[@liroAV]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Attila Vizhanyo** | **[@liroAV]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/58928dec989c9da9aeb1783da79041604ac47266 | implementation of creating session, and making a unique joining code | This step is important to correctly setup a game, so you and your friend can play together |
 
 ---
 
