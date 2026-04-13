@@ -53,33 +53,84 @@ reason).
 
 | **Student** | **Github Username** | **Date** | **Link to Commit** | **Description** | **Relevance** |
 |------------|---------------------|----------|--------------------|-----------------|---------------|
-| **Remy Klemenz** | **[@remy20cent]** |01.04.26|https://github.com/duracell04/sopra-fs26-group-42-server/commit/467e65aac2db268881023567ee4723dc27d7a51a | Backend implementation of userstats | Required for working frontend |
+| **Remy Klemenz** | **[@remy20cent]** | 01.04.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/467e65aac2db268881023567ee4723dc27d7a51a | Backend implementation of userstats | Required for working frontend |
+|                  |                   | 12.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/b74e6a93b8187f654e9703753912713578a743ec | Implement left and right movement within canvas | simple requirement |
+|                  |                   | 12.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/3bce282e615a242ea4fc9179a968bb70d71afd3e | Implementation of keyboard controls left and right | only frontend keyboard controls, not working with websocket |
 | **Enrique Georg Zbinden** | **[@duracell04]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-| **Siyang Jiang** | **[@yang0731]** | 05.04.2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/d0c9c2f3351c1e17f633fa98d66ed47facecad6a | implement gameBlockObject in frontend | frontend should be able to change the status of the blocks |
-|                 |                   |10.04.2026  | https://github.com/duracell04/sopra-fs26-group-42-server/commit/a20701746895b6c36e996bb3173733f3ef933d31 | Add game logic checks to backend game service and initialize GameBlock entity | The backend should have a block entity and be able to validate block selections (in GameService) to determine the status of each gameblock. |
-| **Csaba Vizhanyo** | **[@csaba_vi]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-| **Attila Vizhanyo** | **[@liroAV]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Siyang Jiang** | **[@yang0731]** | [05.04.2026] | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/d0c9c2f3351c1e17f633fa98d66ed47facecad6a] | implement gameBlockObject in frontend | frontend should be able to change the status of the blocks |
+|                 |                   |[10.04.2026]  | [https://github.com/duracell04/sopra-fs26-group-42-server/commit/a20701746895b6c36e996bb3173733f3ef933d31] | Add game logic checks to backend game service and initialize GameBlock entity | The backend should have a block entity and be able to validate block selections (in GameService) to determine the status of each gameblock. |
+|                 |                   |[13.04.2026]  | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/09be6a9af85c4890798045e74aa2f9a4a84023ae] | implemented bullet collision with a gameblock in frontend | It is needed for the correctness check (for elimination), that happens when the bullet collides with a gameblock. |
+| **Csaba Vizhanyo** | **[@csaba_vi]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/37bc48fa8b2d3e12efec564f55359bfde4a5d811 | creating websocket backend setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
+|                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/721bc045a3ade41e2aa66fb1a68738b91a525838 | create ship entity and render it on the frontend | creating player for later gameplay |
+|                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/1fd57ab10081706c9ad1516790d5f06e575412ec | creating frontend websocket setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
+| **Attila Vizhanyo** | **[@liroAV]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/58928dec989c9da9aeb1783da79041604ac47266 | implementation of creating session, and making a unique joining code | This step is important to correctly setup a game, so you and your friend can play together |
 
 ---
 
-## Contributions Week 3 - [Begin Date] to [End Date]
+## Contributions Week 3 - 13.04.26 to 19.04.26
 
-_Continue with the same table format as above._
+| **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
+| ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
+|**Remy Klemenz** |**[@remy20cent]** | 14.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/ffb5fb846b56f10ddc2a34211090daf1b2c4cd4b | Update the ship position smoothly in the frontend | continuous pressing on keyboard works for movement, also backend adjustements |
+|                 |                  | 14.04.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/3c9cdfb338828d7ba057be9bd3b59d7d5864c2cc | Backend Websocket Implementation for movement | should synchronize player movement in real time for both players, but needs different player2 id to test |
+|                    |              | date | ########################### | ########################### | ########################### |
+|**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
+|                          |                  | date | ########################### | ########################### | ########################### |
+|**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
+|                 |                | date | ########################### | ########################### | ########################### ||
+|**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
+|                   |                | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
+|                    |              | date | ########################### | ########################### | ########################### |
+
 
 ---
 
-## Contributions Week 4 - [Begin Date] to [End Date]
+## Contributions Week 4 - 19.04.26 to 26.04.26
 
-_Continue with the same table format as above._
+| **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
+| ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
+|**Remy Klemenz** |**[@remy20cent]** | date | ########################### | ########################### | ########################### |
+|                 |                  | date | ########################### | ########################### | ########################### |
+|**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
+|                          |                  | date | ########################### | ########################### | ########################### |
+|**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
+|                 |                | date | ########################### | ########################### | ########################### ||
+|**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
+|                   |                | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
+|                    |              | date | ########################### | ########################### | ########################### |
 
 ---
 
-## Contributions Week 5 - [Begin Date] to [End Date]
+## Contributions Week 5 - 26.04.26 to 03.05.26
 
-_Continue with the same table format as above._
+| **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
+| ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
+|**Remy Klemenz** |**[@remy20cent]** | date | ########################### | ########################### | ########################### |
+|                 |                  | date | ########################### | ########################### | ########################### |
+|**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
+|                          |                  | date | ########################### | ########################### | ########################### |
+|**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
+|                 |                | date | ########################### | ########################### | ########################### ||
+|**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
+|                   |                | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
+|                    |              | date | ########################### | ########################### | ########################### |
 
 ---
 
-## Contributions Week 6 - [Begin Date] to [End Date]
+## Contributions Week 6 - 03.05.26 to 10.05.26
 
-_Continue with the same table format as above._
+| **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
+| ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
+|**Remy Klemenz** |**[@remy20cent]** | date | ########################### | ########################### | ########################### |
+|                 |                  | date | ########################### | ########################### | ########################### |
+|**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
+|                          |                  | date | ########################### | ########################### | ########################### |
+|**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
+|                 |                | date | ########################### | ########################### | ########################### ||
+|**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
+|                   |                | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
+|                    |              | date | ########################### | ########################### | ########################### |
