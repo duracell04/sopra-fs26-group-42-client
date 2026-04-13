@@ -60,7 +60,9 @@ reason).
 | **Siyang Jiang** | **[@yang0731]** | [05.04.2026] | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/d0c9c2f3351c1e17f633fa98d66ed47facecad6a] | implement gameBlockObject in frontend | frontend should be able to change the status of the blocks |
 |                 |                   |[10.04.2026]  | [https://github.com/duracell04/sopra-fs26-group-42-server/commit/a20701746895b6c36e996bb3173733f3ef933d31] | Add game logic checks to backend game service and initialize GameBlock entity | The backend should have a block entity and be able to validate block selections (in GameService) to determine the status of each gameblock. |
 |                 |                   |[13.04.2026]  | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/09be6a9af85c4890798045e74aa2f9a4a84023ae] | implemented bullet collision with a gameblock in frontend | It is needed for the correctness check (for elimination), that happens when the bullet collides with a gameblock. |
-| **Csaba Vizhanyo** | **[@csaba_vi]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Csaba Vizhanyo** | **[@csaba_vi]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/37bc48fa8b2d3e12efec564f55359bfde4a5d811 | creating websocket backend setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
+|                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/721bc045a3ade41e2aa66fb1a68738b91a525838 | [Brief description of the task] | [Why this contribution is relevant] |
+|                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/1fd57ab10081706c9ad1516790d5f06e575412ec | [Brief description of the task] | [Why this contribution is relevant] |
 | **Attila Vizhanyo** | **[@liroAV]** | [date] | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 
 ---
