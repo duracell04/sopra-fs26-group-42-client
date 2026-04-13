@@ -28,13 +28,13 @@ export class ShipObject extends GameObject {
         this.state = params.state ?? ShipState.IDLE;
     }
 
-    public moveLeft(step: number = 10): void {
-        this.xPosition -= step;
+    public moveLeft(step: number = 10, minX: number = 0): void {
+        this.xPosition = Math.max(minX, this.xPosition - step);
         this.state = ShipState.MOVING;
     }
 
-    public moveRight(step: number = 10): void {
-        this.xPosition += step;
+    public moveRight(step: number = 10, maxX: number = Number.POSITIVE_INFINITY): void {
+        this.xPosition = Math.min(maxX, this.xPosition + step);
         this.state = ShipState.MOVING;
     }
 
