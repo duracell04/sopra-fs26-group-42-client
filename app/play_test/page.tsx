@@ -10,6 +10,10 @@ const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const SHIP_HALF_WIDTH = 15;
 const SHIP_MOVE_STEP = 10;
+
+const FALLING_BLOCK_COUNT = 10;
+const FALLING_BLOCK_SPEED = 1; // Move down 2 pixels per frame
+
 // helper functions for collision detection
 type HitResult = {
   playerId: number;
@@ -113,15 +117,17 @@ const remoteShip = new ShipObject({
   yPosition: 520,
 });
 
-const block = new NumberBlockObject({
-  uuid: "block-1",
-  name: "Block 1",
-  id: 1,
-  value: 42,
-  xPosition: 200,
-  yPosition: 100,
-  state: GameBlockState.DEFAULT,
-});
+// const block = new NumberBlockObject({
+//   uuid: "block-1",
+//   name: "Block 1",
+//   id: 1,
+//   value: 42,
+//   xPosition: 200,
+//   yPosition: 100,
+//   state: GameBlockState.DEFAULT,
+// });
+
+
 
 type RealtimeMessage = {
   type: "move" | "shoot";
@@ -138,6 +144,21 @@ export default function PlayTest() {
     left: false,
     right: false,
   });
+
+// the bolock moving ; TODO: change to real numberBlocks
+  const blocksRef = useRef<NumberBlockObject[]>(
+    Array.from({ length: FALLING_BLOCK_COUNT }, (_, index) =>
+      new NumberBlockObject({
+        uuid: `block-${index + 1}`,
+        name: `Block ${index + 1}`,
+        id: index + 1,
+        value: index + 1,
+        xPosition: 70 + index * 70,
+        yPosition: -50,
+        state: GameBlockState.DEFAULT,
+      })
+    )
+  );
 
   const handleMessage = useCallback((message: unknown) => {
     const data = message as Partial<RealtimeMessage>;
@@ -233,24 +254,26 @@ export default function PlayTest() {
           y: localShip.yPosition,
         });
       }
+      
       // Clear
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawShip(localShip, "lime");
+      // drawShip(localShip, "lime");
+      drawShip(localShip, "red"); //for testing page
       drawShip(remoteShip, "cyan");
+      
+      // Update the position of the falling blocks and remove blocks that have reached the bottom of the screen.
+      blocksRef.current = blocksRef.current.filter((block) => {
+        block.yPosition += FALLING_BLOCK_SPEED;
+        return block.yPosition - BLOCK_STYLE.block.halfSize <= canvas.height;
+      });
 
-      // Draw number block as a rectangle with its value
-      drawBlock(block);
-      // ctx.fillStyle = "steelblue";
-      // ctx.fillRect(block.xPosition - 25, block.yPosition - 25, 50, 50);
-      // ctx.fillStyle = "white";
-      // ctx.font = "20px Arial";
-      // ctx.textAlign = "center";
-      // ctx.textBaseline = "middle";
-      // ctx.fillText(String(block.value), block.xPosition, block.yPosition);
-
+      for (const block of blocksRef.current) {
+        drawBlock(block);
+      }
+      
       // Update and draw bullets
-      const blocksOnScreen = [block]; // TODO: replace with real block array later
+      const blocksOnScreen = blocksRef.current; // TODO: replace with real block array later
       const nextBullets: BulletObject[] = [];
 
       bulletsRef.current = bulletsRef.current.filter(b => !b.isOffScreen());
@@ -260,17 +283,47 @@ export default function PlayTest() {
         // collision detection
         const hitInfo = detectBulletHit(bullet, blocksOnScreen);
         if (hitInfo) {
-          console.log("HIT", hitInfo.playerId, hitInfo.blockId);
-
-          // send to backend
           sendMessage("/app/shoot", {
             playerId: hitInfo.playerId,
             blockId: hitInfo.blockId,
           });
 
-          // do not keep bullet after collision
+          // initiate into default
+          for (const block of blocksRef.current) {
+            block.state = GameBlockState.DEFAULT;
+          }
+
+          // set the hit one into 'selected'
+          const targetBlock = blocksRef.current.find(
+            (block) => block.id === hitInfo.blockId
+          );
+
+          if (targetBlock) {
+            targetBlock.state = GameBlockState.SELECTED;
+          }
+
           continue;
         }
+        
+        
+        
+        // if (hitInfo) {
+        //   console.log("HIT", hitInfo.playerId, hitInfo.blockId);
+
+        //   // send to backend
+        //   sendMessage("/app/shoot", {
+        //     playerId: hitInfo.playerId,
+        //     blockId: hitInfo.blockId,
+        //   });
+
+        //   // do not keep bullet after collision
+        //   continue;
+        // }
+
+
+
+
+        
 
         // render on-screen bullets only
         if (!bullet.isOffScreen()) {
