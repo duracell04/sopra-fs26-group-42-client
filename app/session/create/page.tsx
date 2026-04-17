@@ -123,7 +123,9 @@ export default function CreateSessionPage() {
       await apiService.post(`/sessions/${session.code}/start`, {
         userId: Number(parsedId),
       });
-      router.push("/play_test");
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+      router.push(`/play_test?code=${session.code}`);
     } catch (err) {
       alert(`Failed to start game: ${err instanceof Error ? err.message : "Unknown error"}`);
     }

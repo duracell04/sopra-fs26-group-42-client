@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import { GameSession } from "@/types/session";
@@ -8,7 +8,7 @@ import { Button, Card, Space, Tag, Typography, Spin } from "antd";
 
 const { Title, Text } = Typography;
 
-export default function WaitingSessionPage() {
+function WaitingSessionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "";
@@ -157,5 +157,21 @@ export default function WaitingSessionPage() {
         </Space>
       </Card>
     </div>
+  );
+}
+
+function WaitingSessionFallback() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
+      <Spin size="large" />
+    </div>
+  );
+}
+
+export default function WaitingSessionPage() {
+  return (
+    <Suspense fallback={<WaitingSessionFallback />}>
+      <WaitingSessionPageContent />
+    </Suspense>
   );
 }

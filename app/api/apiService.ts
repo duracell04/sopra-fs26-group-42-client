@@ -65,6 +65,7 @@ export class ApiService {
     const res = await fetch(url, {
       method: "GET",
       headers: this.defaultHeaders,
+      cache: "no-store",
     });
     return this.processResponse<T>(
       res,
@@ -84,6 +85,7 @@ export class ApiService {
       method: "POST",
       headers: this.defaultHeaders,
       body: JSON.stringify(data),
+      cache: "no-store",
     });
     return this.processResponse<T>(
       res,
@@ -103,6 +105,7 @@ export class ApiService {
       method: "PUT",
       headers: this.defaultHeaders,
       body: JSON.stringify(data),
+      cache: "no-store",
     });
     return this.processResponse<T>(
       res,
@@ -120,6 +123,7 @@ export class ApiService {
     const res = await fetch(url, {
       method: "DELETE",
       headers: this.defaultHeaders,
+      cache: "no-store",
     });
     return this.processResponse<T>(
       res,
