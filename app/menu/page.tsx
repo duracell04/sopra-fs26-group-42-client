@@ -44,6 +44,15 @@ export default function MenuPage() {
               type="primary"
               variant="solid"
               className="menu-button"
+              onClick={() => router.push("/session/join")}
+            >
+              Join Session
+            </Button>
+
+            <Button
+              type="primary"
+              variant="solid"
+              className="menu-button"
               onClick={() => router.push("/play_test")}
             >
               Play Test

@@ -74,7 +74,7 @@ export default function CreateSessionPage() {
         } else if (updated.status === "ACTIVE") {
           clearInterval(pollRef.current!);
           clearInterval(timerRef.current!);
-          router.push("/play_test");
+          router.push(`/play_test?code=${sessionCodeRef.current}`);
         }
       } catch {
         // ignore transient errors

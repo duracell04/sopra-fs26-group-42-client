@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
-import useLocalStorage from "@/hooks/useLocalStorage";
 import { Button, Card, Space, Typography, Spin, Alert } from "antd";
 
 const { Title, Text } = Typography;
@@ -20,20 +19,23 @@ export default function ProfilePage() {
   const router = useRouter();
   const apiService = useApi();
 
-  const { value: userId } = useLocalStorage<string>("id", "");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
+    const userId = rawId ? JSON.parse(rawId) : null;
+
+    if (!userId) {
+      router.push("/login");
+      return;
+    }
+
     const fetchProfile = async () => {
       setError(null);
       setLoading(true);
       try {
-        if (!userId) {
-          throw new Error("No user id found. Please log in first.");
-        }
-
         const response = await apiService.get<UserProfile>(`/users/${userId}/profile`);
         setProfile(response);
       } catch (err) {
@@ -48,7 +50,7 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [apiService, userId]);
+  }, [apiService, router]);
 
   return (
     <div className="profile-container">

@@ -13,6 +13,7 @@ const Register: React.FC = () => {
   const [form] = Form.useForm();
   const [error, setError] = useState<string | null>(null);
   const { set: setToken } = useLocalStorage<string>("token", "");
+  const { set: setUserId } = useLocalStorage<string>("id", "");
 
   const handleRegister = async (values: { username: string; password: string; name: string }) => {
     try {
@@ -21,6 +22,10 @@ const Register: React.FC = () => {
 
       if (response.token) {
         setToken(response.token);
+      }
+
+      if (response.id) {
+        setUserId(String(response.id));
       }
 
       router.push("/menu");

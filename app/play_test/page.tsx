@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { ShipObject } from "@/utils/gameObject/ship";
 import { NumberBlockObject, GameBlockState } from "@/utils/gameObject/gameBlockObject";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { BulletObject } from "@/utils/gameObject/bullet";
+import { useApi } from "@/hooks/useApi";
+import { GameSession } from "@/types/session";
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
@@ -101,21 +104,6 @@ const BLOCK_STYLE = {
   },
 };
 
-const localShip = new ShipObject({
-  uuid: "ship-1",
-  name: "Player Ship",
-  playerId: 1,
-  xPosition: 400,
-  yPosition: 550,
-});
-
-const remoteShip = new ShipObject({
-  uuid: "ship-2",
-  name: "Partner Ship",
-  playerId: 2,
-  xPosition: 250,
-  yPosition: 520,
-});
 
 // const block = new NumberBlockObject({
 //   uuid: "block-1",
@@ -138,12 +126,44 @@ type RealtimeMessage = {
 
 
 export default function PlayTest() {
+  const searchParams = useSearchParams();
+  const code = searchParams.get("code") ?? "";
+  const apiService = useApi();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bulletsRef = useRef<BulletObject[]>([]);
-  const pressedKeysRef = useRef({
-    left: false,
-    right: false,
-  });
+  const pressedKeysRef = useRef({ left: false, right: false });
+
+  const localShipRef = useRef(new ShipObject({
+    uuid: "ship-local",
+    name: "Player Ship",
+    playerId: 1,
+    xPosition: 400,
+    yPosition: 550,
+  }));
+
+  const remoteShipRef = useRef(new ShipObject({
+    uuid: "ship-remote",
+    name: "Partner Ship",
+    playerId: 2,
+    xPosition: 250,
+    yPosition: 520,
+  }));
+
+  // Determine player roles from session
+  useEffect(() => {
+    if (!code) return;
+    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
+    const userId = rawId ? Number(JSON.parse(rawId)) : null;
+    if (!userId) return;
+
+    apiService.get<GameSession>(`/sessions/${code}`).then((session) => {
+      const isCreator = session.creatorId === userId;
+      localShipRef.current.playerId = isCreator ? 1 : 2;
+      remoteShipRef.current.playerId = isCreator ? 2 : 1;
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
 
 // the bolock moving ; TODO: change to real numberBlocks
   const blocksRef = useRef<NumberBlockObject[]>(
@@ -160,6 +180,9 @@ export default function PlayTest() {
     )
   );
 
+  // Target position for the remote ship — updated on every received message
+  const remoteTargetRef = useRef({ x: 250, y: 520 });
+
   const handleMessage = useCallback((message: unknown) => {
     const data = message as Partial<RealtimeMessage>;
 
@@ -172,9 +195,12 @@ export default function PlayTest() {
       return;
     }
 
-    if (data.type === "move" && data.playerId === remoteShip.playerId) {
-      remoteShip.xPosition = data.x;
-      remoteShip.yPosition = data.y;
+    // Ignore messages from ourselves — we handle local state directly
+    if (data.playerId === localShipRef.current.playerId) return;
+
+    if (data.type === "move") {
+      remoteTargetRef.current.x = data.x;
+      remoteTargetRef.current.y = data.y;
       return;
     }
 
@@ -197,6 +223,8 @@ export default function PlayTest() {
     if (!ctx) return;
 
     let animationId: number;
+    let lastTimestamp = 0;
+    const TARGET_FRAME_MS = 1000 / 60; // lock to 60 fps
 
     const drawBlock = (block: NumberBlockObject) => {
       if (block.state === GameBlockState.ELIMINATED) return; // vanish
@@ -230,37 +258,46 @@ export default function PlayTest() {
       ctx.fill();
     };
 
-    const gameLoop = () => {
+    const gameLoop = (timestamp: number) => {
+      animationId = requestAnimationFrame(gameLoop);
+
+      if (timestamp - lastTimestamp < TARGET_FRAME_MS) return;
+      lastTimestamp = timestamp;
+
       const minShipX = SHIP_HALF_WIDTH;
       const maxShipX = canvas.width - SHIP_HALF_WIDTH;
 
       let moved = false;
 
       if (pressedKeysRef.current.left && !pressedKeysRef.current.right) {
-        localShip.moveLeft(SHIP_MOVE_STEP, minShipX);
+        localShipRef.current.moveLeft(SHIP_MOVE_STEP, minShipX);
         moved = true;
       } else if (pressedKeysRef.current.right && !pressedKeysRef.current.left) {
-        localShip.moveRight(SHIP_MOVE_STEP, maxShipX);
+        localShipRef.current.moveRight(SHIP_MOVE_STEP, maxShipX);
         moved = true;
       } else {
-        localShip.idle();
+        localShipRef.current.idle();
       }
 
       if (moved) {
         sendMessage("/app/move", {
           type: "move",
-          playerId: localShip.playerId,
-          x: localShip.xPosition,
-          y: localShip.yPosition,
+          playerId: localShipRef.current.playerId,
+          x: localShipRef.current.xPosition,
+          y: localShipRef.current.yPosition,
         });
       }
-      
+
+      // Lerp remote ship toward its latest received position
+      const LERP = 0.25;
+      remoteShipRef.current.xPosition += (remoteTargetRef.current.x - remoteShipRef.current.xPosition) * LERP;
+      remoteShipRef.current.yPosition += (remoteTargetRef.current.y - remoteShipRef.current.yPosition) * LERP;
+
       // Clear
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // drawShip(localShip, "lime");
-      drawShip(localShip, "red"); //for testing page
-      drawShip(remoteShip, "cyan");
+      drawShip(localShipRef.current, "red");
+      drawShip(remoteShipRef.current, "cyan");
       
       // Update the position of the falling blocks and remove blocks that have reached the bottom of the screen.
       blocksRef.current = blocksRef.current.filter((block) => {
@@ -340,7 +377,6 @@ export default function PlayTest() {
       }
 
       bulletsRef.current = nextBullets; // update bullets for the next iteration
-      animationId = requestAnimationFrame(gameLoop);
     };
 
     animationId = requestAnimationFrame(gameLoop);
@@ -355,11 +391,15 @@ export default function PlayTest() {
       }
       
       if (e.code === "Space") {
+        const x = localShipRef.current.xPosition;
+        const y = localShipRef.current.yPosition;
+        // Create bullet locally immediately — no round-trip wait
+        bulletsRef.current.push(new BulletObject({ x, y, playerId: localShipRef.current.playerId }));
         sendMessage("/app/shoot", {
           type: "shoot",
-          playerId: localShip.playerId,
-          x: localShip.xPosition,
-          y: localShip.yPosition,
+          playerId: localShipRef.current.playerId,
+          x,
+          y,
         });
       }
     };

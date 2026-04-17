@@ -7,7 +7,7 @@ export class BulletObject extends GameObject {
     private speed: number = 8;
 
     constructor(params: { x: number; y: number; playerId: number }) {
-        super(crypto.randomUUID(), "bullet");
+        super(`bullet-${Date.now()}-${Math.random().toString(36).slice(2)}`, "bullet");
         this.x = params.x;
         this.y = params.y;
         this.playerId = params.playerId;

@@ -8,6 +8,6 @@ import { isProduction } from "@/utils/environment";
 export function getApiDomain(): string {
   const prodUrl = process.env.NEXT_PUBLIC_PROD_API_URL ||
     "http://localhost:8080"; // TODO: update with your production URL as needed.
-  const devUrl = "http://localhost:8080";
+  const devUrl = process.env.NEXT_PUBLIC_DEV_API_URL || "http://localhost:8080";
   return isProduction() ? prodUrl : devUrl;
 }
