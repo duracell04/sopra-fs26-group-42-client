@@ -55,6 +55,26 @@ type SessionProblemErrorPayload = {
   error?: string;
 };
 
+function formatElapsedTime(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.max(0, totalSeconds % 60)
+    .toString()
+    .padStart(2, "0");
+
+  return `${minutes}:${seconds}`;
+}
+
+function parseTimestamp(value: string | null | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -192,12 +212,21 @@ function PlayTestContent() {
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Loading...");
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [timerSourceMs, setTimerSourceMs] = useState<number | null>(null);
+  const [displayedElapsedSeconds, setDisplayedElapsedSeconds] = useState(0);
+  const [finalElapsedSeconds, setFinalElapsedSeconds] = useState<number | null>(null);
+  const [isGameFinished, setIsGameFinished] = useState(false);
 
   const problemsRef = useRef<MathProblem[]>([]);
   const currentLevelRef = useRef(0);
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
+  const timerSourceMsRef = useRef<number | null>(null);
+  const displayedElapsedSecondsRef = useRef(0);
+  const finalElapsedSecondsRef = useRef<number | null>(null);
+  const isGameFinishedRef = useRef(false);
+  const finishRequestStartedRef = useRef(false);
 
   const applyProblems = useCallback((candidate: unknown) => {
     const problems = normalizeMathProblems(candidate);
@@ -213,7 +242,14 @@ function PlayTestContent() {
     blocksRef.current = buildBlocks(problems[0]);
     setLoadingError(null);
     setIsLoadingProblems(false);
-  }, []);
+
+    if (!code && timerSourceMsRef.current === null) {
+      const startedAtMs = Date.now();
+      timerSourceMsRef.current = startedAtMs;
+      setTimerSourceMs(startedAtMs);
+      setDisplayedElapsedSeconds(0);
+    }
+  }, [code]);
 
   const handleMessage = useCallback((message: unknown) => {
     const data = message as Partial<RealtimeMessage>;
@@ -243,6 +279,92 @@ function PlayTestContent() {
   }, []);
 
   const { sendMessage } = useWebSocket(handleMessage);
+
+  useEffect(() => {
+    timerSourceMsRef.current = timerSourceMs;
+  }, [timerSourceMs]);
+
+  useEffect(() => {
+    displayedElapsedSecondsRef.current = displayedElapsedSeconds;
+  }, [displayedElapsedSeconds]);
+
+  useEffect(() => {
+    finalElapsedSecondsRef.current = finalElapsedSeconds;
+  }, [finalElapsedSeconds]);
+
+  useEffect(() => {
+    isGameFinishedRef.current = isGameFinished;
+  }, [isGameFinished]);
+
+  const freezeTimer = useCallback((elapsedSeconds: number) => {
+    const frozenSeconds = Math.max(0, elapsedSeconds);
+    setDisplayedElapsedSeconds(frozenSeconds);
+    setFinalElapsedSeconds(frozenSeconds);
+    setIsGameFinished(true);
+    pressedKeysRef.current.left = false;
+    pressedKeysRef.current.right = false;
+  }, []);
+
+  const completeGame = useCallback(async () => {
+    if (isGameFinishedRef.current) {
+      return;
+    }
+
+    const startedAtMs = timerSourceMsRef.current;
+    const fallbackElapsedSeconds = finalElapsedSecondsRef.current
+      ?? (startedAtMs !== null
+        ? Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000))
+        : displayedElapsedSecondsRef.current);
+
+    freezeTimer(fallbackElapsedSeconds);
+
+    if (!code || finishRequestStartedRef.current) {
+      return;
+    }
+
+    const userId = getStoredUserId();
+    if (!userId) {
+      return;
+    }
+
+    finishRequestStartedRef.current = true;
+
+    try {
+      const finishedSession = await apiService.post<GameSession>(`/sessions/${code}/finish`, {
+        userId,
+      });
+
+      const startedAtMsFromSession = parseTimestamp(finishedSession.startedAt);
+      if (startedAtMsFromSession !== null) {
+        timerSourceMsRef.current = startedAtMsFromSession;
+        setTimerSourceMs(startedAtMsFromSession);
+      }
+
+      freezeTimer(finishedSession.elapsedSeconds ?? fallbackElapsedSeconds);
+    } catch (error) {
+      console.warn("Failed to synchronize finished session timer:", error);
+    }
+  }, [apiService, code, freezeTimer]);
+
+  useEffect(() => {
+    if (timerSourceMs === null || isGameFinished) {
+      return;
+    }
+
+    const syncElapsedSeconds = () => {
+      setDisplayedElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - timerSourceMs) / 1000)),
+      );
+    };
+
+    syncElapsedSeconds();
+
+    const intervalId = setInterval(syncElapsedSeconds, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isGameFinished, timerSourceMs]);
 
   const persistSessionProblemState = useCallback(
     async (sessionCode: string, payload: unknown) => {
@@ -476,6 +598,15 @@ function PlayTestContent() {
           return;
         }
 
+        const startedAtMs = parseTimestamp(session.startedAt);
+        if (startedAtMs !== null) {
+          timerSourceMsRef.current = startedAtMs;
+          setTimerSourceMs(startedAtMs);
+          if (typeof session.elapsedSeconds === "number") {
+            setDisplayedElapsedSeconds(Math.max(0, session.elapsedSeconds));
+          }
+        }
+
         if (session.status === "CANCELLED") {
           setFatalLoadingError("This session is no longer available.");
           return;
@@ -554,6 +685,7 @@ function PlayTestContent() {
     const drawHud = () => {
       const problem = problemsRef.current[currentLevelRef.current];
       const pair = problem?.pairs[currentPairIndexRef.current];
+      const elapsedSeconds = finalElapsedSecondsRef.current ?? displayedElapsedSecondsRef.current;
 
       if (!pair) {
         return;
@@ -573,22 +705,32 @@ function PlayTestContent() {
       ctx.fillStyle = "#aaa";
       ctx.font = "14px Arial";
       ctx.textAlign = "left";
-      ctx.fillText(`Level ${currentLevelRef.current + 1}`, 12, 25);
+      ctx.fillText(
+        `Level ${currentLevelRef.current + 1}/${problemsRef.current.length}  Time ${formatElapsedTime(elapsedSeconds)}`,
+        12,
+        25,
+      );
 
       ctx.textAlign = "right";
-      ctx.fillText(`Pairs: ${clearedCount}/5`, CANVAS_WIDTH - 12, 25);
+      ctx.fillText(`Pairs: ${clearedCount}/${problem.pairs.length}`, CANVAS_WIDTH - 12, 25);
     };
 
     const advancePair = () => {
       selectedBlockIdsRef.current.clear();
       const nextPair = currentPairIndexRef.current + 1;
+      const currentProblem = problemsRef.current[currentLevelRef.current];
 
-      if (nextPair >= 5) {
+      if (nextPair >= currentProblem.pairs.length) {
         const nextLevel = currentLevelRef.current + 1;
-        currentLevelRef.current = nextLevel % problemsRef.current.length;
+
+        if (nextLevel >= problemsRef.current.length) {
+          return true;
+        }
+
+        currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
-        blocksRef.current = buildBlocks(problemsRef.current[currentLevelRef.current]);
-        return;
+        blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        return false;
       }
 
       currentPairIndexRef.current = nextPair;
@@ -598,6 +740,8 @@ function PlayTestContent() {
           block.state = GameBlockState.DEFAULT;
         }
       }
+
+      return false;
     };
 
     const handleBlockHit = (_bullet: BulletObject, block: NumberBlockObject): boolean => {
@@ -643,7 +787,10 @@ function PlayTestContent() {
         }
 
         selectedBlockIdsRef.current.clear();
-        advancePair();
+        const didFinishGame = advancePair();
+        if (didFinishGame) {
+          void completeGame();
+        }
         return true;
       }
 
@@ -747,7 +894,6 @@ function PlayTestContent() {
           );
         }
       }
-
       bulletsRef.current = nextBullets;
       drawHud();
     };
@@ -796,7 +942,7 @@ function PlayTestContent() {
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [sendMessage]);
+  }, [completeGame, sendMessage]);
 
   return (
     <div
@@ -910,6 +1056,79 @@ function PlayTestContent() {
           style={{ border: "1px solid white" }}
         />
       </div>
+
+      {isGameFinished && !isLoadingProblems && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.68)",
+            zIndex: 20,
+            padding: 24,
+          }}
+        >
+          <div
+            style={{
+              width: "min(420px, 100%)",
+              padding: 28,
+              borderRadius: 16,
+              border: "1px solid #1f6f8b",
+              backgroundColor: "#08131f",
+              color: "#e8f7ff",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.45)",
+            }}
+          >
+            <div
+              style={{
+                color: "#00d4ff",
+                fontFamily: "monospace",
+                fontSize: 28,
+                fontWeight: 900,
+                letterSpacing: 2,
+                marginBottom: 12,
+              }}
+            >
+              Game finished
+            </div>
+            <div style={{ fontSize: 16, color: "#9bc4d8", marginBottom: 8 }}>
+              Final elapsed time
+            </div>
+            <div
+              style={{
+                fontSize: 40,
+                fontWeight: 900,
+                fontFamily: "monospace",
+                color: "#ffffff",
+                marginBottom: 16,
+              }}
+            >
+              {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/menu";
+              }}
+              style={{
+                padding: "12px 18px",
+                border: "none",
+                borderRadius: 10,
+                backgroundColor: "#00d4ff",
+                color: "#031019",
+                fontWeight: 800,
+                cursor: "pointer",
+                minWidth: 140,
+              }}
+            >
+              Leave game
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
