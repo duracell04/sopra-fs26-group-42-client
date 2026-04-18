@@ -77,7 +77,7 @@ reason).
 |**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
 |                          |                  | date | ########################### | ########################### | ########################### |
 |**Siyang Jiang** |**[@yang0731]** | 14.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/c86cd872fcbb6643a0290593ef0541ca985ee34f| add block animation with initialization, falling behavior, and status change to selection on hit | blocks need to be selected for elimination, and show status with color|
-|                 |                | date | ########################### | ########################### | ########################### ||
+|                 |                | 18.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/pull/27/changes/9c451bf34a4d80e1799e6ae45c9687668799a31d | /implement lives and score display and their updating behaviour on frontend page (#9)(#11)(#12) | This is necessary for implementing our points-based game and penalty mechanism. |
 |**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
 |                   |                | date | ########################### | ########################### | ########################### |
 |**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
