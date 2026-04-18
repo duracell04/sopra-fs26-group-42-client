@@ -11,6 +11,9 @@ import { MathProblem } from "@/types/problem";
 import { GameSession } from "@/types/session";
 import { generateMathProblems, normalizeMathProblems } from "@/utils/mathProblems";
 
+//-----------------------------------------------------------------------------
+// -------------- Gameplay and session configuration constants ----------------
+//-----------------------------------------------------------------------------
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const SHIP_HALF_WIDTH = 15;
@@ -19,7 +22,11 @@ const FALLING_BLOCK_SPEED = 0.5;
 const SESSION_FETCH_RETRIES = 3;
 const SESSION_PROBLEM_POLL_LIMIT = 45;
 const SESSION_PROBLEM_POLL_INTERVAL_MS = 2000;
+const INITIAL_LIFE = 3;
+const INCORRECT_FLASH_MS = 1000;
 
+
+// Section: Canvas rendering style configuration
 const BLOCK_STYLE = {
   block: {
     size: 50,
@@ -40,12 +47,30 @@ const BLOCK_STYLE = {
   bullet: { fillStyle: "yellow", width: 4, height: 8 },
 };
 
-type RealtimeMessage = {
+// Realtime and API payload types
+type RealtimeMessage = 
+|{
   type: "move" | "shoot";
   playerId: number;
   x: number;
   y: number;
+}
+|{
+  type: "game_state";
+  sessionCode: string;
+  playerId: number;
+  score: number;
+  life: number;
+  result: "PENDING" | "CORRECT" | "INCORRECT";
+  selectedBlockIds: number[];
+  blocks: {
+    id: number;
+    value: number;
+    state: "DEFAULT" | "SELECTED" | "ELIMINATED" | "INCORRECT";
+  }[];
 };
+
+
 
 type SessionProblemsResponse = {
   problemsJson?: unknown;
@@ -55,6 +80,7 @@ type SessionProblemErrorPayload = {
   error?: string;
 };
 
+// General utility helpers
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -89,6 +115,7 @@ function formatErrorMessage(error: unknown, fallbackMessage: string): string {
   return fallbackMessage;
 }
 
+// Collision geometry helpers
 function getBulletRect(bullet: BulletObject) {
   const halfWidth = BLOCK_STYLE.bullet.width / 2;
   return {
@@ -115,6 +142,7 @@ function isOverlapping(
   return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
 }
 
+// Problem data transformation helpers
 function buildBlocks(problem: MathProblem): NumberBlockObject[] {
   const xPositions = [70, 150, 230, 310, 390, 470, 550, 630, 710, 760];
   const pairInstanceCounts = new Array(problem.pairs.length).fill(0);
@@ -160,11 +188,15 @@ function parseStoredProblemError(problemsJson: unknown): string | null {
   }
 }
 
+// Main game page content component
 function PlayTestContent() {
+  
+  // Section: Router and service hooks
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "";
   const apiService = useApi();
 
+  // Section: Refs for canvas, controls, and entities
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bulletsRef = useRef<BulletObject[]>([]);
   const pressedKeysRef = useRef({ left: false, right: false });
@@ -189,9 +221,17 @@ function PlayTestContent() {
   );
   const remoteTargetRef = useRef({ x: 250, y: 520 });
 
+  const scoreRef = useRef(0);
+
+  const lifeRef = useRef(INITIAL_LIFE);
+
+
+  // Loading and level progression state
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Loading...");
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [scoreUi, setScoreUi] = useState(0);
+  const [lifeUi, setLifeUi] = useState(INITIAL_LIFE);
 
   const problemsRef = useRef<MathProblem[]>([]);
   const currentLevelRef = useRef(0);
@@ -199,24 +239,53 @@ function PlayTestContent() {
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
 
-  const applyProblems = useCallback((candidate: unknown) => {
-    const problems = normalizeMathProblems(candidate);
-
-    if (!problems.length) {
-      throw new Error("No valid level data was available.");
-    }
-
-    problemsRef.current = problems;
-    currentLevelRef.current = 0;
-    currentPairIndexRef.current = 0;
-    selectedBlockIdsRef.current.clear();
-    blocksRef.current = buildBlocks(problems[0]);
-    setLoadingError(null);
-    setIsLoadingProblems(false);
-  }, []);
-
+  // Realtime message handler
   const handleMessage = useCallback((message: unknown) => {
     const data = message as Partial<RealtimeMessage>;
+
+    if (data.type === "game_state") {
+      if (
+        typeof data.score !== "number" ||
+        typeof data.life !== "number" ||
+        !Array.isArray(data.blocks)
+      ) {
+        return;
+      }
+
+      scoreRef.current = data.score;
+      lifeRef.current = data.life;
+      setScoreUi(data.score);
+      setLifeUi(data.life);
+
+      const incomingBlocks = data.blocks;
+      const nextBlocks = blocksRef.current.map((existingBlock) => {
+        const incoming = incomingBlocks.find((candidate) => candidate.id === existingBlock.id);
+        if (!incoming) {
+          return existingBlock;
+        }
+
+        switch (incoming.state) {
+          case "DEFAULT":
+            existingBlock.state = GameBlockState.DEFAULT;
+            break;
+          case "SELECTED":
+            existingBlock.state = GameBlockState.SELECTED;
+            break;
+          case "ELIMINATED":
+            existingBlock.state = GameBlockState.ELIMINATED;
+            break;
+          case "INCORRECT":
+            existingBlock.state = GameBlockState.INCORRECT;
+            break;
+        }
+
+        return existingBlock;
+      });
+
+      blocksRef.current = nextBlocks;
+      selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
+      return;
+    }
 
     if (
       (data.type !== "move" && data.type !== "shoot") ||
@@ -242,8 +311,48 @@ function PlayTestContent() {
     );
   }, []);
 
+  // functions for live scores
+  const increaseScore = useCallback(() => {
+  scoreRef.current += 1;
+  setScoreUi(scoreRef.current);
+  }, []);
+
+  const decreaseLife = useCallback(() => {
+    lifeRef.current = Math.max(0, lifeRef.current - 1);
+    setLifeUi(lifeRef.current);
+  }, []);
+
+  const resetRoundStats = useCallback(() => {
+    scoreRef.current = 0;
+    lifeRef.current = INITIAL_LIFE;
+    setScoreUi(0);
+    setLifeUi(INITIAL_LIFE);
+  }, []);
+
+ // Session problem initialization helpers
+  const applyProblems = useCallback((candidate: unknown) => {
+    const problems = normalizeMathProblems(candidate);
+
+    if (!problems.length) {
+      throw new Error("No valid level data was available.");
+    }
+
+    problemsRef.current = problems;
+    currentLevelRef.current = 0;
+    currentPairIndexRef.current = 0;
+    selectedBlockIdsRef.current.clear();
+    blocksRef.current = buildBlocks(problems[0]);
+
+    resetRoundStats();
+
+    setLoadingError(null);
+    setIsLoadingProblems(false);
+  }, [resetRoundStats]);
+
+  // WebSocket integration
   const { sendMessage } = useWebSocket(handleMessage);
 
+  // Session persistence helper
   const persistSessionProblemState = useCallback(
     async (sessionCode: string, payload: unknown) => {
       let lastError: unknown = null;
@@ -268,6 +377,7 @@ function PlayTestContent() {
     [apiService],
   );
 
+  // Session bootstrap and problem loading flow
   useEffect(() => {
     let cancelled = false;
     let pollTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -504,6 +614,7 @@ function PlayTestContent() {
     };
   }, [apiService, applyProblems, code, persistSessionProblemState]);
 
+  // Canvas render loop, collisions, and player controls
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
@@ -577,6 +688,10 @@ function PlayTestContent() {
 
       ctx.textAlign = "right";
       ctx.fillText(`Pairs: ${clearedCount}/5`, CANVAS_WIDTH - 12, 25);
+      ctx.fillText("Points: " + scoreRef.current, CANVAS_WIDTH - 12, 32);
+
+      ctx.textAlign = "left";
+      ctx.fillText("Life: " + lifeRef.current, 12, 39);
     };
 
     const advancePair = () => {
@@ -626,6 +741,16 @@ function PlayTestContent() {
 
       block.state = GameBlockState.SELECTED;
       selectedBlockIdsRef.current.add(block.id);
+      
+      // backend to be authoritative
+      sendMessage("/app/block/select", {
+        sessionCode: code,
+        userId: getStoredUserId(),
+        blockId: block.id,
+        blockValue: block.value,
+        targetProduct: targetPair.product,
+        selectionWindowMs: INCORRECT_FLASH_MS,
+      });
 
       const nextSelectedBlocks = blocksRef.current.filter((candidate) =>
         selectedBlockIdsRef.current.has(candidate.id)
@@ -637,17 +762,20 @@ function PlayTestContent() {
 
       const selectedProduct = nextSelectedBlocks[0].value * nextSelectedBlocks[1].value;
 
+      // frontend to be authoritative
       if (selectedProduct === targetPair.product) {
         for (const selectedBlock of nextSelectedBlocks) {
           selectedBlock.eliminate();
         }
 
+        increaseScore();
         selectedBlockIdsRef.current.clear();
         advancePair();
         return true;
       }
 
       selectedBlockIdsRef.current.clear();
+      decreaseLife();
 
       for (const selectedBlock of nextSelectedBlocks) {
         selectedBlock.state = GameBlockState.INCORRECT;
@@ -659,7 +787,7 @@ function PlayTestContent() {
             selectedBlock.state = GameBlockState.DEFAULT;
           }
         }
-      }, 400);
+      }, INCORRECT_FLASH_MS);
 
       return true;
     };
@@ -798,6 +926,7 @@ function PlayTestContent() {
     };
   }, [sendMessage]);
 
+  // UI layout and loading overlay
   return (
     <div
       style={{
@@ -914,6 +1043,7 @@ function PlayTestContent() {
   );
 }
 
+// Suspense fallback component
 function PlayTestFallback() {
   return (
     <div
@@ -936,6 +1066,7 @@ function PlayTestFallback() {
   );
 }
 
+// Page export with suspense boundary
 export default function PlayTest() {
   return (
     <Suspense fallback={<PlayTestFallback />}>
