@@ -198,6 +198,8 @@ function PlayTestContent() {
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
+  const scoreRef = useRef(0);
+  const [score, setScore] = useState(0);
 
   const applyProblems = useCallback((candidate: unknown) => {
     const problems = normalizeMathProblems(candidate);
@@ -643,6 +645,8 @@ function PlayTestContent() {
         }
 
         selectedBlockIdsRef.current.clear();
+        scoreRef.current += 1;
+        setScore(scoreRef.current);
         advancePair();
         return true;
       }
