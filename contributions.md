@@ -79,8 +79,8 @@ reason).
 |**Siyang Jiang** |**[@yang0731]** | 14.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/c86cd872fcbb6643a0290593ef0541ca985ee34f| add block animation with initialization, falling behavior, and status change to selection on hit | blocks need to be selected for elimination, and show status with color|
 |                 |                | 18.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/pull/27/changes/9c451bf34a4d80e1799e6ae45c9687668799a31d | /implement lives and score display and their updating behaviour on frontend page (#9)(#11)(#12) | This is necessary for implementing our points-based game and penalty mechanism. |
 |                 |                | 18.04.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/338249c199f1bd521e862908cd522712dc9b0f2b | feature/implemented deducting sharedlives in backend (#12) | REST communication and sharedlives deduction logic in backend|
-|**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
-|                   |                | date | ########################### | ########################### | ########################### |
+|**Csaba Vizhanyo** |**[@csaba_vi]** | 16.04 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/2d34107b9a1fa0bc6fe7c8683d34ea3db5501cfa | implemented problem generation algorithm for levels | essential for main gameplay loop |
+|                   |                | 16.04 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/29efbdc43d5541092cff2bae90bcd345bc03723b | implemented back end logic so player 2 can access the generated problems from player 1 | essential for main gameplay loop |
 |**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
 |                    |              | date | ########################### | ########################### | ########################### |
 
