@@ -198,6 +198,8 @@ function PlayTestContent() {
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
+  const scoreRef = useRef(0);
+  const [score, setScore] = useState(0);
 
   const applyProblems = useCallback((candidate: unknown) => {
     const problems = normalizeMathProblems(candidate);
@@ -562,7 +564,7 @@ function PlayTestContent() {
       const clearedCount = currentPairIndexRef.current;
 
       ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(0, 0, CANVAS_WIDTH, 50);
+      ctx.fillRect(0, 0, CANVAS_WIDTH, 55);
 
       ctx.fillStyle = "#00d4ff";
       ctx.font = "bold 22px monospace";
@@ -575,6 +577,10 @@ function PlayTestContent() {
       ctx.textAlign = "left";
       ctx.fillText(`Level ${currentLevelRef.current + 1}`, 12, 25);
 
+      ctx.fillStyle = "#2ecc71";
+      ctx.fillText(`Score: ${scoreRef.current}`, 12, 42);
+
+      ctx.fillStyle = "#aaa";
       ctx.textAlign = "right";
       ctx.fillText(`Pairs: ${clearedCount}/5`, CANVAS_WIDTH - 12, 25);
     };
@@ -643,6 +649,8 @@ function PlayTestContent() {
         }
 
         selectedBlockIdsRef.current.clear();
+        scoreRef.current += 1;
+        setScore(scoreRef.current);
         advancePair();
         return true;
       }
