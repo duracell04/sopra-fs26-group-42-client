@@ -81,8 +81,8 @@ reason).
 |                 |                | 18.04.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/338249c199f1bd521e862908cd522712dc9b0f2b | feature/implemented deducting sharedlives in backend (#12) | REST communication and sharedlives deduction logic in backend|
 |**Csaba Vizhanyo** |**[@csaba_vi]** | 16.04 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/2d34107b9a1fa0bc6fe7c8683d34ea3db5501cfa | implemented problem generation algorithm for levels | essential for main gameplay loop |
 |                   |                | 16.04 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/29efbdc43d5541092cff2bae90bcd345bc03723b | implemented back end logic so player 2 can access the generated problems from player 1 | essential for main gameplay loop |
-|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
-|                    |              | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | 19.04 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/fde8dcb8d26f86853903efec5288c848a43ae7d5 | recognizes corrects number blocks being shot | this is important so the code knows when to give a point |
+|                    |              | 19.04 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/3c1a0c11dc2725eeb79cac79b6e90aaa1a950ec7 | displays the current score | essential for letting the player know their current points visually |
 
 
 ---
