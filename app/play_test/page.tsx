@@ -228,6 +228,7 @@ function PlayTestContent() {
   const isGameOverRef = useRef(false); // for Gameover (penalty system)
 
   const [isGameOver, setIsGameOver] = useState(false); // for Gameover (penalty system)
+  const [isErrorFlash, setIsErrorFlash] = useState(false);    // screen flash when selecting incorrect pairs
 
   // Loading and level progression state
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
@@ -329,6 +330,8 @@ function PlayTestContent() {
   const decreaseLife = useCallback(() => {
     lifeRef.current = Math.max(0, lifeRef.current - 1);
     setLifeUi(lifeRef.current);
+    setIsErrorFlash(true);
+    setTimeout(() => setIsErrorFlash(false), INCORRECT_FLASH_MS);        // screen flash when selecting incorrect pairs
   }, []);
 
   const resetRoundStats = useCallback(() => {
@@ -1078,6 +1081,16 @@ function PlayTestContent() {
           height={CANVAS_HEIGHT}
           style={{ border: "1px solid white" }}
         />
+        {isErrorFlash && (                               // screen flash when selecting incorrect pairs
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "rgba(220, 0, 0, 0.35)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
         {isGameOver && (                               // for Gameover (penalty system)
           <div
             style={{
