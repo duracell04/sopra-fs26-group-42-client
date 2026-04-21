@@ -61,6 +61,7 @@ type RealtimeMessage =
   playerId: number;
   score: number;
   life: number;
+  gameOver?: boolean; // for Gameover (penalty system)
   result: "PENDING" | "CORRECT" | "INCORRECT";
   selectedBlockIds: number[];
   blocks: {
@@ -224,7 +225,9 @@ function PlayTestContent() {
   const scoreRef = useRef(0);
 
   const lifeRef = useRef(INITIAL_LIFE);
+  const isGameOverRef = useRef(false); // for Gameover (penalty system)
 
+  const [isGameOver, setIsGameOver] = useState(false); // for Gameover (penalty system)
 
   // Loading and level progression state
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
@@ -238,7 +241,6 @@ function PlayTestContent() {
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
-  const scoreRef = useRef(0);
   const [score, setScore] = useState(0);
 
   // Realtime message handler
@@ -258,6 +260,11 @@ function PlayTestContent() {
       lifeRef.current = data.life;
       setScoreUi(data.score);
       setLifeUi(data.life);
+
+      if (data.gameOver) {        // for Gameover (penalty system)
+        isGameOverRef.current = true;
+        setIsGameOver(true);
+      }
 
       const incomingBlocks = data.blocks;
       const nextBlocks = blocksRef.current.map((existingBlock) => {
@@ -327,8 +334,10 @@ function PlayTestContent() {
   const resetRoundStats = useCallback(() => {
     scoreRef.current = 0;
     lifeRef.current = INITIAL_LIFE;
+    isGameOverRef.current = false; // for Gameover (penalty system)
     setScoreUi(0);
     setLifeUi(INITIAL_LIFE);
+    setIsGameOver(false);
   }, []);
 
  // Session problem initialization helpers
@@ -800,6 +809,19 @@ function PlayTestContent() {
       return true;
     };
 
+    const drawGameOverOverlay = () => {                        // for Gameover (penalty system)
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillStyle = "#ff4d4f";
+      ctx.font = "bold 52px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("GAME OVER", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 24);
+      ctx.fillStyle = "#e0e0e0";
+      ctx.font = "20px Arial";
+      ctx.fillText("Lives reached zero", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 28);
+    };
+
     const gameLoop = (timestamp: number) => {
       animationId = requestAnimationFrame(gameLoop);
 
@@ -808,6 +830,11 @@ function PlayTestContent() {
       }
 
       lastTimestamp = timestamp;
+
+      if (isGameOverRef.current) {  // for Gameover (penalty system)
+        drawGameOverOverlay();
+        return;
+      }
 
       const minShipX = SHIP_HALF_WIDTH;
       const maxShipX = canvas.width - SHIP_HALF_WIDTH;
@@ -891,6 +918,10 @@ function PlayTestContent() {
     animationId = requestAnimationFrame(gameLoop);
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isGameOverRef.current) {                           // for Gameover (penalty system)
+        return;
+      }
+
       if (event.code === "KeyA" || event.code === "ArrowLeft") {
         pressedKeysRef.current.left = true;
       }
@@ -1037,6 +1068,7 @@ function PlayTestContent() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          position: "relative",
           visibility: isLoadingProblems ? "hidden" : "visible",
         }}
       >
@@ -1046,6 +1078,53 @@ function PlayTestContent() {
           height={CANVAS_HEIGHT}
           style={{ border: "1px solid white" }}
         />
+        {isGameOver && (                               // for Gameover (penalty system)
+          <div
+            style={{
+              position: "absolute",
+              bottom: "10%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              gap: 12,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => window.location.reload()}   // TODO 
+              style={{
+                padding: "10px 22px",
+                backgroundColor: "#ff4d4f",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 700,
+                fontFamily: "monospace",
+              }}
+            >
+              Play Again
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = code ? `/session/waiting?code=${code}` : "/menu";
+              }}
+              style={{
+                padding: "10px 22px",
+                backgroundColor: "#1a1a2e",
+                color: "#e0e0e0",
+                border: "1px solid #444",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 700,
+                fontFamily: "monospace",
+              }}
+            >
+              Leave Game
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
