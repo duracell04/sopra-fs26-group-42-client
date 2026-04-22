@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import { GameSession } from "@/types/session";
-import { Button, Card, Space, Tag, Typography, Spin } from "antd";
+import { Button, Card, Space, Typography, Spin } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -82,76 +82,71 @@ function WaitingSessionPageContent() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
-        <Spin size="large" />
+      <div className="session-simple-shell">
+        <Card className="session-simple-card">
+          <Space direction="vertical" size="middle" align="center">
+            <Spin size="large" />
+            <Text className="session-simple-subtitle">Joining session...</Text>
+          </Space>
+        </Card>
       </div>
     );
   }
 
-  return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
-      <Card
-        style={{
-          width: 480,
-          background: "#1a1a2e",
-          border: "1px solid #16213e",
-          borderRadius: 16,
-        }}
-      >
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <Title level={2} style={{ color: "#e0e0e0", textAlign: "center", margin: 0 }}>
-            Waiting for Host
-          </Title>
+  const playerCount = session?.players?.length ?? 0;
 
-          <div style={{ textAlign: "center", padding: "16px", background: "#16213e", borderRadius: 12 }}>
-            <Text style={{ color: "#888", fontSize: 12, display: "block", marginBottom: 8, letterSpacing: 2 }}>
-              SESSION CODE
-            </Text>
-            <Text
-              style={{
-                color: "#00d4ff",
-                fontSize: 48,
-                fontWeight: 900,
-                letterSpacing: 12,
-                fontFamily: "monospace",
-                display: "block",
-              }}
-            >
-              {code}
+  return (
+    <div className="session-simple-shell">
+      <Card className="session-simple-card">
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <div>
+            <Title level={2} className="session-simple-title">
+              Waiting for Host
+            </Title>
+            <Text className="session-simple-subtitle">
+              The host will start the game once everyone is ready.
             </Text>
           </div>
 
-          <div>
-            <Text style={{ color: "#aaa", fontSize: 14, display: "block", marginBottom: 12 }}>
-              Players ({session?.players?.length ?? 0}/2):
-            </Text>
-            <Space direction="vertical" style={{ width: "100%" }}>
+          <div className="session-simple-code-box">
+            <Text className="session-simple-label">Session Code</Text>
+            <div className="session-simple-code">{code}</div>
+          </div>
+
+          <div className="session-simple-info-list">
+            <div className="session-simple-info-row">
+              <Text className="session-simple-info-label">Status</Text>
+              <Text className="session-simple-info-value">Waiting</Text>
+            </div>
+            <div className="session-simple-info-row">
+              <Text className="session-simple-info-label">Players</Text>
+              <Text className="session-simple-info-value">{playerCount}/2</Text>
+            </div>
+          </div>
+
+          <div className="session-simple-section">
+            <Text className="session-simple-section-title">Players</Text>
+            <Space direction="vertical" size="small" style={{ width: "100%" }}>
               {session?.players?.map((player, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "10px 16px",
-                    background: "#16213e",
-                    borderRadius: 8,
-                  }}
-                >
-                  <Tag color={idx === 0 ? "blue" : "green"}>
-                    {idx === 0 ? "Host" : "Player 2"}
-                  </Tag>
-                  <Text style={{ color: "#e0e0e0" }}>{player}</Text>
+                <div key={idx} className="session-simple-player-row">
+                  <Text className="session-simple-player-role">{idx === 0 ? "Host" : "Player 2"}</Text>
+                  <Text className="session-simple-player-name">{player}</Text>
                 </div>
               ))}
+              {playerCount < 2 && (
+                <div className="session-simple-player-row">
+                  <Text className="session-simple-player-role">Open</Text>
+                  <Text className="session-simple-player-name session-simple-player-name-muted">Waiting for player 2</Text>
+                </div>
+              )}
             </Space>
           </div>
 
-          <Text style={{ color: "#faad14", textAlign: "center", display: "block" }}>
+          <Text className="session-simple-status-note">
             Waiting for the host to start the game...
           </Text>
 
-          <Button danger size="large" style={{ width: "100%" }} onClick={handleLeave}>
+          <Button size="large" className="session-simple-secondary-button" onClick={handleLeave}>
             Leave Session
           </Button>
         </Space>
@@ -162,8 +157,13 @@ function WaitingSessionPageContent() {
 
 function WaitingSessionFallback() {
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
-      <Spin size="large" />
+    <div className="session-simple-shell">
+      <Card className="session-simple-card">
+        <Space direction="vertical" size="middle" align="center">
+          <Spin size="large" />
+          <Text className="session-simple-subtitle">Loading session...</Text>
+        </Space>
+      </Card>
     </div>
   );
 }

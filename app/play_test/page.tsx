@@ -232,14 +232,13 @@ function PlayTestContent() {
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [scoreUi, setScoreUi] = useState(0);
   const [lifeUi, setLifeUi] = useState(INITIAL_LIFE);
+  const gameOverRef = useRef(false);
 
   const problemsRef = useRef<MathProblem[]>([]);
   const currentLevelRef = useRef(0);
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
-  const scoreRef = useRef(0);
-  const [score, setScore] = useState(0);
 
   // Realtime message handler
   const handleMessage = useCallback((message: unknown) => {
@@ -315,8 +314,8 @@ function PlayTestContent() {
 
   // functions for live scores
   const increaseScore = useCallback(() => {
-  scoreRef.current += 1;
-  setScoreUi(scoreRef.current);
+    scoreRef.current += 1;
+    setScoreUi(scoreRef.current);
   }, []);
 
   const decreaseLife = useCallback(() => {
@@ -327,8 +326,20 @@ function PlayTestContent() {
   const resetRoundStats = useCallback(() => {
     scoreRef.current = 0;
     lifeRef.current = INITIAL_LIFE;
+    gameOverRef.current = false;
     setScoreUi(0);
     setLifeUi(INITIAL_LIFE);
+  }, []);
+
+  const triggerGameOver = useCallback((message: string) => {
+    if (gameOverRef.current) {
+      return;
+    }
+
+    gameOverRef.current = true;
+    setLoadingStatus("Game Over");
+    setLoadingError(message);
+    setIsLoadingProblems(true);
   }, []);
 
  // Session problem initialization helpers
@@ -675,7 +686,7 @@ function PlayTestContent() {
       const clearedCount = currentPairIndexRef.current;
 
       ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(0, 0, CANVAS_WIDTH, 55);
+      ctx.fillRect(0, 0, CANVAS_WIDTH, 64);
 
       ctx.fillStyle = "#00d4ff";
       ctx.font = "bold 22px monospace";
@@ -686,18 +697,18 @@ function PlayTestContent() {
       ctx.fillStyle = "#aaa";
       ctx.font = "14px Arial";
       ctx.textAlign = "left";
-      ctx.fillText(`Level ${currentLevelRef.current + 1}`, 12, 25);
+      ctx.fillText(`Level ${currentLevelRef.current + 1}`, 12, 18);
 
       ctx.fillStyle = "#2ecc71";
-      ctx.fillText(`Score: ${scoreRef.current}`, 12, 42);
+      ctx.fillText(`Score: ${scoreRef.current}`, 12, 36);
+
+      ctx.fillStyle = "#ff7675";
+      ctx.fillText(`Life: ${lifeRef.current}`, 12, 54);
 
       ctx.fillStyle = "#aaa";
       ctx.textAlign = "right";
-      ctx.fillText(`Pairs: ${clearedCount}/5`, CANVAS_WIDTH - 12, 25);
-      ctx.fillText("Points: " + scoreRef.current, CANVAS_WIDTH - 12, 32);
-
-      ctx.textAlign = "left";
-      ctx.fillText("Life: " + lifeRef.current, 12, 39);
+      ctx.fillText(`Pairs: ${clearedCount}/5`, CANVAS_WIDTH - 12, 18);
+      ctx.fillText(`Points: ${scoreRef.current}`, CANVAS_WIDTH - 12, 36);
     };
 
     const advancePair = () => {
@@ -776,8 +787,6 @@ function PlayTestContent() {
 
         increaseScore();
         selectedBlockIdsRef.current.clear();
-        scoreRef.current += 1;
-        setScore(scoreRef.current);
         advancePair();
         return true;
       }
@@ -800,8 +809,12 @@ function PlayTestContent() {
       return true;
     };
 
-    const gameLoop = (timestamp: number) => {
+      const gameLoop = (timestamp: number) => {
       animationId = requestAnimationFrame(gameLoop);
+
+      if (gameOverRef.current) {
+        return;
+      }
 
       if (timestamp - lastTimestamp < targetFrameMs) {
         return;
@@ -840,9 +853,21 @@ function PlayTestContent() {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      const groundLimit = canvas.height - BLOCK_STYLE.block.halfSize;
       blocksRef.current = blocksRef.current.filter((block) => {
+        if (block.state === GameBlockState.ELIMINATED) {
+          return false;
+        }
+
         block.yPosition += FALLING_BLOCK_SPEED;
-        return block.yPosition - BLOCK_STYLE.block.halfSize <= canvas.height;
+
+        if (block.yPosition >= groundLimit) {
+          selectedBlockIdsRef.current.delete(block.id);
+          triggerGameOver("A falling number hit the ground.");
+          return false;
+        }
+
+        return true;
       });
 
       for (const block of blocksRef.current) {
@@ -932,7 +957,7 @@ function PlayTestContent() {
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [sendMessage]);
+  }, [sendMessage, triggerGameOver]);
 
   // UI layout and loading overlay
   return (

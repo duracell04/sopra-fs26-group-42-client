@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Space, Typography, Tag, Spin } from "antd";
+import { Alert, Button, Card, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
 import { GameSession } from "@/types/session";
 
@@ -137,19 +137,51 @@ export default function CreateSessionPage() {
     return `${m}:${s}`;
   };
 
+  const getStatusLabel = (status?: GameSession["status"]) => {
+    switch (status) {
+      case "ACTIVE":
+        return "Active";
+      case "CANCELLED":
+        return "Cancelled";
+      default:
+        return "Waiting";
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
-        <Spin size="large" />
+      <div className="session-simple-shell">
+        <Card className="session-simple-card">
+          <Space direction="vertical" size="middle" align="center">
+            <Spin size="large" />
+            <Text className="session-simple-subtitle">Creating your session...</Text>
+          </Space>
+        </Card>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", gap: 16, background: "#0a0a0a" }}>
-        <Text type="danger" style={{ fontSize: 16 }}>Error: {error}</Text>
-        <Button onClick={() => router.push("/menu")}>Back to Menu</Button>
+      <div className="session-simple-shell">
+        <Card className="session-simple-card">
+          <Space direction="vertical" size="large" style={{ width: "100%" }}>
+            <div>
+              <Title level={2} className="session-simple-title">
+                Create Session
+              </Title>
+              <Text className="session-simple-subtitle">
+                We couldn&apos;t open the session.
+              </Text>
+            </div>
+
+            <Alert message={error} type="error" showIcon />
+
+            <Button className="session-simple-secondary-button" size="large" onClick={() => router.push("/menu")}>
+              Back to Menu
+            </Button>
+          </Space>
+        </Card>
       </div>
     );
   }
@@ -161,106 +193,61 @@ export default function CreateSessionPage() {
   const isCreator = session?.creatorId === currentUserId;
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#0a0a0a" }}>
-      <Card
-        style={{
-          width: 480,
-          background: "#1a1a2e",
-          border: "1px solid #16213e",
-          borderRadius: 16,
-        }}
-      >
+    <div className="session-simple-shell">
+      <Card className="session-simple-card">
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <Title level={2} style={{ color: "#e0e0e0", textAlign: "center", margin: 0 }}>
-            Game Session
-          </Title>
-
-          {/* Session Code */}
-          <div
-            style={{
-              textAlign: "center",
-              padding: "24px",
-              background: "#16213e",
-              borderRadius: 12,
-            }}
-          >
-            <Text style={{ color: "#888", fontSize: 12, display: "block", marginBottom: 8, letterSpacing: 2 }}>
-              SESSION CODE
-            </Text>
-            <Text
-              style={{
-                color: "#00d4ff",
-                fontSize: 48,
-                fontWeight: 900,
-                letterSpacing: 12,
-                fontFamily: "monospace",
-                display: "block",
-              }}
-            >
-              {session?.code}
-            </Text>
-            <Text style={{ color: "#666", fontSize: 12, display: "block", marginTop: 8 }}>
-              Share this code with your friend
+          <div>
+            <Title level={2} className="session-simple-title">
+              Create Session
+            </Title>
+            <Text className="session-simple-subtitle">
+              Share the code with your friend and start when both players are here.
             </Text>
           </div>
 
-          {/* Expiry countdown (only when waiting with 1 player) */}
-          {session?.status === "WAITING" && playerCount < 2 && (
-            <div style={{ textAlign: "center" }}>
-              <Text style={{ color: timeLeft < 60 ? "#ff4d4f" : "#faad14", fontSize: 14 }}>
-                Session expires in: <strong>{formatTime(timeLeft)}</strong>
-              </Text>
-            </div>
-          )}
+          <div className="session-simple-code-box">
+            <Text className="session-simple-label">Session Code</Text>
+            <div className="session-simple-code">{session?.code}</div>
+          </div>
 
-          {/* Players list */}
-          <div>
-            <Text style={{ color: "#aaa", fontSize: 14, display: "block", marginBottom: 12 }}>
-              Players ({playerCount}/2):
-            </Text>
-            <Space direction="vertical" style={{ width: "100%" }}>
+          <div className="session-simple-info-list">
+            <div className="session-simple-info-row">
+              <Text className="session-simple-info-label">Status</Text>
+              <Text className="session-simple-info-value">{getStatusLabel(session?.status)}</Text>
+            </div>
+            <div className="session-simple-info-row">
+              <Text className="session-simple-info-label">Players</Text>
+              <Text className="session-simple-info-value">{playerCount}/2</Text>
+            </div>
+            <div className="session-simple-info-row">
+              <Text className="session-simple-info-label">Expires In</Text>
+              <Text className="session-simple-info-value">{formatTime(timeLeft)}</Text>
+            </div>
+          </div>
+
+          <div className="session-simple-section">
+            <Text className="session-simple-section-title">Players</Text>
+            <Space direction="vertical" size="small" style={{ width: "100%" }}>
               {session?.players?.map((player, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "10px 16px",
-                    background: "#16213e",
-                    borderRadius: 8,
-                  }}
-                >
-                  <Tag color={idx === 0 ? "blue" : "green"}>
-                    {idx === 0 ? "Host" : "Player 2"}
-                  </Tag>
-                  <Text style={{ color: "#e0e0e0" }}>{player}</Text>
+                <div key={idx} className="session-simple-player-row">
+                  <Text className="session-simple-player-role">{idx === 0 ? "Host" : "Player 2"}</Text>
+                  <Text className="session-simple-player-name">{player}</Text>
                 </div>
               ))}
               {playerCount < 2 && (
-                <div
-                  style={{
-                    padding: "10px 16px",
-                    background: "#0d0d1a",
-                    borderRadius: 8,
-                    border: "1px dashed #333",
-                  }}
-                >
-                  <Text style={{ color: "#555" }}>Waiting for player 2 to join...</Text>
+                <div className="session-simple-player-row">
+                  <Text className="session-simple-player-role">Open</Text>
+                  <Text className="session-simple-player-name session-simple-player-name-muted">Waiting for player 2</Text>
                 </div>
               )}
             </Space>
           </div>
 
-          {/* Action buttons */}
           <Space direction="vertical" style={{ width: "100%" }} size="middle">
             <Button
               type="primary"
               size="large"
-              style={{
-                width: "100%",
-                ...(canStart && isCreator ? { backgroundColor: "#52c41a", borderColor: "#52c41a" } : {}),
-              }}
+              className="session-simple-primary-button"
               disabled={!canStart || !isCreator}
               onClick={handleStartGame}
             >
@@ -271,7 +258,7 @@ export default function CreateSessionPage() {
                 : "Waiting for players..."}
             </Button>
 
-            <Button danger size="large" style={{ width: "100%" }} onClick={handleCancel}>
+            <Button size="large" className="session-simple-secondary-button" onClick={handleCancel}>
               Cancel Session
             </Button>
           </Space>
