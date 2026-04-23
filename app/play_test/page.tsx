@@ -61,6 +61,7 @@ type RealtimeMessage =
   playerId: number;
   score: number;
   life: number;
+  gameOver?: boolean;
   result: "PENDING" | "CORRECT" | "INCORRECT";
   selectedBlockIds: number[];
   blocks: {
@@ -224,6 +225,7 @@ function PlayTestContent() {
   const scoreRef = useRef(0);
 
   const lifeRef = useRef(INITIAL_LIFE);
+  const penaltyGameOverRef = useRef(false);
 
 
   // Loading and level progression state
@@ -232,6 +234,8 @@ function PlayTestContent() {
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [scoreUi, setScoreUi] = useState(0);
   const [lifeUi, setLifeUi] = useState(INITIAL_LIFE);
+  const [isPenaltyGameOver, setIsPenaltyGameOver] = useState(false);
+  const [isErrorFlash, setIsErrorFlash] = useState(false);
   const gameOverRef = useRef(false);
 
   const problemsRef = useRef<MathProblem[]>([]);
@@ -257,6 +261,13 @@ function PlayTestContent() {
       lifeRef.current = data.life;
       setScoreUi(data.score);
       setLifeUi(data.life);
+
+      if (data.gameOver || data.life <= 0) {
+        penaltyGameOverRef.current = true;
+        pressedKeysRef.current.left = false;
+        pressedKeysRef.current.right = false;
+        setIsPenaltyGameOver(true);
+      }
 
       const incomingBlocks = data.blocks;
       const nextBlocks = blocksRef.current.map((existingBlock) => {
@@ -319,16 +330,31 @@ function PlayTestContent() {
   }, []);
 
   const decreaseLife = useCallback(() => {
-    lifeRef.current = Math.max(0, lifeRef.current - 1);
-    setLifeUi(lifeRef.current);
+    const nextLife = Math.max(0, lifeRef.current - 1);
+    lifeRef.current = nextLife;
+    setLifeUi(nextLife);
+    setIsErrorFlash(true);
+    setTimeout(() => {
+      setIsErrorFlash(false);
+    }, INCORRECT_FLASH_MS);
+
+    if (nextLife === 0) {
+      penaltyGameOverRef.current = true;
+      pressedKeysRef.current.left = false;
+      pressedKeysRef.current.right = false;
+      setIsPenaltyGameOver(true);
+    }
   }, []);
 
   const resetRoundStats = useCallback(() => {
     scoreRef.current = 0;
     lifeRef.current = INITIAL_LIFE;
+    penaltyGameOverRef.current = false;
     gameOverRef.current = false;
     setScoreUi(0);
     setLifeUi(INITIAL_LIFE);
+    setIsPenaltyGameOver(false);
+    setIsErrorFlash(false);
   }, []);
 
   const triggerGameOver = useCallback((message: string) => {
@@ -812,7 +838,7 @@ function PlayTestContent() {
       const gameLoop = (timestamp: number) => {
       animationId = requestAnimationFrame(gameLoop);
 
-      if (gameOverRef.current) {
+      if (gameOverRef.current || penaltyGameOverRef.current) {
         return;
       }
 
@@ -916,6 +942,10 @@ function PlayTestContent() {
     animationId = requestAnimationFrame(gameLoop);
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (gameOverRef.current || penaltyGameOverRef.current) {
+        return;
+      }
+
       if (event.code === "KeyA" || event.code === "ArrowLeft") {
         pressedKeysRef.current.left = true;
       }
@@ -957,7 +987,7 @@ function PlayTestContent() {
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [sendMessage, triggerGameOver]);
+  }, [code, decreaseLife, increaseScore, sendMessage, triggerGameOver]);
 
   // UI layout and loading overlay
   return (
@@ -1062,6 +1092,7 @@ function PlayTestContent() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          position: "relative",
           visibility: isLoadingProblems ? "hidden" : "visible",
         }}
       >
@@ -1071,6 +1102,95 @@ function PlayTestContent() {
           height={CANVAS_HEIGHT}
           style={{ border: "1px solid white" }}
         />
+        {isErrorFlash && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundColor: "rgba(220, 0, 0, 0.35)",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+        {isPenaltyGameOver && !isLoadingProblems && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0, 0, 0, 0.68)",
+              zIndex: 20,
+              padding: 24,
+            }}
+          >
+            <div
+              style={{
+                width: "min(420px, 100%)",
+                padding: 28,
+                borderRadius: 16,
+                border: "1px solid #8b1f1f",
+                backgroundColor: "#160b0b",
+                color: "#f7eaea",
+                textAlign: "center",
+                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.45)",
+              }}
+            >
+              <div
+                style={{
+                  color: "#ff6b6b",
+                  fontFamily: "monospace",
+                  fontSize: 28,
+                  fontWeight: 900,
+                  letterSpacing: 2,
+                  marginBottom: 12,
+                }}
+              >
+                Game Over
+              </div>
+              <div style={{ fontSize: 16, color: "#d8b1b1", marginBottom: 20 }}>
+                Shared lives reached zero.
+              </div>
+              <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  style={{
+                    padding: "12px 18px",
+                    border: "none",
+                    borderRadius: 10,
+                    backgroundColor: "#ff4d4f",
+                    color: "#fff5f5",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    minWidth: 140,
+                  }}
+                >
+                  Play Again
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = code ? `/session/waiting?code=${code}` : "/menu";
+                  }}
+                  style={{
+                    padding: "12px 18px",
+                    border: "1px solid #5b3d3d",
+                    borderRadius: 10,
+                    backgroundColor: "#241414",
+                    color: "#f0e4e4",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    minWidth: 140,
+                  }}
+                >
+                  Leave Game
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
