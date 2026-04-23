@@ -6,4 +6,7 @@ export interface GameSession {
   status: "WAITING" | "ACTIVE" | "CANCELLED";
   createdAt: string;
   expiresAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  elapsedSeconds: number | null;
 }
