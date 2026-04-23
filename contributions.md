@@ -93,7 +93,7 @@ reason).
 | ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
 |**Remy Klemenz** |**[@remy20cent]** | date | ########################### | ########################### | ########################### |
 |                 |                  | date | ########################### | ########################### | ########################### |
-|**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
+|**Enrique Georg Zbinden** |**[@duracell04]** | 24.04.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/00245af289c0859ed14096d29217942edc09a824 | Fixed legacy backend User tests for the current `username` model, unblocked the server test pipeline, and refreshed SonarCloud coverage as part of issue #100 / PR #101 | Restored backend CI, regenerated a current JaCoCo/Sonar report, and pushed server coverage above the 50% M3 requirement |
 |                          |                  | date | ########################### | ########################### | ########################### |
 |**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
 |                 |                | date | ########################### | ########################### | ########################### ||
