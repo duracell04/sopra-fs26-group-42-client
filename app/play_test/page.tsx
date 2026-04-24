@@ -17,8 +17,8 @@ import { generateMathProblems, normalizeMathProblems } from "@/utils/mathProblem
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const SHIP_HALF_WIDTH = 15;
-const SHIP_MOVE_STEP = 10;
-const FALLING_BLOCK_SPEED = 0.5;
+const SHIP_MOVE_SPEED = 600;
+const FALLING_BLOCK_SPEED = 30;
 const SESSION_FETCH_RETRIES = 3;
 const SESSION_PROBLEM_POLL_LIMIT = 45;
 const SESSION_PROBLEM_POLL_INTERVAL_MS = 2000;
@@ -226,7 +226,7 @@ function PlayTestContent() {
     new ShipObject({
       uuid: "ship-local",
       name: "Player Ship",
-      playerId: 1,
+      playerId: getStoredUserId() ?? 1,
       xPosition: 400,
       yPosition: 550,
     }),
@@ -235,12 +235,12 @@ function PlayTestContent() {
     new ShipObject({
       uuid: "ship-remote",
       name: "Partner Ship",
-      playerId: 2,
+      playerId: -1,
       xPosition: 250,
-      yPosition: 520,
+      yPosition: 550,
     }),
   );
-  const remoteTargetRef = useRef({ x: 250, y: 520 });
+  const remoteTargetRef = useRef({ x: 250, y: 550 });
 
   const scoreRef = useRef(0);
 
@@ -570,14 +570,14 @@ function PlayTestContent() {
       setIsLoadingProblems(true);
     };
 
-    const configureAsCreator = () => {
-      localShipRef.current.playerId = 1;
-      remoteShipRef.current.playerId = 2;
+    const configureAsCreator = (currentUserId: number) => {
+      localShipRef.current.playerId = currentUserId;
+      remoteShipRef.current.playerId = -1;
     };
 
-    const configureAsJoiner = () => {
-      localShipRef.current.playerId = 2;
-      remoteShipRef.current.playerId = 1;
+    const configureAsJoiner = (currentUserId: number, creatorId: number) => {
+      localShipRef.current.playerId = currentUserId;
+      remoteShipRef.current.playerId = creatorId;
     };
 
     const fetchSessionWithRetry = async () => {
@@ -609,7 +609,7 @@ function PlayTestContent() {
     };
 
     const loadCreatorProblems = async (sessionCode?: string) => {
-      configureAsCreator();
+      configureAsCreator(getStoredUserId() ?? 1);
       setLoadingError(null);
       setLoadingStatus("Generating levels locally...");
 
@@ -662,7 +662,6 @@ function PlayTestContent() {
     };
 
     const loadJoinerProblems = () => {
-      configureAsJoiner();
       setLoadingError(null);
       setLoadingStatus("Waiting for host to generate levels...");
 
@@ -773,8 +772,10 @@ function PlayTestContent() {
         }
 
         if (session.creatorId === userId) {
+          configureAsCreator(userId);
           await loadCreatorProblems(code);
         } else {
+          configureAsJoiner(userId, session.creatorId);
           loadJoinerProblems();
         }
       } catch (error) {
@@ -811,8 +812,7 @@ function PlayTestContent() {
     }
 
     let animationId = 0;
-    let lastTimestamp = 0;
-    const targetFrameMs = 1000 / 60;
+    let lastTimestamp: number | null = null;
 
     const drawBlock = (block: NumberBlockObject) => {
       if (block.state === GameBlockState.ELIMINATED) {
@@ -989,28 +989,31 @@ function PlayTestContent() {
       return true;
     };
 
-      const gameLoop = (timestamp: number) => {
+    const gameLoop = (timestamp: number) => {
       animationId = requestAnimationFrame(gameLoop);
 
       if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current) {
         return;
       }
 
-      if (timestamp - lastTimestamp < targetFrameMs) {
+      if (lastTimestamp === null) {
+        lastTimestamp = timestamp;
         return;
       }
 
+      const deltaSeconds = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
       lastTimestamp = timestamp;
 
       const minShipX = SHIP_HALF_WIDTH;
       const maxShipX = canvas.width - SHIP_HALF_WIDTH;
+      const shipStep = SHIP_MOVE_SPEED * deltaSeconds;
       let moved = false;
 
       if (pressedKeysRef.current.left && !pressedKeysRef.current.right) {
-        localShipRef.current.moveLeft(SHIP_MOVE_STEP, minShipX);
+        localShipRef.current.moveLeft(shipStep, minShipX);
         moved = true;
       } else if (pressedKeysRef.current.right && !pressedKeysRef.current.left) {
-        localShipRef.current.moveRight(SHIP_MOVE_STEP, maxShipX);
+        localShipRef.current.moveRight(shipStep, maxShipX);
         moved = true;
       } else {
         localShipRef.current.idle();
@@ -1025,7 +1028,7 @@ function PlayTestContent() {
         });
       }
 
-      const lerp = 0.25;
+      const lerp = 1 - Math.exp(-12 * deltaSeconds);
       remoteShipRef.current.xPosition +=
         (remoteTargetRef.current.x - remoteShipRef.current.xPosition) * lerp;
       remoteShipRef.current.yPosition +=
@@ -1039,7 +1042,7 @@ function PlayTestContent() {
           return false;
         }
 
-        block.yPosition += FALLING_BLOCK_SPEED;
+        block.yPosition += FALLING_BLOCK_SPEED * deltaSeconds;
 
         if (block.yPosition >= groundLimit) {
           selectedBlockIdsRef.current.delete(block.id);
@@ -1061,7 +1064,21 @@ function PlayTestContent() {
       bulletsRef.current = bulletsRef.current.filter((bullet) => !bullet.isOffScreen());
 
       for (const bullet of bulletsRef.current) {
-        bullet.update();
+        bullet.update(deltaSeconds);
+
+        if (bullet.playerId !== localShipRef.current.playerId) {
+          if (!bullet.isOffScreen()) {
+            nextBullets.push(bullet);
+            ctx.fillStyle = BLOCK_STYLE.bullet.fillStyle;
+            ctx.fillRect(
+              bullet.x - BLOCK_STYLE.bullet.width / 2,
+              bullet.y - BLOCK_STYLE.bullet.height,
+              BLOCK_STYLE.bullet.width,
+              BLOCK_STYLE.bullet.height,
+            );
+          }
+          continue;
+        }
 
         const bulletRect = getBulletRect(bullet);
         let consumed = false;

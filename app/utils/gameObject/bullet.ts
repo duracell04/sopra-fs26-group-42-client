@@ -4,7 +4,7 @@ export class BulletObject extends GameObject {
     public x: number;
     public y: number;
     public playerId: number;
-    private speed: number = 8;
+    private speed: number = 480;
 
     constructor(params: { x: number; y: number; playerId: number }) {
         super(`bullet-${Date.now()}-${Math.random().toString(36).slice(2)}`, "bullet");
@@ -13,8 +13,8 @@ export class BulletObject extends GameObject {
         this.playerId = params.playerId;
     }
 
-    public update(): void {
-        this.y -= this.speed;
+    public update(deltaSeconds: number = 1 / 60): void {
+        this.y -= this.speed * deltaSeconds;
     }
 
     public isOffScreen(): boolean {
