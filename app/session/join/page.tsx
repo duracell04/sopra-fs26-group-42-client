@@ -29,11 +29,6 @@ function getStoredUserId() {
   return Number.isFinite(userId) ? userId : null;
 }
 
-function isExpired(session: GameSession) {
-  const expiresAt = Date.parse(session.expiresAt);
-  return Number.isFinite(expiresAt) && expiresAt <= Date.now();
-}
-
 function getStatusLabel(status?: GameSession["status"]) {
   switch (status) {
     case "ACTIVE":
@@ -67,7 +62,7 @@ function JoinSessionPageContent() {
       return;
     }
 
-    if (updatedSession.status === "CANCELLED" || isExpired(updatedSession)) {
+    if (updatedSession.status === "CANCELLED") {
       if (pollRef.current) {
         clearInterval(pollRef.current);
       }
