@@ -4,7 +4,7 @@ export class BulletObject extends GameObject {
     public x: number;
     public y: number;
     public playerId: number;
-    private speed: number = 480;
+    private speed: number = 336;
 
     constructor(params: { x: number; y: number; playerId: number }) {
         super(`bullet-${Date.now()}-${Math.random().toString(36).slice(2)}`, "bullet");

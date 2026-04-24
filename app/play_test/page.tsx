@@ -17,8 +17,8 @@ import { generateMathProblems, normalizeMathProblems } from "@/utils/mathProblem
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const SHIP_HALF_WIDTH = 15;
-const SHIP_MOVE_SPEED = 600;
-const FALLING_BLOCK_SPEED = 30;
+const SHIP_MOVE_SPEED = 420;
+const FALLING_BLOCK_SPEED = 21;
 const SESSION_FETCH_RETRIES = 3;
 const SESSION_PROBLEM_POLL_LIMIT = 45;
 const SESSION_PROBLEM_POLL_INTERVAL_MS = 2000;
@@ -267,11 +267,53 @@ function PlayTestContent() {
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
+  const incorrectResetTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const timerSourceMsRef = useRef<number | null>(null);
   const displayedElapsedSecondsRef = useRef(0);
   const finalElapsedSecondsRef = useRef<number | null>(null);
   const isGameFinishedRef = useRef(false);
   const finishRequestStartedRef = useRef(false);
+
+  const scheduleIncorrectReset = useCallback((blockId: number) => {
+    const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    const timeoutId = setTimeout(() => {
+      const block = blocksRef.current.find((candidate) => candidate.id === blockId);
+      if (block?.state === GameBlockState.INCORRECT) {
+        block.state = GameBlockState.DEFAULT;
+      }
+      incorrectResetTimeoutsRef.current.delete(blockId);
+    }, INCORRECT_FLASH_MS);
+
+    incorrectResetTimeoutsRef.current.set(blockId, timeoutId);
+  }, []);
+
+  const syncPairProgressFromBlocks = useCallback(() => {
+    const currentProblem = problemsRef.current[currentLevelRef.current];
+    if (!currentProblem) {
+      return;
+    }
+
+    const completedPairs = Math.floor(
+      blocksRef.current.filter((block) => block.state === GameBlockState.ELIMINATED).length / 2,
+    );
+
+    if (completedPairs >= currentProblem.pairs.length) {
+      const nextLevel = currentLevelRef.current + 1;
+      if (nextLevel < problemsRef.current.length) {
+        currentLevelRef.current = nextLevel;
+        currentPairIndexRef.current = 0;
+        selectedBlockIdsRef.current.clear();
+        blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+      }
+      return;
+    }
+
+    currentPairIndexRef.current = completedPairs;
+  }, []);
 
   // Realtime message handler
   const handleMessage = useCallback((message: unknown) => {
@@ -317,6 +359,7 @@ function PlayTestContent() {
             break;
           case "INCORRECT":
             existingBlock.state = GameBlockState.INCORRECT;
+            scheduleIncorrectReset(existingBlock.id);
             break;
         }
 
@@ -325,6 +368,7 @@ function PlayTestContent() {
 
       blocksRef.current = nextBlocks;
       selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
+      syncPairProgressFromBlocks();
       return;
     }
 
@@ -350,7 +394,7 @@ function PlayTestContent() {
     bulletsRef.current.push(
       new BulletObject({ x: data.x, y: data.y, playerId: data.playerId }),
     );
-  }, []);
+  }, [scheduleIncorrectReset, syncPairProgressFromBlocks]);
 
   // functions for live scores
   const increaseScore = useCallback(() => {
@@ -416,7 +460,11 @@ function PlayTestContent() {
     selectedBlockIdsRef.current.clear();
     blocksRef.current = buildBlocks(problems[0]);
 
-    resetRoundStats();
+      resetRoundStats();
+      incorrectResetTimeoutsRef.current.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      incorrectResetTimeoutsRef.current.clear();
 
     setLoadingError(null);
     setIsLoadingProblems(false);
@@ -976,15 +1024,8 @@ function PlayTestContent() {
 
       for (const selectedBlock of nextSelectedBlocks) {
         selectedBlock.state = GameBlockState.INCORRECT;
+        scheduleIncorrectReset(selectedBlock.id);
       }
-
-      setTimeout(() => {
-        for (const selectedBlock of nextSelectedBlocks) {
-          if (selectedBlock.state === GameBlockState.INCORRECT) {
-            selectedBlock.state = GameBlockState.DEFAULT;
-          }
-        }
-      }, INCORRECT_FLASH_MS);
 
       return true;
     };
@@ -1154,11 +1195,15 @@ function PlayTestContent() {
     window.addEventListener("keyup", handleKeyUp);
 
     return () => {
+      incorrectResetTimeoutsRef.current.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      incorrectResetTimeoutsRef.current.clear();
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [code, completeGame, decreaseLife, increaseScore, sendMessage, triggerGameOver]);
+  }, [code, completeGame, decreaseLife, increaseScore, scheduleIncorrectReset, sendMessage, triggerGameOver]);
 
   // UI layout and loading overlay
   return (
