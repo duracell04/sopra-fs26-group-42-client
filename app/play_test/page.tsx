@@ -58,12 +58,12 @@ type RealtimeMessage =
 |{
   type: "game_state";
   sessionCode: string;
+  playerId: number;
   score: number;
   life: number;
   gameOver?: boolean;
-  errorTriggered?: boolean;
-  pendingSelectionBlockId?: number | null;
-  targetProduct?: number;
+  result: "PENDING" | "CORRECT" | "INCORRECT";
+  selectedBlockIds: number[];
   blocks: {
     id: number;
     value: number;
@@ -164,19 +164,18 @@ function isOverlapping(
 }
 
 // Problem data transformation helpers
-function buildBlocks(problem: MathProblem, levelIndex: number): NumberBlockObject[] {
+function buildBlocks(problem: MathProblem): NumberBlockObject[] {
   const xPositions = [70, 150, 230, 310, 390, 470, 550, 630, 710, 760];
   const pairInstanceCounts = new Array(problem.pairs.length).fill(0);
 
   return problem.blocks.map((block, idx) => {
     const pairOffset = pairInstanceCounts[block.pairIndex];
     pairInstanceCounts[block.pairIndex] += 1;
-    const stableBlockId = levelIndex * 1000 + block.pairIndex * 2 + pairOffset;
 
     return new NumberBlockObject({
-      uuid: `level-${levelIndex}-block-${block.pairIndex}-${pairOffset}`,
+      uuid: `block-${block.pairIndex}-${pairOffset}`,
       name: `Block ${idx}`,
-      id: stableBlockId,
+      id: block.pairIndex * 2 + pairOffset,
       value: block.value,
       xPosition: xPositions[idx],
       yPosition: -60,
@@ -269,25 +268,11 @@ function PlayTestContent() {
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
   const incorrectResetTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-  const errorFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerSourceMsRef = useRef<number | null>(null);
   const displayedElapsedSecondsRef = useRef(0);
   const finalElapsedSecondsRef = useRef<number | null>(null);
   const isGameFinishedRef = useRef(false);
   const finishRequestStartedRef = useRef(false);
-
-  const triggerIncorrectFlash = useCallback(() => {
-    setIsErrorFlash(true);
-
-    if (errorFlashTimeoutRef.current) {
-      clearTimeout(errorFlashTimeoutRef.current);
-    }
-
-    errorFlashTimeoutRef.current = setTimeout(() => {
-      setIsErrorFlash(false);
-      errorFlashTimeoutRef.current = null;
-    }, INCORRECT_FLASH_MS);
-  }, []);
 
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
@@ -322,7 +307,7 @@ function PlayTestContent() {
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
         selectedBlockIdsRef.current.clear();
-        blocksRef.current = buildBlocks(problemsRef.current[nextLevel], nextLevel);
+        blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
       }
       return;
     }
@@ -335,10 +320,6 @@ function PlayTestContent() {
     const data = message as Partial<RealtimeMessage>;
 
     if (data.type === "game_state") {
-      if (code && data.sessionCode !== code) {
-        return;
-      }
-
       if (
         typeof data.score !== "number" ||
         typeof data.life !== "number" ||
@@ -347,15 +328,10 @@ function PlayTestContent() {
         return;
       }
 
-      const previousLife = lifeRef.current;
       scoreRef.current = data.score;
       lifeRef.current = data.life;
       setScoreUi(data.score);
       setLifeUi(data.life);
-
-      if (data.errorTriggered || data.life < previousLife) {
-        triggerIncorrectFlash();
-      }
 
       if (data.gameOver || data.life <= 0) {
         penaltyGameOverRef.current = true;
@@ -398,11 +374,7 @@ function PlayTestContent() {
       });
 
       blocksRef.current = nextBlocks;
-      selectedBlockIdsRef.current = new Set(
-        nextBlocks
-          .filter((block) => block.state === GameBlockState.SELECTED)
-          .map((block) => block.id),
-      );
+      selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
       syncPairProgressFromBlocks();
       return;
     }
@@ -429,7 +401,7 @@ function PlayTestContent() {
     bulletsRef.current.push(
       new BulletObject({ x: data.x, y: data.y, playerId: data.playerId }),
     );
-  }, [code, scheduleIncorrectReset, syncPairProgressFromBlocks, triggerIncorrectFlash]);
+  }, [scheduleIncorrectReset, syncPairProgressFromBlocks]);
 
   // functions for live scores
   const increaseScore = useCallback(() => {
@@ -493,17 +465,13 @@ function PlayTestContent() {
     currentLevelRef.current = 0;
     currentPairIndexRef.current = 0;
     selectedBlockIdsRef.current.clear();
-    blocksRef.current = buildBlocks(problems[0], 0);
+    blocksRef.current = buildBlocks(problems[0]);
 
     resetRoundStats();
     incorrectResetTimeoutsRef.current.forEach((timeoutId) => {
       clearTimeout(timeoutId);
     });
     incorrectResetTimeoutsRef.current.clear();
-    if (errorFlashTimeoutRef.current) {
-      clearTimeout(errorFlashTimeoutRef.current);
-      errorFlashTimeoutRef.current = null;
-    }
 
     setLoadingError(null);
     setIsLoadingProblems(false);
@@ -981,7 +949,7 @@ function PlayTestContent() {
 
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
-        blocksRef.current = buildBlocks(problemsRef.current[nextLevel], nextLevel);
+        blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
         return false;
       }
 
@@ -1024,17 +992,14 @@ function PlayTestContent() {
       block.state = GameBlockState.SELECTED;
       selectedBlockIdsRef.current.add(block.id);
 
-      if (code) {
-        sendMessage("/app/block/select", {
-          sessionCode: code,
-          userId: getStoredUserId(),
-          blockId: block.id,
-          blockValue: block.value,
-          targetProduct: targetPair.product,
-          selectionWindowMs: INCORRECT_FLASH_MS,
-        });
-        return true;
-      }
+      sendMessage("/app/block/select", {
+        sessionCode: code,
+        userId: getStoredUserId(),
+        blockId: block.id,
+        blockValue: block.value,
+        targetProduct: targetPair.product,
+        selectionWindowMs: INCORRECT_FLASH_MS,
+      });
 
       const nextSelectedBlocks = blocksRef.current.filter((candidate) =>
         selectedBlockIdsRef.current.has(candidate.id) &&
@@ -1242,10 +1207,6 @@ function PlayTestContent() {
         clearTimeout(timeoutId);
       });
       incorrectResetTimeoutsRef.current.clear();
-      if (errorFlashTimeoutRef.current) {
-        clearTimeout(errorFlashTimeoutRef.current);
-        errorFlashTimeoutRef.current = null;
-      }
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
