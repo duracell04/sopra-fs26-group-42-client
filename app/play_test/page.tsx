@@ -312,7 +312,7 @@ function PlayTestContent() {
       return;
     }
 
-    currentPairIndexRef.current = completedPairs;
+    currentPairIndexRef.current = Math.max(currentPairIndexRef.current, completedPairs);
   }, []);
 
   // Realtime message handler
@@ -347,6 +347,13 @@ function PlayTestContent() {
           return existingBlock;
         }
 
+        if (
+          existingBlock.state === GameBlockState.ELIMINATED &&
+          incoming.state !== "ELIMINATED"
+        ) {
+          return existingBlock;
+        }
+
         switch (incoming.state) {
           case "DEFAULT":
             existingBlock.state = GameBlockState.DEFAULT;
@@ -367,7 +374,11 @@ function PlayTestContent() {
       });
 
       blocksRef.current = nextBlocks;
-      selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
+      selectedBlockIdsRef.current = new Set(
+        nextBlocks
+          .filter((block) => block.state === GameBlockState.SELECTED)
+          .map((block) => block.id),
+      );
       syncPairProgressFromBlocks();
       return;
     }
@@ -967,7 +978,8 @@ function PlayTestContent() {
       }
 
       const selectedBlocks = blocksRef.current.filter((candidate) =>
-        selectedBlockIdsRef.current.has(candidate.id)
+        selectedBlockIdsRef.current.has(candidate.id) &&
+        candidate.state !== GameBlockState.ELIMINATED
       );
 
       if (selectedBlocks.length >= 2) {
@@ -995,7 +1007,8 @@ function PlayTestContent() {
       });
 
       const nextSelectedBlocks = blocksRef.current.filter((candidate) =>
-        selectedBlockIdsRef.current.has(candidate.id)
+        selectedBlockIdsRef.current.has(candidate.id) &&
+        candidate.state !== GameBlockState.ELIMINATED
       );
 
       if (nextSelectedBlocks.length < 2) {
