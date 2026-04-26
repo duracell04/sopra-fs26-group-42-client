@@ -653,16 +653,22 @@ function PlayTestContent() {
     }
   }, [code, sendMessage]);
 
-  // Send game_ready_ack once problems are applied and sendMessage is available
+  // Keep broadcasting game_ready_ack until the game starts.
+  // A single send can be missed if the partner subscribed after we sent it,
+  // so we retry every 500 ms until isLoadingProblems flips to false.
   useEffect(() => {
-    if (!problemsSentAck || !code) return;
-    sendMessage("/app/move", {
-      type: "game_ready_ack",
-      playerId: localShipRef.current.playerId,
-      x: 0,
-      y: 0,
-    });
-  }, [problemsSentAck, code, sendMessage]);
+    if (!problemsSentAck || !code || !isLoadingProblems) return;
+    const send = () =>
+      sendMessage("/app/move", {
+        type: "game_ready_ack",
+        playerId: localShipRef.current.playerId,
+        x: 0,
+        y: 0,
+      });
+    send();
+    const interval = setInterval(send, 500);
+    return () => clearInterval(interval);
+  }, [problemsSentAck, code, sendMessage, isLoadingProblems]);
 
   useEffect(() => {
     timerSourceMsRef.current = timerSourceMs;
