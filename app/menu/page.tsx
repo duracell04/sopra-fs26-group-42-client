@@ -14,10 +14,10 @@ export default function MenuPage() {
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           <div>
             <Title level={2} className="menu-title">
-              Main Menu
+              Math Invaders
             </Title>
             <Text className="menu-subtitle">
-              Choose an action to continue.
+              Play solo or team up with a friend.
             </Text>
           </div>
 
@@ -26,18 +26,9 @@ export default function MenuPage() {
               type="primary"
               variant="solid"
               className="menu-button"
-              onClick={() => router.push("/profile")}
-            >
-              User Profile
-            </Button>
-
-            <Button
-              type="primary"
-              variant="solid"
-              className="menu-button"
               onClick={() => router.push("/session/create")}
             >
-              Create Session
+              Create Multiplayer Session
             </Button>
 
             <Button
@@ -55,8 +46,16 @@ export default function MenuPage() {
               className="menu-button"
               onClick={() => router.push("/play_test")}
             >
-              Play Test
+              Solo Practice
+            </Button>
 
+            <Button
+              type="default"
+              variant="solid"
+              className="menu-button"
+              onClick={() => router.push("/profile")}
+            >
+              My Profile
             </Button>
 
             <Button

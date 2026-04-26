@@ -50,10 +50,18 @@ const BLOCK_STYLE = {
 // Realtime and API payload types
 type RealtimeMessage =
 |{
-  type: "move" | "shoot" | "play_again_ready";
+  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "slow_on" | "slow_off";
   playerId: number;
   x: number;
   y: number;
+}
+|{
+  type: "pair_advance";
+  playerId: number;
+  x: number;
+  y: number;
+  pairIndex: number;
+  levelIndex: number;
 }
 |{
   type: "game_state";
@@ -281,6 +289,12 @@ function PlayTestContent() {
   const [playAgainReadyCount, setPlayAgainReadyCount] = useState(0);
   const lastMoveSendRef = useRef(0);
 
+  // Pause and slow-mode
+  const isPausedRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const isSlowModeRef = useRef(false);
+  const [isSlowMode, setIsSlowMode] = useState(false);
+
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
     if (existingTimeout) {
@@ -304,11 +318,21 @@ function PlayTestContent() {
       return;
     }
 
-    const completedPairs = Math.floor(
-      blocksRef.current.filter((block) => block.state === GameBlockState.ELIMINATED).length / 2,
-    );
+    // Count eliminated blocks per pair index (id = pairIndex*2 + offset)
+    const elimCountByPair = new Map<number, number>();
+    for (const block of blocksRef.current) {
+      if (block.state === GameBlockState.ELIMINATED) {
+        const pairIdx = Math.floor(block.id / 2);
+        elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
+      }
+    }
 
-    if (completedPairs >= currentProblem.pairs.length) {
+    const completedPairSet = new Set<number>();
+    for (const [pairIdx, count] of elimCountByPair) {
+      if (count >= 2) completedPairSet.add(pairIdx);
+    }
+
+    if (completedPairSet.size >= currentProblem.pairs.length) {
       const nextLevel = currentLevelRef.current + 1;
       if (nextLevel < problemsRef.current.length) {
         currentLevelRef.current = nextLevel;
@@ -319,7 +343,13 @@ function PlayTestContent() {
       return;
     }
 
-    currentPairIndexRef.current = Math.max(currentPairIndexRef.current, completedPairs);
+    // Advance to the first pair that is not yet completed
+    for (let i = 0; i < currentProblem.pairs.length; i++) {
+      if (!completedPairSet.has(i)) {
+        currentPairIndexRef.current = i;
+        return;
+      }
+    }
   }, []);
 
   // Realtime message handler
@@ -394,6 +424,44 @@ function PlayTestContent() {
         if (total >= 2) {
           window.location.reload();
         }
+      }
+      return;
+    }
+
+    if (data.type === "pause") {
+      isPausedRef.current = true;
+      setIsPaused(true);
+      return;
+    }
+
+    if (data.type === "resume") {
+      isPausedRef.current = false;
+      setIsPaused(false);
+      return;
+    }
+
+    if (data.type === "slow_on") {
+      isSlowModeRef.current = true;
+      setIsSlowMode(true);
+      return;
+    }
+
+    if (data.type === "slow_off") {
+      isSlowModeRef.current = false;
+      setIsSlowMode(false);
+      return;
+    }
+
+    if (data.type === "pair_advance" && typeof (data as { pairIndex?: number }).pairIndex === "number") {
+      const msg = data as { pairIndex: number; levelIndex: number };
+      if (msg.levelIndex === currentLevelRef.current) {
+        currentPairIndexRef.current = msg.pairIndex;
+        selectedBlockIdsRef.current.clear();
+      } else if (msg.levelIndex > currentLevelRef.current && msg.levelIndex < problemsRef.current.length) {
+        currentLevelRef.current = msg.levelIndex;
+        currentPairIndexRef.current = msg.pairIndex;
+        selectedBlockIdsRef.current.clear();
+        blocksRef.current = buildBlocks(problemsRef.current[msg.levelIndex]);
       }
       return;
     }
@@ -522,6 +590,24 @@ function PlayTestContent() {
     });
     if (total >= 2) {
       window.location.reload();
+    }
+  }, [code, sendMessage]);
+
+  const handlePauseToggle = useCallback(() => {
+    const next = !isPausedRef.current;
+    isPausedRef.current = next;
+    setIsPaused(next);
+    if (code) {
+      sendMessage("/app/move", { type: next ? "pause" : "resume", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+    }
+  }, [code, sendMessage]);
+
+  const handleSlowToggle = useCallback(() => {
+    const next = !isSlowModeRef.current;
+    isSlowModeRef.current = next;
+    setIsSlowMode(next);
+    if (code) {
+      sendMessage("/app/move", { type: next ? "slow_on" : "slow_off", playerId: localShipRef.current.playerId, x: 0, y: 0 });
     }
   }, [code, sendMessage]);
 
@@ -978,10 +1064,24 @@ function PlayTestContent() {
       ctx.fillText(`Points: ${scoreRef.current}`, CANVAS_WIDTH - 12, 36);
     };
 
+    const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
+      if (!code) return;
+      sendMessage("/app/move", {
+        type: "pair_advance",
+        playerId: localShipRef.current.playerId,
+        x: 0,
+        y: 0,
+        pairIndex,
+        levelIndex,
+      });
+    };
+
     const advancePair = () => {
       selectedBlockIdsRef.current.clear();
+      const currentProblem = problemsRef.current[currentLevelRef.current];
+      const pairCount = currentProblem?.pairs.length ?? 5;
       const nextPair = currentPairIndexRef.current + 1;
-      if (nextPair >= 5) {
+      if (nextPair >= pairCount) {
         const nextLevel = currentLevelRef.current + 1;
 
         if (nextLevel >= problemsRef.current.length) {
@@ -991,10 +1091,12 @@ function PlayTestContent() {
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        broadcastPairAdvance(0, nextLevel);
         return false;
       }
 
       currentPairIndexRef.current = nextPair;
+      broadcastPairAdvance(nextPair, currentLevelRef.current);
 
       for (const block of blocksRef.current) {
         if (block.state === GameBlockState.SELECTED) {
@@ -1086,6 +1188,11 @@ function PlayTestContent() {
         return;
       }
 
+      if (isPausedRef.current) {
+        lastTimestamp = null;
+        return;
+      }
+
       if (lastTimestamp === null) {
         lastTimestamp = timestamp;
         return;
@@ -1122,7 +1229,7 @@ function PlayTestContent() {
         }
       }
 
-      const lerp = 1 - Math.exp(-12 * deltaSeconds);
+      const lerp = 1 - Math.exp(-18 * deltaSeconds);
       remoteShipRef.current.xPosition +=
         (remoteTargetRef.current.x - remoteShipRef.current.xPosition) * lerp;
       remoteShipRef.current.yPosition +=
@@ -1136,7 +1243,7 @@ function PlayTestContent() {
           return false;
         }
 
-        block.yPosition += FALLING_BLOCK_SPEED * deltaSeconds;
+        block.yPosition += (isSlowModeRef.current ? FALLING_BLOCK_SPEED * 0.35 : FALLING_BLOCK_SPEED) * deltaSeconds;
 
         if (block.yPosition >= groundLimit) {
           selectedBlockIdsRef.current.delete(block.id);
@@ -1207,7 +1314,17 @@ function PlayTestContent() {
     animationId = requestAnimationFrame(gameLoop);
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current) {
+      if (event.code === "KeyP") {
+        const next = !isPausedRef.current;
+        isPausedRef.current = next;
+        setIsPaused(next);
+        if (code) {
+          sendMessage("/app/move", { type: next ? "pause" : "resume", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+        }
+        return;
+      }
+
+      if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current || isPausedRef.current) {
         return;
       }
 
@@ -1235,12 +1352,26 @@ function PlayTestContent() {
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      const wasLeft = pressedKeysRef.current.left;
+      const wasRight = pressedKeysRef.current.right;
+
       if (event.code === "KeyA" || event.code === "ArrowLeft") {
         pressedKeysRef.current.left = false;
       }
 
       if (event.code === "KeyD" || event.code === "ArrowRight") {
         pressedKeysRef.current.right = false;
+      }
+
+      // Send final position when player stops so remote snaps to correct spot
+      if ((wasLeft || wasRight) && !pressedKeysRef.current.left && !pressedKeysRef.current.right) {
+        sendMessage("/app/move", {
+          type: "move",
+          playerId: localShipRef.current.playerId,
+          x: localShipRef.current.xPosition,
+          y: localShipRef.current.yPosition,
+        });
+        lastMoveSendRef.current = performance.now();
       }
     };
 
@@ -1366,26 +1497,119 @@ function PlayTestContent() {
         }}
       >
         {!isGameFinished && !isPenaltyGameOver && (
-          <button
-            type="button"
-            onClick={() => { window.location.href = "/menu"; }}
+          <>
+            <button
+              type="button"
+              onClick={() => { window.location.href = "/menu"; }}
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                zIndex: 5,
+                padding: "6px 14px",
+                backgroundColor: "rgba(0,0,0,0.55)",
+                color: "#aaa",
+                border: "1px solid #444",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              ← Menu
+            </button>
+            <div style={{ position: "absolute", top: 10, right: 10, zIndex: 5, display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={handleSlowToggle}
+                title="Toggle slow mode (blocks fall slower)"
+                style={{
+                  padding: "6px 14px",
+                  backgroundColor: isSlowMode ? "#7c4dff" : "rgba(0,0,0,0.55)",
+                  color: isSlowMode ? "#fff" : "#aaa",
+                  border: `1px solid ${isSlowMode ? "#7c4dff" : "#444"}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                {isSlowMode ? "🐢 Slow ON" : "🐢 Slow"}
+              </button>
+              <button
+                type="button"
+                onClick={handlePauseToggle}
+                title="Pause / Resume (P)"
+                style={{
+                  padding: "6px 14px",
+                  backgroundColor: isPaused ? "#ff9800" : "rgba(0,0,0,0.55)",
+                  color: isPaused ? "#000" : "#aaa",
+                  border: `1px solid ${isPaused ? "#ff9800" : "#444"}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                {isPaused ? "▶ Resume" : "⏸ Pause"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {isPaused && !isGameFinished && !isPenaltyGameOver && (
+          <div
             style={{
               position: "absolute",
-              top: 10,
-              left: 10,
-              zIndex: 5,
-              padding: "6px 14px",
-              backgroundColor: "rgba(0,0,0,0.55)",
-              color: "#aaa",
-              border: "1px solid #444",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: 13,
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.72)",
+              zIndex: 15,
+              gap: 20,
             }}
           >
-            ← Menu
-          </button>
+            <div style={{ color: "#ff9800", fontFamily: "monospace", fontSize: 36, fontWeight: 900, letterSpacing: 4 }}>
+              PAUSED
+            </div>
+            <div style={{ color: "#888", fontSize: 14 }}>Press P or click Resume to continue</div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                type="button"
+                onClick={handlePauseToggle}
+                style={{
+                  padding: "12px 28px",
+                  backgroundColor: "#ff9800",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 800,
+                  fontSize: 16,
+                }}
+              >
+                ▶ Resume
+              </button>
+              <button
+                type="button"
+                onClick={() => { window.location.href = "/menu"; }}
+                style={{
+                  padding: "12px 28px",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  color: "#ccc",
+                  border: "1px solid #555",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 16,
+                }}
+              >
+                ← Menu
+              </button>
+            </div>
+          </div>
         )}
         <canvas
           ref={canvasRef}
