@@ -21,7 +21,7 @@ const SHIP_MOVE_SPEED = 420;
 const FALLING_BLOCK_SPEED = 21;
 const SESSION_FETCH_RETRIES = 3;
 const SESSION_PROBLEM_POLL_LIMIT = 45;
-const SESSION_PROBLEM_POLL_INTERVAL_MS = 2000;
+const SESSION_PROBLEM_POLL_INTERVAL_MS = 400;
 const INITIAL_LIFE = 3;
 const INCORRECT_FLASH_MS = 1000;
 
@@ -50,7 +50,7 @@ const BLOCK_STYLE = {
 // Realtime and API payload types
 type RealtimeMessage =
 |{
-  type: "move" | "shoot";
+  type: "move" | "shoot" | "play_again_ready";
   playerId: number;
   x: number;
   y: number;
@@ -274,6 +274,13 @@ function PlayTestContent() {
   const isGameFinishedRef = useRef(false);
   const finishRequestStartedRef = useRef(false);
 
+  // Play-again ready gate (both players must click before restarting)
+  const isLocalCreatorRef = useRef(true);
+  const localPlayAgainReadyRef = useRef(false);
+  const remotePlayAgainReadyPlayersRef = useRef<Set<number>>(new Set());
+  const [playAgainReadyCount, setPlayAgainReadyCount] = useState(0);
+  const lastMoveSendRef = useRef(0);
+
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
     if (existingTimeout) {
@@ -376,6 +383,18 @@ function PlayTestContent() {
       blocksRef.current = nextBlocks;
       selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
       syncPairProgressFromBlocks();
+      return;
+    }
+
+    if (data.type === "play_again_ready" && typeof data.playerId === "number") {
+      if (data.playerId !== localShipRef.current.playerId) {
+        remotePlayAgainReadyPlayersRef.current.add(data.playerId);
+        const total = (localPlayAgainReadyRef.current ? 1 : 0) + remotePlayAgainReadyPlayersRef.current.size;
+        setPlayAgainReadyCount(total);
+        if (total >= 2) {
+          window.location.reload();
+        }
+      }
       return;
     }
 
@@ -485,6 +504,26 @@ function PlayTestContent() {
 
   // WebSocket integration
   const { sendMessage } = useWebSocket(handleMessage);
+
+  const handlePlayAgainReady = useCallback(() => {
+    if (!code) {
+      window.location.reload();
+      return;
+    }
+    if (localPlayAgainReadyRef.current) return;
+    localPlayAgainReadyRef.current = true;
+    const total = 1 + remotePlayAgainReadyPlayersRef.current.size;
+    setPlayAgainReadyCount(total);
+    sendMessage("/app/move", {
+      type: "play_again_ready",
+      playerId: localShipRef.current.playerId,
+      x: 0,
+      y: 0,
+    });
+    if (total >= 2) {
+      window.location.reload();
+    }
+  }, [code, sendMessage]);
 
   useEffect(() => {
     timerSourceMsRef.current = timerSourceMs;
@@ -628,11 +667,13 @@ function PlayTestContent() {
     const configureAsCreator = (currentUserId: number) => {
       localShipRef.current.playerId = currentUserId;
       remoteShipRef.current.playerId = -1;
+      isLocalCreatorRef.current = true;
     };
 
     const configureAsJoiner = (currentUserId: number, creatorId: number) => {
       localShipRef.current.playerId = currentUserId;
       remoteShipRef.current.playerId = creatorId;
+      isLocalCreatorRef.current = false;
     };
 
     const fetchSessionWithRetry = async () => {
@@ -1069,12 +1110,16 @@ function PlayTestContent() {
       }
 
       if (moved) {
-        sendMessage("/app/move", {
-          type: "move",
-          playerId: localShipRef.current.playerId,
-          x: localShipRef.current.xPosition,
-          y: localShipRef.current.yPosition,
-        });
+        const nowMs = performance.now();
+        if (nowMs - lastMoveSendRef.current > 50) {
+          lastMoveSendRef.current = nowMs;
+          sendMessage("/app/move", {
+            type: "move",
+            playerId: localShipRef.current.playerId,
+            x: localShipRef.current.xPosition,
+            y: localShipRef.current.yPosition,
+          });
+        }
       }
 
       const lerp = 1 - Math.exp(-12 * deltaSeconds);
@@ -1106,8 +1151,8 @@ function PlayTestContent() {
         drawBlock(block);
       }
 
-      drawShip(localShipRef.current, "red");
-      drawShip(remoteShipRef.current, "cyan");
+      drawShip(localShipRef.current, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
+      drawShip(remoteShipRef.current, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
 
       const nextBullets: BulletObject[] = [];
       bulletsRef.current = bulletsRef.current.filter((bullet) => !bullet.isOffScreen());
@@ -1320,6 +1365,28 @@ function PlayTestContent() {
           visibility: isLoadingProblems ? "hidden" : "visible",
         }}
       >
+        {!isGameFinished && !isPenaltyGameOver && (
+          <button
+            type="button"
+            onClick={() => { window.location.href = "/menu"; }}
+            style={{
+              position: "absolute",
+              top: 10,
+              left: 10,
+              zIndex: 5,
+              padding: "6px 14px",
+              backgroundColor: "rgba(0,0,0,0.55)",
+              color: "#aaa",
+              border: "1px solid #444",
+              borderRadius: 8,
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            ← Menu
+          </button>
+        )}
         <canvas
           ref={canvasRef}
           width={CANVAS_WIDTH}
@@ -1387,24 +1454,48 @@ function PlayTestContent() {
               >
                 {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = "/menu";
-                }}
-                style={{
-                  padding: "12px 18px",
-                  border: "none",
-                  borderRadius: 10,
-                  backgroundColor: "#00d4ff",
-                  color: "#031019",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  minWidth: 140,
-                }}
-              >
-                Leave Game
-              </button>
+              <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={handlePlayAgainReady}
+                  disabled={localPlayAgainReadyRef.current}
+                  style={{
+                    padding: "12px 18px",
+                    border: "none",
+                    borderRadius: 10,
+                    backgroundColor: localPlayAgainReadyRef.current ? "#0a8fa8" : "#00d4ff",
+                    color: "#031019",
+                    fontWeight: 800,
+                    cursor: localPlayAgainReadyRef.current ? "default" : "pointer",
+                    minWidth: 160,
+                    opacity: localPlayAgainReadyRef.current ? 0.7 : 1,
+                  }}
+                >
+                  {code
+                    ? localPlayAgainReadyRef.current
+                      ? `Ready ${playAgainReadyCount}/2`
+                      : "Play Again"
+                    : "Play Again"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/menu";
+                  }}
+                  style={{
+                    padding: "12px 18px",
+                    border: "1px solid #1f6f8b",
+                    borderRadius: 10,
+                    backgroundColor: "#08131f",
+                    color: "#e8f7ff",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    minWidth: 140,
+                  }}
+                >
+                  Leave Game
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1451,24 +1542,30 @@ function PlayTestContent() {
               <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={() => window.location.reload()}
+                  onClick={handlePlayAgainReady}
+                  disabled={localPlayAgainReadyRef.current}
                   style={{
                     padding: "12px 18px",
                     border: "none",
                     borderRadius: 10,
-                    backgroundColor: "#ff4d4f",
+                    backgroundColor: localPlayAgainReadyRef.current ? "#7f2122" : "#ff4d4f",
                     color: "#fff5f5",
                     fontWeight: 800,
-                    cursor: "pointer",
-                    minWidth: 140,
+                    cursor: localPlayAgainReadyRef.current ? "default" : "pointer",
+                    minWidth: 160,
+                    opacity: localPlayAgainReadyRef.current ? 0.7 : 1,
                   }}
                 >
-                  Play Again
+                  {code
+                    ? localPlayAgainReadyRef.current
+                      ? `Ready ${playAgainReadyCount}/2`
+                      : "Play Again"
+                    : "Play Again"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = code ? `/session/waiting?code=${code}` : "/menu";
+                    window.location.href = "/menu";
                   }}
                   style={{
                     padding: "12px 18px",

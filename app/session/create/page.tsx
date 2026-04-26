@@ -197,6 +197,13 @@ export default function CreateSessionPage() {
       <Card className="session-simple-card">
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           <div>
+            <button
+              type="button"
+              onClick={handleCancel}
+              style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, padding: "0 0 8px 0" }}
+            >
+              ← Back to Menu
+            </button>
             <Title level={2} className="session-simple-title">
               Create Session
             </Title>
