@@ -50,7 +50,7 @@ const BLOCK_STYLE = {
 // Realtime and API payload types
 type RealtimeMessage =
 |{
-  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "slow_on" | "slow_off";
+  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "slow_on" | "slow_off" | "game_ready_ack";
   playerId: number;
   x: number;
   y: number;
@@ -289,11 +289,28 @@ function PlayTestContent() {
   const [playAgainReadyCount, setPlayAgainReadyCount] = useState(0);
   const lastMoveSendRef = useRef(0);
 
-  // Pause and slow-mode
+  // Pause and slow-mode (slow-mode persists in localStorage across play-again reloads)
   const isPausedRef = useRef(false);
   const [isPaused, setIsPaused] = useState(false);
   const isSlowModeRef = useRef(false);
   const [isSlowMode, setIsSlowMode] = useState(false);
+
+  // Eliminated block IDs — persists even after blocks are filtered from blocksRef
+  const eliminatedBlockIdsRef = useRef<Set<number>>(new Set());
+
+  // Multiplayer game-start handshake: wait for both players to confirm problems loaded
+  const gameReadyPlayersRef = useRef<Set<number>>(new Set());
+  const problemsAppliedRef = useRef(false);
+  const [problemsSentAck, setProblemsSentAck] = useState(false);
+
+  // Restore slow mode from previous session
+  useEffect(() => {
+    const stored = localStorage.getItem("mi_slow_mode") === "1";
+    if (stored) {
+      isSlowModeRef.current = true;
+      setIsSlowMode(true);
+    }
+  }, []);
 
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
@@ -318,13 +335,12 @@ function PlayTestContent() {
       return;
     }
 
-    // Count eliminated blocks per pair index (id = pairIndex*2 + offset)
+    // Use the persistent eliminatedBlockIdsRef — blocks may already be filtered
+    // out of blocksRef.current by the game loop before this runs.
     const elimCountByPair = new Map<number, number>();
-    for (const block of blocksRef.current) {
-      if (block.state === GameBlockState.ELIMINATED) {
-        const pairIdx = Math.floor(block.id / 2);
-        elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
-      }
+    for (const blockId of eliminatedBlockIdsRef.current) {
+      const pairIdx = Math.floor(blockId / 2);
+      elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
     }
 
     const completedPairSet = new Set<number>();
@@ -338,6 +354,7 @@ function PlayTestContent() {
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
         selectedBlockIdsRef.current.clear();
+        eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
       }
       return;
@@ -400,6 +417,7 @@ function PlayTestContent() {
             break;
           case "ELIMINATED":
             existingBlock.state = GameBlockState.ELIMINATED;
+            eliminatedBlockIdsRef.current.add(existingBlock.id);
             break;
           case "INCORRECT":
             existingBlock.state = GameBlockState.INCORRECT;
@@ -428,31 +446,42 @@ function PlayTestContent() {
       return;
     }
 
-    if (data.type === "pause") {
+    // All control messages below are ignored when echoed back from self
+    const isFromSelf = typeof data.playerId === "number" && data.playerId === localShipRef.current.playerId;
+
+    if (data.type === "game_ready_ack" && typeof data.playerId === "number") {
+      gameReadyPlayersRef.current.add(data.playerId);
+      if (gameReadyPlayersRef.current.size >= 2 && problemsAppliedRef.current) {
+        setIsLoadingProblems(false);
+      }
+      return;
+    }
+
+    if (data.type === "pause" && !isFromSelf) {
       isPausedRef.current = true;
       setIsPaused(true);
       return;
     }
 
-    if (data.type === "resume") {
+    if (data.type === "resume" && !isFromSelf) {
       isPausedRef.current = false;
       setIsPaused(false);
       return;
     }
 
-    if (data.type === "slow_on") {
+    if (data.type === "slow_on" && !isFromSelf) {
       isSlowModeRef.current = true;
       setIsSlowMode(true);
       return;
     }
 
-    if (data.type === "slow_off") {
+    if (data.type === "slow_off" && !isFromSelf) {
       isSlowModeRef.current = false;
       setIsSlowMode(false);
       return;
     }
 
-    if (data.type === "pair_advance" && typeof (data as { pairIndex?: number }).pairIndex === "number") {
+    if (data.type === "pair_advance" && !isFromSelf && typeof (data as { pairIndex?: number }).pairIndex === "number") {
       const msg = data as { pairIndex: number; levelIndex: number };
       if (msg.levelIndex === currentLevelRef.current) {
         currentPairIndexRef.current = msg.pairIndex;
@@ -461,6 +490,7 @@ function PlayTestContent() {
         currentLevelRef.current = msg.levelIndex;
         currentPairIndexRef.current = msg.pairIndex;
         selectedBlockIdsRef.current.clear();
+        eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[msg.levelIndex]);
       }
       return;
@@ -552,6 +582,7 @@ function PlayTestContent() {
     currentLevelRef.current = 0;
     currentPairIndexRef.current = 0;
     selectedBlockIdsRef.current.clear();
+    eliminatedBlockIdsRef.current.clear();
     blocksRef.current = buildBlocks(problems[0]);
 
     resetRoundStats();
@@ -561,12 +592,21 @@ function PlayTestContent() {
     incorrectResetTimeoutsRef.current.clear();
 
     setLoadingError(null);
-    setIsLoadingProblems(false);
+    problemsAppliedRef.current = true;
 
-    if (!code && timerSourceMsRef.current === null) {
-      const startedAtMs = Date.now();
-      timerSourceMsRef.current = startedAtMs;
-      setTimerSourceMs(startedAtMs);
+    if (!code) {
+      // Solo: start immediately
+      setIsLoadingProblems(false);
+      if (timerSourceMsRef.current === null) {
+        const startedAtMs = Date.now();
+        timerSourceMsRef.current = startedAtMs;
+        setTimerSourceMs(startedAtMs);
+      }
+    } else {
+      // Multiplayer: wait for both players to confirm they're ready
+      setLoadingStatus("Ready! Waiting for partner...");
+      gameReadyPlayersRef.current.clear();
+      setProblemsSentAck(true);
     }
   }, [code, resetRoundStats]);
 
@@ -606,10 +646,22 @@ function PlayTestContent() {
     const next = !isSlowModeRef.current;
     isSlowModeRef.current = next;
     setIsSlowMode(next);
+    localStorage.setItem("mi_slow_mode", next ? "1" : "0");
     if (code) {
       sendMessage("/app/move", { type: next ? "slow_on" : "slow_off", playerId: localShipRef.current.playerId, x: 0, y: 0 });
     }
   }, [code, sendMessage]);
+
+  // Send game_ready_ack once problems are applied and sendMessage is available
+  useEffect(() => {
+    if (!problemsSentAck || !code) return;
+    sendMessage("/app/move", {
+      type: "game_ready_ack",
+      playerId: localShipRef.current.playerId,
+      x: 0,
+      y: 0,
+    });
+  }, [problemsSentAck, code, sendMessage]);
 
   useEffect(() => {
     timerSourceMsRef.current = timerSourceMs;
@@ -1090,6 +1142,7 @@ function PlayTestContent() {
 
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
+        eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
         broadcastPairAdvance(0, nextLevel);
         return false;
@@ -1159,6 +1212,7 @@ function PlayTestContent() {
       if (selectedProduct === targetPair.product) {
         for (const selectedBlock of nextSelectedBlocks) {
           selectedBlock.eliminate();
+          eliminatedBlockIdsRef.current.add(selectedBlock.id);
         }
 
         increaseScore();
