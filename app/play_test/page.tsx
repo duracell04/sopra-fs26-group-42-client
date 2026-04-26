@@ -603,9 +603,10 @@ function PlayTestContent() {
         setTimerSourceMs(startedAtMs);
       }
     } else {
-      // Multiplayer: wait for both players to confirm they're ready
+      // Multiplayer: wait for both players to confirm they're ready.
+      // Do NOT clear gameReadyPlayersRef — the partner's ack may have
+      // already arrived before our own applyProblems ran.
       setLoadingStatus("Ready! Waiting for partner...");
-      gameReadyPlayersRef.current.clear();
       setProblemsSentAck(true);
     }
   }, [code, resetRoundStats]);
