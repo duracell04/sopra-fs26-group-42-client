@@ -653,11 +653,13 @@ function PlayTestContent() {
     }
   }, [code, sendMessage]);
 
-  // Keep broadcasting game_ready_ack until the game starts.
-  // A single send can be missed if the partner subscribed after we sent it,
-  // so we retry every 500 ms until isLoadingProblems flips to false.
+  // Broadcast game_ready_ack for 10 seconds after problems are ready.
+  // The partner may unlock and stop sending their own acks very quickly (because
+  // our acks arrived before they finished loading), so we must keep broadcasting
+  // long enough for them to still receive at least one of ours.
   useEffect(() => {
-    if (!problemsSentAck || !code || !isLoadingProblems) return;
+    if (!problemsSentAck || !code) return;
+    let remaining = 20; // 20 × 500 ms = 10 s
     const send = () =>
       sendMessage("/app/move", {
         type: "game_ready_ack",
@@ -666,9 +668,16 @@ function PlayTestContent() {
         y: 0,
       });
     send();
-    const interval = setInterval(send, 500);
+    const interval = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        return;
+      }
+      send();
+    }, 500);
     return () => clearInterval(interval);
-  }, [problemsSentAck, code, sendMessage, isLoadingProblems]);
+  }, [problemsSentAck, code, sendMessage]);
 
   useEffect(() => {
     timerSourceMsRef.current = timerSourceMs;
