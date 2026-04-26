@@ -57,17 +57,16 @@ export default function ProfilePage() {
       <Card className="profile-card">
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           <div className="profile-header">
+            <button
+              type="button"
+              onClick={() => router.push("/menu")}
+              style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, padding: "0 0 4px 0", alignSelf: "flex-start" }}
+            >
+              ← Back to Menu
+            </button>
             <Title level={2} className="profile-title">
               User Profile
             </Title>
-
-            <Button
-              type="text"
-              className="profile-close-button"
-              onClick={() => router.push("/menu")}
-            >
-              X
-            </Button>
           </div>
 
           {loading && <Spin size="large" />}

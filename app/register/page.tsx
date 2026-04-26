@@ -40,8 +40,8 @@ const Register: React.FC = () => {
 
   return (
     <div className="register-container">
-<div className="register-card">
-        <h1 className="register-title">Register</h1>
+      <div className="register-card">
+        <h1 className="register-title">Create Account</h1>
         {error && <Alert message="Registration Error" description={error} type="error" showIcon style={{ marginBottom: "20px" }} />}
       <Form
         form={form}
@@ -88,6 +88,11 @@ const Register: React.FC = () => {
         <Form.Item>
           <Button type="primary" htmlType="submit" className="register-button" block>
             Register
+          </Button>
+        </Form.Item>
+        <Form.Item style={{ marginBottom: 0, textAlign: "center" }}>
+          <Button type="link" onClick={() => router.push("/login")} style={{ padding: 0 }}>
+            Already have an account? Login
           </Button>
         </Form.Item>
       </Form>

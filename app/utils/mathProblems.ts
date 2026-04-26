@@ -2,7 +2,7 @@ import { MathBlock, MathPair, MathProblem } from "@/types/problem";
 
 export const PROBLEM_PAIR_COUNT = 5;
 export const BLOCK_COUNT_PER_LEVEL = PROBLEM_PAIR_COUNT * 2;
-export const DEFAULT_LEVEL_COUNT = 100;
+export const DEFAULT_LEVEL_COUNT = 10;
 
 const MIN_FACTOR = 1;
 const MAX_FACTOR = 12;

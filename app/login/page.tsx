@@ -39,8 +39,8 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
-<div className="login-card">
-        <h1 className="login-title">Login</h1>
+      <div className="login-card">
+        <h1 className="login-title">Math Invaders</h1>
       <Form
         form={form}
         name="login"
@@ -64,8 +64,13 @@ const Login: React.FC = () => {
           <Input.Password placeholder="Enter password" />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" className="login-button">
+          <Button type="primary" htmlType="submit" className="login-button" block>
             Login
+          </Button>
+        </Form.Item>
+        <Form.Item style={{ marginBottom: 0, textAlign: "center" }}>
+          <Button type="link" onClick={() => router.push("/register")} style={{ padding: 0 }}>
+            No account? Register here
           </Button>
         </Form.Item>
       </Form>

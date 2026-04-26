@@ -21,7 +21,7 @@ const SHIP_MOVE_SPEED = 420;
 const FALLING_BLOCK_SPEED = 21;
 const SESSION_FETCH_RETRIES = 3;
 const SESSION_PROBLEM_POLL_LIMIT = 45;
-const SESSION_PROBLEM_POLL_INTERVAL_MS = 2000;
+const SESSION_PROBLEM_POLL_INTERVAL_MS = 400;
 const INITIAL_LIFE = 3;
 const INCORRECT_FLASH_MS = 1000;
 
@@ -50,10 +50,18 @@ const BLOCK_STYLE = {
 // Realtime and API payload types
 type RealtimeMessage =
 |{
-  type: "move" | "shoot";
+  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "slow_on" | "slow_off" | "game_ready_ack";
   playerId: number;
   x: number;
   y: number;
+}
+|{
+  type: "pair_advance";
+  playerId: number;
+  x: number;
+  y: number;
+  pairIndex: number;
+  levelIndex: number;
 }
 |{
   type: "game_state";
@@ -274,6 +282,36 @@ function PlayTestContent() {
   const isGameFinishedRef = useRef(false);
   const finishRequestStartedRef = useRef(false);
 
+  // Play-again ready gate (both players must click before restarting)
+  const isLocalCreatorRef = useRef(true);
+  const localPlayAgainReadyRef = useRef(false);
+  const remotePlayAgainReadyPlayersRef = useRef<Set<number>>(new Set());
+  const [playAgainReadyCount, setPlayAgainReadyCount] = useState(0);
+  const lastMoveSendRef = useRef(0);
+
+  // Pause and slow-mode (slow-mode persists in localStorage across play-again reloads)
+  const isPausedRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const isSlowModeRef = useRef(false);
+  const [isSlowMode, setIsSlowMode] = useState(false);
+
+  // Eliminated block IDs — persists even after blocks are filtered from blocksRef
+  const eliminatedBlockIdsRef = useRef<Set<number>>(new Set());
+
+  // Multiplayer game-start handshake: wait for both players to confirm problems loaded
+  const gameReadyPlayersRef = useRef<Set<number>>(new Set());
+  const problemsAppliedRef = useRef(false);
+  const [problemsSentAck, setProblemsSentAck] = useState(false);
+
+  // Restore slow mode from previous session
+  useEffect(() => {
+    const stored = localStorage.getItem("mi_slow_mode") === "1";
+    if (stored) {
+      isSlowModeRef.current = true;
+      setIsSlowMode(true);
+    }
+  }, []);
+
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
     if (existingTimeout) {
@@ -297,22 +335,38 @@ function PlayTestContent() {
       return;
     }
 
-    const completedPairs = Math.floor(
-      blocksRef.current.filter((block) => block.state === GameBlockState.ELIMINATED).length / 2,
-    );
+    // Use the persistent eliminatedBlockIdsRef — blocks may already be filtered
+    // out of blocksRef.current by the game loop before this runs.
+    const elimCountByPair = new Map<number, number>();
+    for (const blockId of eliminatedBlockIdsRef.current) {
+      const pairIdx = Math.floor(blockId / 2);
+      elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
+    }
 
-    if (completedPairs >= currentProblem.pairs.length) {
+    const completedPairSet = new Set<number>();
+    for (const [pairIdx, count] of elimCountByPair) {
+      if (count >= 2) completedPairSet.add(pairIdx);
+    }
+
+    if (completedPairSet.size >= currentProblem.pairs.length) {
       const nextLevel = currentLevelRef.current + 1;
       if (nextLevel < problemsRef.current.length) {
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
         selectedBlockIdsRef.current.clear();
+        eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
       }
       return;
     }
 
-    currentPairIndexRef.current = Math.max(currentPairIndexRef.current, completedPairs);
+    // Advance to the first pair that is not yet completed
+    for (let i = 0; i < currentProblem.pairs.length; i++) {
+      if (!completedPairSet.has(i)) {
+        currentPairIndexRef.current = i;
+        return;
+      }
+    }
   }, []);
 
   // Realtime message handler
@@ -363,6 +417,7 @@ function PlayTestContent() {
             break;
           case "ELIMINATED":
             existingBlock.state = GameBlockState.ELIMINATED;
+            eliminatedBlockIdsRef.current.add(existingBlock.id);
             break;
           case "INCORRECT":
             existingBlock.state = GameBlockState.INCORRECT;
@@ -376,6 +431,68 @@ function PlayTestContent() {
       blocksRef.current = nextBlocks;
       selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
       syncPairProgressFromBlocks();
+      return;
+    }
+
+    if (data.type === "play_again_ready" && typeof data.playerId === "number") {
+      if (data.playerId !== localShipRef.current.playerId) {
+        remotePlayAgainReadyPlayersRef.current.add(data.playerId);
+        const total = (localPlayAgainReadyRef.current ? 1 : 0) + remotePlayAgainReadyPlayersRef.current.size;
+        setPlayAgainReadyCount(total);
+        if (total >= 2) {
+          window.location.reload();
+        }
+      }
+      return;
+    }
+
+    // All control messages below are ignored when echoed back from self
+    const isFromSelf = typeof data.playerId === "number" && data.playerId === localShipRef.current.playerId;
+
+    if (data.type === "game_ready_ack" && typeof data.playerId === "number") {
+      gameReadyPlayersRef.current.add(data.playerId);
+      if (gameReadyPlayersRef.current.size >= 2 && problemsAppliedRef.current) {
+        setIsLoadingProblems(false);
+      }
+      return;
+    }
+
+    if (data.type === "pause" && !isFromSelf) {
+      isPausedRef.current = true;
+      setIsPaused(true);
+      return;
+    }
+
+    if (data.type === "resume" && !isFromSelf) {
+      isPausedRef.current = false;
+      setIsPaused(false);
+      return;
+    }
+
+    if (data.type === "slow_on" && !isFromSelf) {
+      isSlowModeRef.current = true;
+      setIsSlowMode(true);
+      return;
+    }
+
+    if (data.type === "slow_off" && !isFromSelf) {
+      isSlowModeRef.current = false;
+      setIsSlowMode(false);
+      return;
+    }
+
+    if (data.type === "pair_advance" && !isFromSelf && typeof (data as { pairIndex?: number }).pairIndex === "number") {
+      const msg = data as { pairIndex: number; levelIndex: number };
+      if (msg.levelIndex === currentLevelRef.current) {
+        currentPairIndexRef.current = msg.pairIndex;
+        selectedBlockIdsRef.current.clear();
+      } else if (msg.levelIndex > currentLevelRef.current && msg.levelIndex < problemsRef.current.length) {
+        currentLevelRef.current = msg.levelIndex;
+        currentPairIndexRef.current = msg.pairIndex;
+        selectedBlockIdsRef.current.clear();
+        eliminatedBlockIdsRef.current.clear();
+        blocksRef.current = buildBlocks(problemsRef.current[msg.levelIndex]);
+      }
       return;
     }
 
@@ -465,6 +582,7 @@ function PlayTestContent() {
     currentLevelRef.current = 0;
     currentPairIndexRef.current = 0;
     selectedBlockIdsRef.current.clear();
+    eliminatedBlockIdsRef.current.clear();
     blocksRef.current = buildBlocks(problems[0]);
 
     resetRoundStats();
@@ -474,17 +592,83 @@ function PlayTestContent() {
     incorrectResetTimeoutsRef.current.clear();
 
     setLoadingError(null);
-    setIsLoadingProblems(false);
+    problemsAppliedRef.current = true;
 
-    if (!code && timerSourceMsRef.current === null) {
-      const startedAtMs = Date.now();
-      timerSourceMsRef.current = startedAtMs;
-      setTimerSourceMs(startedAtMs);
+    if (!code) {
+      // Solo: start immediately
+      setIsLoadingProblems(false);
+      if (timerSourceMsRef.current === null) {
+        const startedAtMs = Date.now();
+        timerSourceMsRef.current = startedAtMs;
+        setTimerSourceMs(startedAtMs);
+      }
+    } else {
+      // Multiplayer: wait for both players to confirm they're ready.
+      // Do NOT clear gameReadyPlayersRef — the partner's ack may have
+      // already arrived before our own applyProblems ran.
+      setLoadingStatus("Ready! Waiting for partner...");
+      setProblemsSentAck(true);
     }
   }, [code, resetRoundStats]);
 
   // WebSocket integration
   const { sendMessage } = useWebSocket(handleMessage);
+
+  const handlePlayAgainReady = useCallback(() => {
+    if (!code) {
+      window.location.reload();
+      return;
+    }
+    if (localPlayAgainReadyRef.current) return;
+    localPlayAgainReadyRef.current = true;
+    const total = 1 + remotePlayAgainReadyPlayersRef.current.size;
+    setPlayAgainReadyCount(total);
+    sendMessage("/app/move", {
+      type: "play_again_ready",
+      playerId: localShipRef.current.playerId,
+      x: 0,
+      y: 0,
+    });
+    if (total >= 2) {
+      window.location.reload();
+    }
+  }, [code, sendMessage]);
+
+  const handlePauseToggle = useCallback(() => {
+    const next = !isPausedRef.current;
+    isPausedRef.current = next;
+    setIsPaused(next);
+    if (code) {
+      sendMessage("/app/move", { type: next ? "pause" : "resume", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+    }
+  }, [code, sendMessage]);
+
+  const handleSlowToggle = useCallback(() => {
+    const next = !isSlowModeRef.current;
+    isSlowModeRef.current = next;
+    setIsSlowMode(next);
+    localStorage.setItem("mi_slow_mode", next ? "1" : "0");
+    if (code) {
+      sendMessage("/app/move", { type: next ? "slow_on" : "slow_off", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+    }
+  }, [code, sendMessage]);
+
+  // Keep broadcasting game_ready_ack until the game starts.
+  // A single send can be missed if the partner subscribed after we sent it,
+  // so we retry every 500 ms until isLoadingProblems flips to false.
+  useEffect(() => {
+    if (!problemsSentAck || !code || !isLoadingProblems) return;
+    const send = () =>
+      sendMessage("/app/move", {
+        type: "game_ready_ack",
+        playerId: localShipRef.current.playerId,
+        x: 0,
+        y: 0,
+      });
+    send();
+    const interval = setInterval(send, 500);
+    return () => clearInterval(interval);
+  }, [problemsSentAck, code, sendMessage, isLoadingProblems]);
 
   useEffect(() => {
     timerSourceMsRef.current = timerSourceMs;
@@ -628,11 +812,13 @@ function PlayTestContent() {
     const configureAsCreator = (currentUserId: number) => {
       localShipRef.current.playerId = currentUserId;
       remoteShipRef.current.playerId = -1;
+      isLocalCreatorRef.current = true;
     };
 
     const configureAsJoiner = (currentUserId: number, creatorId: number) => {
       localShipRef.current.playerId = currentUserId;
       remoteShipRef.current.playerId = creatorId;
+      isLocalCreatorRef.current = false;
     };
 
     const fetchSessionWithRetry = async () => {
@@ -937,10 +1123,24 @@ function PlayTestContent() {
       ctx.fillText(`Points: ${scoreRef.current}`, CANVAS_WIDTH - 12, 36);
     };
 
+    const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
+      if (!code) return;
+      sendMessage("/app/move", {
+        type: "pair_advance",
+        playerId: localShipRef.current.playerId,
+        x: 0,
+        y: 0,
+        pairIndex,
+        levelIndex,
+      });
+    };
+
     const advancePair = () => {
       selectedBlockIdsRef.current.clear();
+      const currentProblem = problemsRef.current[currentLevelRef.current];
+      const pairCount = currentProblem?.pairs.length ?? 5;
       const nextPair = currentPairIndexRef.current + 1;
-      if (nextPair >= 5) {
+      if (nextPair >= pairCount) {
         const nextLevel = currentLevelRef.current + 1;
 
         if (nextLevel >= problemsRef.current.length) {
@@ -949,11 +1149,14 @@ function PlayTestContent() {
 
         currentLevelRef.current = nextLevel;
         currentPairIndexRef.current = 0;
+        eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        broadcastPairAdvance(0, nextLevel);
         return false;
       }
 
       currentPairIndexRef.current = nextPair;
+      broadcastPairAdvance(nextPair, currentLevelRef.current);
 
       for (const block of blocksRef.current) {
         if (block.state === GameBlockState.SELECTED) {
@@ -1016,6 +1219,7 @@ function PlayTestContent() {
       if (selectedProduct === targetPair.product) {
         for (const selectedBlock of nextSelectedBlocks) {
           selectedBlock.eliminate();
+          eliminatedBlockIdsRef.current.add(selectedBlock.id);
         }
 
         increaseScore();
@@ -1045,6 +1249,11 @@ function PlayTestContent() {
         return;
       }
 
+      if (isPausedRef.current) {
+        lastTimestamp = null;
+        return;
+      }
+
       if (lastTimestamp === null) {
         lastTimestamp = timestamp;
         return;
@@ -1069,15 +1278,19 @@ function PlayTestContent() {
       }
 
       if (moved) {
-        sendMessage("/app/move", {
-          type: "move",
-          playerId: localShipRef.current.playerId,
-          x: localShipRef.current.xPosition,
-          y: localShipRef.current.yPosition,
-        });
+        const nowMs = performance.now();
+        if (nowMs - lastMoveSendRef.current > 50) {
+          lastMoveSendRef.current = nowMs;
+          sendMessage("/app/move", {
+            type: "move",
+            playerId: localShipRef.current.playerId,
+            x: localShipRef.current.xPosition,
+            y: localShipRef.current.yPosition,
+          });
+        }
       }
 
-      const lerp = 1 - Math.exp(-12 * deltaSeconds);
+      const lerp = 1 - Math.exp(-18 * deltaSeconds);
       remoteShipRef.current.xPosition +=
         (remoteTargetRef.current.x - remoteShipRef.current.xPosition) * lerp;
       remoteShipRef.current.yPosition +=
@@ -1091,7 +1304,7 @@ function PlayTestContent() {
           return false;
         }
 
-        block.yPosition += FALLING_BLOCK_SPEED * deltaSeconds;
+        block.yPosition += (isSlowModeRef.current ? FALLING_BLOCK_SPEED * 0.35 : FALLING_BLOCK_SPEED) * deltaSeconds;
 
         if (block.yPosition >= groundLimit) {
           selectedBlockIdsRef.current.delete(block.id);
@@ -1106,8 +1319,8 @@ function PlayTestContent() {
         drawBlock(block);
       }
 
-      drawShip(localShipRef.current, "red");
-      drawShip(remoteShipRef.current, "cyan");
+      drawShip(localShipRef.current, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
+      drawShip(remoteShipRef.current, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
 
       const nextBullets: BulletObject[] = [];
       bulletsRef.current = bulletsRef.current.filter((bullet) => !bullet.isOffScreen());
@@ -1162,7 +1375,17 @@ function PlayTestContent() {
     animationId = requestAnimationFrame(gameLoop);
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current) {
+      if (event.code === "KeyP") {
+        const next = !isPausedRef.current;
+        isPausedRef.current = next;
+        setIsPaused(next);
+        if (code) {
+          sendMessage("/app/move", { type: next ? "pause" : "resume", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+        }
+        return;
+      }
+
+      if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current || isPausedRef.current) {
         return;
       }
 
@@ -1190,12 +1413,26 @@ function PlayTestContent() {
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      const wasLeft = pressedKeysRef.current.left;
+      const wasRight = pressedKeysRef.current.right;
+
       if (event.code === "KeyA" || event.code === "ArrowLeft") {
         pressedKeysRef.current.left = false;
       }
 
       if (event.code === "KeyD" || event.code === "ArrowRight") {
         pressedKeysRef.current.right = false;
+      }
+
+      // Send final position when player stops so remote snaps to correct spot
+      if ((wasLeft || wasRight) && !pressedKeysRef.current.left && !pressedKeysRef.current.right) {
+        sendMessage("/app/move", {
+          type: "move",
+          playerId: localShipRef.current.playerId,
+          x: localShipRef.current.xPosition,
+          y: localShipRef.current.yPosition,
+        });
+        lastMoveSendRef.current = performance.now();
       }
     };
 
@@ -1320,6 +1557,121 @@ function PlayTestContent() {
           visibility: isLoadingProblems ? "hidden" : "visible",
         }}
       >
+        {!isGameFinished && !isPenaltyGameOver && (
+          <>
+            <button
+              type="button"
+              onClick={() => { window.location.href = "/menu"; }}
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                zIndex: 5,
+                padding: "6px 14px",
+                backgroundColor: "rgba(0,0,0,0.55)",
+                color: "#aaa",
+                border: "1px solid #444",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              ← Menu
+            </button>
+            <div style={{ position: "absolute", top: 10, right: 10, zIndex: 5, display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={handleSlowToggle}
+                title="Toggle slow mode (blocks fall slower)"
+                style={{
+                  padding: "6px 14px",
+                  backgroundColor: isSlowMode ? "#7c4dff" : "rgba(0,0,0,0.55)",
+                  color: isSlowMode ? "#fff" : "#aaa",
+                  border: `1px solid ${isSlowMode ? "#7c4dff" : "#444"}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                {isSlowMode ? "🐢 Slow ON" : "🐢 Slow"}
+              </button>
+              <button
+                type="button"
+                onClick={handlePauseToggle}
+                title="Pause / Resume (P)"
+                style={{
+                  padding: "6px 14px",
+                  backgroundColor: isPaused ? "#ff9800" : "rgba(0,0,0,0.55)",
+                  color: isPaused ? "#000" : "#aaa",
+                  border: `1px solid ${isPaused ? "#ff9800" : "#444"}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                {isPaused ? "▶ Resume" : "⏸ Pause"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {isPaused && !isGameFinished && !isPenaltyGameOver && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.72)",
+              zIndex: 15,
+              gap: 20,
+            }}
+          >
+            <div style={{ color: "#ff9800", fontFamily: "monospace", fontSize: 36, fontWeight: 900, letterSpacing: 4 }}>
+              PAUSED
+            </div>
+            <div style={{ color: "#888", fontSize: 14 }}>Press P or click Resume to continue</div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                type="button"
+                onClick={handlePauseToggle}
+                style={{
+                  padding: "12px 28px",
+                  backgroundColor: "#ff9800",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 800,
+                  fontSize: 16,
+                }}
+              >
+                ▶ Resume
+              </button>
+              <button
+                type="button"
+                onClick={() => { window.location.href = "/menu"; }}
+                style={{
+                  padding: "12px 28px",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  color: "#ccc",
+                  border: "1px solid #555",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 16,
+                }}
+              >
+                ← Menu
+              </button>
+            </div>
+          </div>
+        )}
         <canvas
           ref={canvasRef}
           width={CANVAS_WIDTH}
@@ -1387,24 +1739,48 @@ function PlayTestContent() {
               >
                 {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = "/menu";
-                }}
-                style={{
-                  padding: "12px 18px",
-                  border: "none",
-                  borderRadius: 10,
-                  backgroundColor: "#00d4ff",
-                  color: "#031019",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  minWidth: 140,
-                }}
-              >
-                Leave Game
-              </button>
+              <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={handlePlayAgainReady}
+                  disabled={localPlayAgainReadyRef.current}
+                  style={{
+                    padding: "12px 18px",
+                    border: "none",
+                    borderRadius: 10,
+                    backgroundColor: localPlayAgainReadyRef.current ? "#0a8fa8" : "#00d4ff",
+                    color: "#031019",
+                    fontWeight: 800,
+                    cursor: localPlayAgainReadyRef.current ? "default" : "pointer",
+                    minWidth: 160,
+                    opacity: localPlayAgainReadyRef.current ? 0.7 : 1,
+                  }}
+                >
+                  {code
+                    ? localPlayAgainReadyRef.current
+                      ? `Ready ${playAgainReadyCount}/2`
+                      : "Play Again"
+                    : "Play Again"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = "/menu";
+                  }}
+                  style={{
+                    padding: "12px 18px",
+                    border: "1px solid #1f6f8b",
+                    borderRadius: 10,
+                    backgroundColor: "#08131f",
+                    color: "#e8f7ff",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    minWidth: 140,
+                  }}
+                >
+                  Leave Game
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1451,24 +1827,30 @@ function PlayTestContent() {
               <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={() => window.location.reload()}
+                  onClick={handlePlayAgainReady}
+                  disabled={localPlayAgainReadyRef.current}
                   style={{
                     padding: "12px 18px",
                     border: "none",
                     borderRadius: 10,
-                    backgroundColor: "#ff4d4f",
+                    backgroundColor: localPlayAgainReadyRef.current ? "#7f2122" : "#ff4d4f",
                     color: "#fff5f5",
                     fontWeight: 800,
-                    cursor: "pointer",
-                    minWidth: 140,
+                    cursor: localPlayAgainReadyRef.current ? "default" : "pointer",
+                    minWidth: 160,
+                    opacity: localPlayAgainReadyRef.current ? 0.7 : 1,
                   }}
                 >
-                  Play Again
+                  {code
+                    ? localPlayAgainReadyRef.current
+                      ? `Ready ${playAgainReadyCount}/2`
+                      : "Play Again"
+                    : "Play Again"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    window.location.href = code ? `/session/waiting?code=${code}` : "/menu";
+                    window.location.href = "/menu";
                   }}
                   style={{
                     padding: "12px 18px",
