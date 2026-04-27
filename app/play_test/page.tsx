@@ -25,6 +25,15 @@ const SESSION_PROBLEM_POLL_INTERVAL_MS = 400;
 const INITIAL_LIFE = 3;
 const INCORRECT_FLASH_MS = 1000;
 
+const BACKGROUND_SPRITE_PATH = "/sprites/space-background.png";
+const HOST_SHIP_SPRITE_PATH = "/sprites/ship-host.png";
+const JOINER_SHIP_SPRITE_PATH = "/sprites/ship-joiner.png";
+
+const SHIP_RENDER_WIDTH = 64;
+const SHIP_RENDER_HEIGHT = 64;
+const SHIP_RENDER_HALF_WIDTH = SHIP_RENDER_WIDTH / 2;
+const SHIP_RENDER_HALF_HEIGHT = SHIP_RENDER_HEIGHT / 2;
+
 
 // Section: Canvas rendering style configuration
 const BLOCK_STYLE = {
@@ -79,7 +88,9 @@ type RealtimeMessage =
   }[];
 };
 
-
+function isLoadedImage(image: HTMLImageElement | null): image is HTMLImageElement {
+  return Boolean(image && image.complete && image.naturalWidth > 0);
+}
 
 type SessionProblemsResponse = {
   problemsJson?: unknown;
@@ -230,6 +241,10 @@ function PlayTestContent() {
   const bulletsRef = useRef<BulletObject[]>([]);
   const pressedKeysRef = useRef({ left: false, right: false });
 
+  const backgroundSpriteRef = useRef<HTMLImageElement | null>(null);
+  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
+  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
+
   const localShipRef = useRef(
     new ShipObject({
       uuid: "ship-local",
@@ -302,6 +317,18 @@ function PlayTestContent() {
   const gameReadyPlayersRef = useRef<Set<number>>(new Set());
   const problemsAppliedRef = useRef(false);
   const [problemsSentAck, setProblemsSentAck] = useState(false);
+
+  useEffect(() => {
+    const loadImage = (src: string) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    };
+
+    backgroundSpriteRef.current = loadImage(BACKGROUND_SPRITE_PATH);
+    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
+    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
+  }, []);
 
   // Restore slow mode from previous session
   useEffect(() => {
@@ -1083,8 +1110,63 @@ function PlayTestContent() {
       ctx.fillText(String(block.value), block.xPosition, block.yPosition);
     };
 
-    const drawShip = (ship: ShipObject, color: string) => {
-      ctx.fillStyle = color;
+    const drawCoverImage = (
+      image: HTMLImageElement,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+    ) => {
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const targetRatio = width / height;
+
+      let sx = 0;
+      let sy = 0;
+      let sw = image.naturalWidth;
+      let sh = image.naturalHeight;
+
+      if (imageRatio > targetRatio) {
+        sw = image.naturalHeight * targetRatio;
+        sx = (image.naturalWidth - sw) / 2;
+      } else {
+        sh = image.naturalWidth / targetRatio;
+        sy = (image.naturalHeight - sh) / 2;
+      }
+
+      ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+    };
+
+    const drawBackground = () => {
+      const backgroundSprite = backgroundSpriteRef.current;
+
+      if (isLoadedImage(backgroundSprite)) {
+        drawCoverImage(backgroundSprite, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(4, 10, 24, 0.28)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      ctx.fillStyle = "#050b1a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const drawShip = (
+      ship: ShipObject,
+      sprite: HTMLImageElement | null,
+      fallbackColor: string,
+    ) => {
+      if (isLoadedImage(sprite)) {
+        ctx.drawImage(
+          sprite,
+          ship.xPosition - SHIP_RENDER_HALF_WIDTH,
+          ship.yPosition - SHIP_RENDER_HALF_HEIGHT,
+          SHIP_RENDER_WIDTH,
+          SHIP_RENDER_HEIGHT,
+        );
+        return;
+      }
+
+      ctx.fillStyle = fallbackColor;
       ctx.beginPath();
       ctx.moveTo(ship.xPosition, ship.yPosition - 20);
       ctx.lineTo(ship.xPosition - SHIP_HALF_WIDTH, ship.yPosition + 10);
@@ -1092,6 +1174,7 @@ function PlayTestContent() {
       ctx.closePath();
       ctx.fill();
     };
+
 
     const drawHud = () => {
       const problem = problemsRef.current[currentLevelRef.current];
@@ -1271,8 +1354,8 @@ function PlayTestContent() {
       const deltaSeconds = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
       lastTimestamp = timestamp;
 
-      const minShipX = SHIP_HALF_WIDTH;
-      const maxShipX = canvas.width - SHIP_HALF_WIDTH;
+      const minShipX = SHIP_RENDER_HALF_WIDTH;
+      const maxShipX = canvas.width - SHIP_RENDER_HALF_WIDTH;
       const shipStep = SHIP_MOVE_SPEED * deltaSeconds;
       let moved = false;
 
@@ -1305,7 +1388,7 @@ function PlayTestContent() {
       remoteShipRef.current.yPosition +=
         (remoteTargetRef.current.y - remoteShipRef.current.yPosition) * lerp;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
 
       const groundLimit = canvas.height - BLOCK_STYLE.block.halfSize;
       blocksRef.current = blocksRef.current.filter((block) => {
@@ -1328,8 +1411,14 @@ function PlayTestContent() {
         drawBlock(block);
       }
 
-      drawShip(localShipRef.current, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
-      drawShip(remoteShipRef.current, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
+      const localShipSprite = isLocalCreatorRef.current
+        ? hostShipSpriteRef.current
+        : joinerShipSpriteRef.current;
+      const remoteShipSprite = isLocalCreatorRef.current
+        ? joinerShipSpriteRef.current
+        : hostShipSpriteRef.current;
+      drawShip(localShipRef.current, localShipSprite, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
+      drawShip(remoteShipRef.current, remoteShipSprite, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
 
       const nextBullets: BulletObject[] = [];
       bulletsRef.current = bulletsRef.current.filter((bullet) => !bullet.isOffScreen());
@@ -1465,7 +1554,7 @@ function PlayTestContent() {
       style={{
         width: "100vw",
         height: "100vh",
-        backgroundColor: "#0a0a0a",
+        backgroundColor: "#050b1a",
         position: "relative",
       }}
     >
@@ -1685,7 +1774,8 @@ function PlayTestContent() {
           ref={canvasRef}
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
-          style={{ border: "1px solid white" }}
+          style={{ border: "1px solid #8fd8ff", boxShadow: "0 0 40px rgba(0, 212, 255, 0.18)" }}
+
         />
         {isErrorFlash && (
           <div
