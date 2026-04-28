@@ -110,8 +110,8 @@ reason).
 
 | **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
-|**Remy Klemenz** |**[@remy20cent]** | date | ########################### | ########################### | ########################### |
-|                 |                  | date | ########################### | ########################### | ########################### |
+|**Remy Klemenz** |**[@remy20cent]** | 28.04 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/64d8ba3ea8a27aecdee2809aa653b7fd5f7d4727 | Added sprites for spaceship and background | Game looks more appealing, like "Invaders" inspiration |
+|                 |                  | 28.04 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/018d69cdd41027215fac7ccf96e21d962484265a | Added sprites for Block and Shoot/Explosion soundeffect | Gameplay is more appealing |
 |**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
 |                          |                  | date | ########################### | ########################### | ########################### |
 |**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
