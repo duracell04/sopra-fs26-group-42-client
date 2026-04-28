@@ -84,7 +84,7 @@ function WaitingSessionPageContent() {
     return (
       <div className="session-simple-shell">
         <Card className="session-simple-card">
-          <Space direction="vertical" size="middle" align="center">
+          <Space orientation="vertical" size="middle" align="center">
             <Spin size="large" />
             <Text className="session-simple-subtitle">Joining session...</Text>
           </Space>
@@ -98,7 +98,7 @@ function WaitingSessionPageContent() {
   return (
     <div className="session-simple-shell">
       <Card className="session-simple-card">
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="large" style={{ width: "100%" }}>
           <div>
             <button
               type="button"
@@ -133,7 +133,7 @@ function WaitingSessionPageContent() {
 
           <div className="session-simple-section">
             <Text className="session-simple-section-title">Players</Text>
-            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+            <Space orientation="vertical" size="small" style={{ width: "100%" }}>
               {session?.players?.map((player, idx) => (
                 <div key={idx} className="session-simple-player-row">
                   <Text className="session-simple-player-role">{idx === 0 ? "Host" : "Player 2"}</Text>
@@ -166,7 +166,7 @@ function WaitingSessionFallback() {
   return (
     <div className="session-simple-shell">
       <Card className="session-simple-card">
-        <Space direction="vertical" size="middle" align="center">
+        <Space orientation="vertical" size="middle" align="center">
           <Spin size="large" />
           <Text className="session-simple-subtitle">Loading session...</Text>
         </Space>
