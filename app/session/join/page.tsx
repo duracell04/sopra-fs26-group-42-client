@@ -163,7 +163,7 @@ function JoinSessionPageContent() {
     return (
       <div className="session-simple-shell">
         <Card className="session-simple-card">
-          <Space direction="vertical" size="middle" align="center" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="middle" align="center" style={{ width: "100%" }}>
             <Spin size="large" />
             <Text className="session-simple-subtitle">Loading session...</Text>
           </Space>
@@ -178,7 +178,7 @@ function JoinSessionPageContent() {
     return (
       <div className="session-simple-shell">
         <Card className="session-simple-card">
-          <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="large" style={{ width: "100%" }}>
             <div>
               <button
                 type="button"
@@ -213,7 +213,7 @@ function JoinSessionPageContent() {
 
             <div className="session-simple-section">
               <Text className="session-simple-section-title">Players</Text>
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              <Space orientation="vertical" size="small" style={{ width: "100%" }}>
                 {session.players?.map((player, idx) => (
                   <div key={`${player}-${idx}`} className="session-simple-player-row">
                     <Text className="session-simple-player-role">
@@ -237,7 +237,7 @@ function JoinSessionPageContent() {
               Only the host can start the game.
             </Text>
 
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
+            <Space orientation="vertical" style={{ width: "100%" }} size="middle">
               <Button
                 type="primary"
                 size="large"
@@ -263,7 +263,7 @@ function JoinSessionPageContent() {
   return (
     <div className="session-simple-shell">
       <Card className="session-simple-card">
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="large" style={{ width: "100%" }}>
           <div>
             <Title level={2} className="session-simple-title">
               Join Session
@@ -273,7 +273,7 @@ function JoinSessionPageContent() {
             </Text>
           </div>
 
-          <Space direction="vertical" size="small" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="small" style={{ width: "100%" }}>
             <Text className="session-simple-label">Session Code</Text>
             <Input
               value={code}
@@ -332,7 +332,7 @@ function JoinSessionFallback() {
   return (
     <div className="session-simple-shell">
       <Card className="session-simple-card">
-        <Space direction="vertical" size="middle" align="center" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" align="center" style={{ width: "100%" }}>
           <Spin size="large" />
           <Text className="session-simple-subtitle">Loading session...</Text>
         </Space>

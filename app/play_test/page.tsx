@@ -25,6 +25,21 @@ const SESSION_PROBLEM_POLL_INTERVAL_MS = 400;
 const INITIAL_LIFE = 3;
 const INCORRECT_FLASH_MS = 1000;
 
+const BACKGROUND_SPRITE_PATH = "/sprites/space-background.png";
+const HOST_SHIP_SPRITE_PATH = "/sprites/ship-host.png";
+const JOINER_SHIP_SPRITE_PATH = "/sprites/ship-joiner.png";
+const BLOCK_SPRITE_PATH = "/sprites/asteroid.png";
+const SHIP_RENDER_WIDTH = 64;
+const SHIP_RENDER_HEIGHT = 64;
+const SHIP_RENDER_HALF_WIDTH = SHIP_RENDER_WIDTH / 2;
+const SHIP_RENDER_HALF_HEIGHT = SHIP_RENDER_HEIGHT / 2;
+const BLOCK_SPRITE_RENDER_SIZE = 70;
+const BLOCK_SPRITE_HALF_SIZE = BLOCK_SPRITE_RENDER_SIZE / 2;
+
+const LASER_SOUND_PATH = "/sounds/laser4.wav";
+const DESTROYED_SOUND_PATH = "/sounds/explosion.wav";
+const SUCCESS_FLASH_MS = 140;
+
 
 // Section: Canvas rendering style configuration
 const BLOCK_STYLE = {
@@ -79,7 +94,9 @@ type RealtimeMessage =
   }[];
 };
 
-
+function isLoadedImage(image: HTMLImageElement | null): image is HTMLImageElement {
+  return Boolean(image && image.complete && image.naturalWidth > 0);
+}
 
 type SessionProblemsResponse = {
   problemsJson?: unknown;
@@ -230,6 +247,17 @@ function PlayTestContent() {
   const bulletsRef = useRef<BulletObject[]>([]);
   const pressedKeysRef = useRef({ left: false, right: false });
 
+  const backgroundSpriteRef = useRef<HTMLImageElement | null>(null);
+  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
+  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
+  const blockSpriteRef = useRef<HTMLImageElement | null>(null);
+  
+  const laserAudioRef = useRef<HTMLAudioElement | null>(null);
+  const destroyedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const successFlashUntilRef = useRef<Map<number, number>>(new Map());
+  const lastDestroyedSoundAtRef = useRef(0);
+
+
   const localShipRef = useRef(
     new ShipObject({
       uuid: "ship-local",
@@ -302,6 +330,59 @@ function PlayTestContent() {
   const gameReadyPlayersRef = useRef<Set<number>>(new Set());
   const problemsAppliedRef = useRef(false);
   const [problemsSentAck, setProblemsSentAck] = useState(false);
+
+  useEffect(() => {
+    const loadImage = (src: string) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    };
+
+    const loadAudio = (src: string) => {
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      audio.load();
+      return audio;
+    };
+
+
+    backgroundSpriteRef.current = loadImage(BACKGROUND_SPRITE_PATH);
+    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
+    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
+    blockSpriteRef.current = loadImage(BLOCK_SPRITE_PATH);
+
+    laserAudioRef.current = loadAudio(LASER_SOUND_PATH);
+    destroyedAudioRef.current = loadAudio(DESTROYED_SOUND_PATH);
+  }, []);
+
+
+  const playSound = useCallback((audio: HTMLAudioElement | null) => {
+    if (!audio?.src) {
+      return;
+    }
+
+    try {
+      const sound = audio.cloneNode(true) as HTMLAudioElement;
+      sound.preload = "auto";
+      void sound.play().catch(() => {
+        // Ignore autoplay/playback interruptions.
+      });
+    } catch (error) {
+      console.warn("Sound playback failed:", error);
+    }
+  }, []);
+
+  const playDestroyedSound = useCallback(() => {
+    const now = performance.now();
+
+    if (now - lastDestroyedSoundAtRef.current < 250) {
+      return;
+    }
+
+    lastDestroyedSoundAtRef.current = now;
+    playSound(destroyedAudioRef.current);
+  }, [playSound]);
+
 
   // Restore slow mode from previous session
   useEffect(() => {
@@ -394,6 +475,7 @@ function PlayTestContent() {
         setIsPenaltyGameOver(true);
       }
 
+      let shouldPlayDestroyedSound = false;
       const incomingBlocks = data.blocks;
       const nextBlocks = blocksRef.current.map((existingBlock) => {
         const incoming = incomingBlocks.find((candidate) => candidate.id === existingBlock.id);
@@ -416,6 +498,13 @@ function PlayTestContent() {
             existingBlock.state = GameBlockState.SELECTED;
             break;
           case "ELIMINATED":
+            if (existingBlock.state !== GameBlockState.ELIMINATED) {
+              successFlashUntilRef.current.set(
+                existingBlock.id,
+                performance.now() + SUCCESS_FLASH_MS,
+              );
+              shouldPlayDestroyedSound = true;
+            }
             existingBlock.state = GameBlockState.ELIMINATED;
             eliminatedBlockIdsRef.current.add(existingBlock.id);
             break;
@@ -429,6 +518,9 @@ function PlayTestContent() {
       });
 
       blocksRef.current = nextBlocks;
+      if (shouldPlayDestroyedSound) {
+        playDestroyedSound();
+      }
       selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
       syncPairProgressFromBlocks();
       return;
@@ -518,7 +610,9 @@ function PlayTestContent() {
     bulletsRef.current.push(
       new BulletObject({ x: data.x, y: data.y, playerId: data.playerId }),
     );
-  }, [scheduleIncorrectReset, syncPairProgressFromBlocks]);
+    playSound(laserAudioRef.current);
+  }, [playDestroyedSound, playSound, scheduleIncorrectReset, syncPairProgressFromBlocks]);
+  
 
   // functions for live scores
   const increaseScore = useCallback(() => {
@@ -1065,26 +1159,137 @@ function PlayTestContent() {
     let lastTimestamp: number | null = null;
 
     const drawBlock = (block: NumberBlockObject) => {
-      if (block.state === GameBlockState.ELIMINATED) {
+      const successFlashUntil = successFlashUntilRef.current.get(block.id);
+      const isSuccessFlashing =
+        block.state === GameBlockState.ELIMINATED &&
+        typeof successFlashUntil === "number" &&
+        successFlashUntil > performance.now();
+
+      if (block.state === GameBlockState.ELIMINATED && !isSuccessFlashing) {
         return;
       }
 
-      ctx.fillStyle = BLOCK_STYLE.block.fillByState[block.state];
-      ctx.fillRect(
-        block.xPosition - BLOCK_STYLE.block.halfSize,
-        block.yPosition - BLOCK_STYLE.block.halfSize,
-        BLOCK_STYLE.block.size,
-        BLOCK_STYLE.block.size,
-      );
+      const spriteLeft = block.xPosition - BLOCK_SPRITE_HALF_SIZE;
+      const spriteTop = block.yPosition - BLOCK_SPRITE_HALF_SIZE;
+
+      const tint =
+        isSuccessFlashing
+          ? "rgba(46, 204, 113, 0.45)"
+          : block.state === GameBlockState.SELECTED
+            ? "rgba(241, 196, 15, 0.45)"
+            : block.state === GameBlockState.INCORRECT
+              ? "rgba(231, 76, 60, 0.45)"
+              : null;
+
+      const blockSprite = blockSpriteRef.current;
+
+      if (isLoadedImage(blockSprite)) {
+        ctx.drawImage(
+          blockSprite,
+          spriteLeft,
+          spriteTop,
+          BLOCK_SPRITE_RENDER_SIZE,
+          BLOCK_SPRITE_RENDER_SIZE,
+        );
+
+        if (tint) {
+          ctx.save();
+          ctx.globalCompositeOperation = "source-atop";
+          ctx.fillStyle = tint;
+          ctx.fillRect(
+            spriteLeft,
+            spriteTop,
+            BLOCK_SPRITE_RENDER_SIZE,
+            BLOCK_SPRITE_RENDER_SIZE,
+          );
+          ctx.restore();
+        }
+      } else {
+        ctx.fillStyle = isSuccessFlashing
+          ? "#2ecc71"
+          : BLOCK_STYLE.block.fillByState[
+              block.state === GameBlockState.ELIMINATED
+                ? GameBlockState.DEFAULT
+                : block.state
+            ];
+
+        ctx.fillRect(
+          block.xPosition - BLOCK_STYLE.block.halfSize,
+          block.yPosition - BLOCK_STYLE.block.halfSize,
+          BLOCK_STYLE.block.size,
+          BLOCK_STYLE.block.size,
+        );
+      }
+
+      ctx.save();
       ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
-      ctx.font = BLOCK_STYLE.block.text.font;
+      ctx.font = "bold 18px Arial";
       ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
       ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+      ctx.shadowBlur = 6;
       ctx.fillText(String(block.value), block.xPosition, block.yPosition);
+      ctx.restore();
     };
 
-    const drawShip = (ship: ShipObject, color: string) => {
-      ctx.fillStyle = color;
+
+    const drawCoverImage = (
+      image: HTMLImageElement,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+    ) => {
+      const imageRatio = image.naturalWidth / image.naturalHeight;
+      const targetRatio = width / height;
+
+      let sx = 0;
+      let sy = 0;
+      let sw = image.naturalWidth;
+      let sh = image.naturalHeight;
+
+      if (imageRatio > targetRatio) {
+        sw = image.naturalHeight * targetRatio;
+        sx = (image.naturalWidth - sw) / 2;
+      } else {
+        sh = image.naturalWidth / targetRatio;
+        sy = (image.naturalHeight - sh) / 2;
+      }
+
+      ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+    };
+
+    const drawBackground = () => {
+      const backgroundSprite = backgroundSpriteRef.current;
+
+      if (isLoadedImage(backgroundSprite)) {
+        drawCoverImage(backgroundSprite, 0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(4, 10, 24, 0.28)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      ctx.fillStyle = "#050b1a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const drawShip = (
+      ship: ShipObject,
+      sprite: HTMLImageElement | null,
+      fallbackColor: string,
+    ) => {
+      if (isLoadedImage(sprite)) {
+        ctx.drawImage(
+          sprite,
+          ship.xPosition - SHIP_RENDER_HALF_WIDTH,
+          ship.yPosition - SHIP_RENDER_HALF_HEIGHT,
+          SHIP_RENDER_WIDTH,
+          SHIP_RENDER_HEIGHT,
+        );
+        return;
+      }
+
+      ctx.fillStyle = fallbackColor;
       ctx.beginPath();
       ctx.moveTo(ship.xPosition, ship.yPosition - 20);
       ctx.lineTo(ship.xPosition - SHIP_HALF_WIDTH, ship.yPosition + 10);
@@ -1092,6 +1297,7 @@ function PlayTestContent() {
       ctx.closePath();
       ctx.fill();
     };
+
 
     const drawHud = () => {
       const problem = problemsRef.current[currentLevelRef.current];
@@ -1226,12 +1432,17 @@ function PlayTestContent() {
 
       // frontend to be authoritative
       if (selectedProduct === targetPair.product) {
+        const successUntil = performance.now() + SUCCESS_FLASH_MS;
+
         for (const selectedBlock of nextSelectedBlocks) {
+          successFlashUntilRef.current.set(selectedBlock.id, successUntil);
           selectedBlock.eliminate();
           eliminatedBlockIdsRef.current.add(selectedBlock.id);
         }
 
+        playDestroyedSound();
         increaseScore();
+
         selectedBlockIdsRef.current.clear();
         const didFinishGame = advancePair();
         if (didFinishGame) {
@@ -1271,8 +1482,8 @@ function PlayTestContent() {
       const deltaSeconds = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
       lastTimestamp = timestamp;
 
-      const minShipX = SHIP_HALF_WIDTH;
-      const maxShipX = canvas.width - SHIP_HALF_WIDTH;
+      const minShipX = SHIP_RENDER_HALF_WIDTH;
+      const maxShipX = canvas.width - SHIP_RENDER_HALF_WIDTH;
       const shipStep = SHIP_MOVE_SPEED * deltaSeconds;
       let moved = false;
 
@@ -1305,11 +1516,21 @@ function PlayTestContent() {
       remoteShipRef.current.yPosition +=
         (remoteTargetRef.current.y - remoteShipRef.current.yPosition) * lerp;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
 
       const groundLimit = canvas.height - BLOCK_STYLE.block.halfSize;
       blocksRef.current = blocksRef.current.filter((block) => {
         if (block.state === GameBlockState.ELIMINATED) {
+          const successFlashUntil = successFlashUntilRef.current.get(block.id);
+
+          if (
+            typeof successFlashUntil === "number" &&
+            successFlashUntil > timestamp
+          ) {
+            return true;
+          }
+
+          successFlashUntilRef.current.delete(block.id);
           return false;
         }
 
@@ -1328,8 +1549,14 @@ function PlayTestContent() {
         drawBlock(block);
       }
 
-      drawShip(localShipRef.current, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
-      drawShip(remoteShipRef.current, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
+      const localShipSprite = isLocalCreatorRef.current
+        ? hostShipSpriteRef.current
+        : joinerShipSpriteRef.current;
+      const remoteShipSprite = isLocalCreatorRef.current
+        ? joinerShipSpriteRef.current
+        : hostShipSpriteRef.current;
+      drawShip(localShipRef.current, localShipSprite, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
+      drawShip(remoteShipRef.current, remoteShipSprite, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
 
       const nextBullets: BulletObject[] = [];
       bulletsRef.current = bulletsRef.current.filter((bullet) => !bullet.isOffScreen());
@@ -1412,6 +1639,7 @@ function PlayTestContent() {
         bulletsRef.current.push(
           new BulletObject({ x, y, playerId: localShipRef.current.playerId }),
         );
+        playSound(laserAudioRef.current);
         sendMessage("/app/shoot", {
           type: "shoot",
           playerId: localShipRef.current.playerId,
@@ -1457,7 +1685,7 @@ function PlayTestContent() {
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [code, completeGame, decreaseLife, increaseScore, scheduleIncorrectReset, sendMessage, triggerGameOver]);
+  }, [code, completeGame, decreaseLife, increaseScore, playDestroyedSound, playSound, scheduleIncorrectReset, sendMessage, triggerGameOver]);
 
   // UI layout and loading overlay
   return (
@@ -1465,7 +1693,7 @@ function PlayTestContent() {
       style={{
         width: "100vw",
         height: "100vh",
-        backgroundColor: "#0a0a0a",
+        backgroundColor: "#050b1a",
         position: "relative",
       }}
     >
@@ -1685,7 +1913,8 @@ function PlayTestContent() {
           ref={canvasRef}
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
-          style={{ border: "1px solid white" }}
+          style={{ border: "1px solid #8fd8ff", boxShadow: "0 0 40px rgba(0, 212, 255, 0.18)" }}
+
         />
         {isErrorFlash && (
           <div

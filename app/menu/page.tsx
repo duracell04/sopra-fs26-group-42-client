@@ -11,7 +11,7 @@ export default function MenuPage() {
   return (
     <div className="menu-container">
       <Card className="menu-card">
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="large" style={{ width: "100%" }}>
           <div>
             <Title level={2} className="menu-title">
               Math Invaders
@@ -21,7 +21,7 @@ export default function MenuPage() {
             </Text>
           </div>
 
-          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+          <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
             <Button
               type="primary"
               variant="solid"
