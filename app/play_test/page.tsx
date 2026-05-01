@@ -1610,22 +1610,23 @@ function PlayTestContent() {
       for (const bullet of bulletsRef.current) {
         bullet.update(deltaSeconds);
 
-        if (bullet.playerId !== localShipRef.current.playerId) {
-          if (!bullet.isOffScreen()) {
-            nextBullets.push(bullet);
-            ctx.fillStyle = BLOCK_STYLE.bullet.fillStyle;
-            ctx.fillRect(
-              bullet.x - BLOCK_STYLE.bullet.width / 2,
-              bullet.y - BLOCK_STYLE.bullet.height,
-              BLOCK_STYLE.bullet.width,
-              BLOCK_STYLE.bullet.height,
-            );
-          }
-          continue;
-        }
+        // if (bullet.playerId !== localShipRef.current.playerId) {
+        //   if (!bullet.isOffScreen()) {
+        //     nextBullets.push(bullet);
+        //     ctx.fillStyle = BLOCK_STYLE.bullet.fillStyle;
+        //     ctx.fillRect(
+        //       bullet.x - BLOCK_STYLE.bullet.width / 2,
+        //       bullet.y - BLOCK_STYLE.bullet.height,
+        //       BLOCK_STYLE.bullet.width,
+        //       BLOCK_STYLE.bullet.height,
+        //     );
+        //   }
+        //   continue;
+        // }
 
         const bulletRect = getBulletRect(bullet);
         let consumed = false;
+        let hitBlock: NumberBlockObject | null = null;
 
         for (const block of blocksRef.current) {
           if (block.state === GameBlockState.ELIMINATED) {
@@ -1633,8 +1634,18 @@ function PlayTestContent() {
           }
 
           if (isOverlapping(bulletRect, getBlockRect(block))) {
-            consumed = handleBlockHit(bullet, block);
+            hitBlock = block;
             break;
+          }
+        }
+
+        if (hitBlock) {
+          if (bullet.playerId === localShipRef.current.playerId) {
+            consumed = handleBlockHit(bullet, hitBlock);
+          } else {
+            // Remote bullets should disappear on collision as well; block state
+            // changes remain synchronized via websocket game_state messages.
+            consumed = true;
           }
         }
 
