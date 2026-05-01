@@ -161,6 +161,51 @@ function formatErrorMessage(error: unknown, fallbackMessage: string): string {
   return fallbackMessage;
 }
 
+// use text to manually generate loadingbar
+function getLoadingProgress(status: string, hasError: boolean): number {
+  if (hasError) {
+    return 100;
+  }
+
+  if (status.includes("Ready! Waiting for partner")) {
+    return 95;
+  }
+
+  if (status.includes("Sharing generated levels with the session")) {
+    return 75;
+  }
+
+  if (status.includes("Generating levels locally")) {
+    return 55;
+  }
+
+  if (status.includes("Waiting for host to generate levels")) {
+    return 65;
+  }
+
+  if (status.startsWith("Loading session")) {
+    const retryMatch = status.match(/retry\s+(\d+)\/(\d+)/i);
+
+    if (retryMatch) {
+      const attempt = Number(retryMatch[1]);
+      const total = Number(retryMatch[2]);
+
+      if (Number.isFinite(attempt) && Number.isFinite(total) && total > 0) {
+        const ratio = Math.min(1, Math.max(0, attempt / total));
+        return Math.round(20 + ratio * 20);
+      }
+    }
+
+    return 25;
+  }
+
+  if (status === "Loading...") {
+    return 12;
+  }
+
+  return 40;
+}
+
 // Collision geometry helpers
 function getBulletRect(bullet: BulletObject) {
   const halfWidth = BLOCK_STYLE.bullet.width / 2;
@@ -288,6 +333,7 @@ function PlayTestContent() {
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Loading...");
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const loadingProgress = getLoadingProgress(loadingStatus, Boolean(loadingError));
   const [scoreUi, setScoreUi] = useState(0);
   const [lifeUi, setLifeUi] = useState(INITIAL_LIFE);
   const [isPenaltyGameOver, setIsPenaltyGameOver] = useState(false);
@@ -1725,6 +1771,41 @@ function PlayTestContent() {
           </div>
           <div style={{ color: loadingError ? "#ff7875" : "#aaa", fontSize: 16, maxWidth: 560 }}>
             {loadingStatus}
+          </div>
+  
+          <div // add loading bar
+            style={{
+              width: "min(560px, 88vw)",
+              height: 14,
+              borderRadius: 999,
+              backgroundColor: "rgba(255,255,255,0.1)",
+              overflow: "hidden",
+              border: `1px solid ${loadingError ? "rgba(255,120,117,0.55)" : "rgba(0,212,255,0.35)"}`,
+            }}
+          >
+            <div
+              style={{
+                width: `${loadingProgress}%`,
+                height: "100%",
+                background: loadingError
+                  ? "linear-gradient(90deg, #ff4d4f 0%, #ff7875 100%)"
+                  : "linear-gradient(90deg, #00d4ff 0%, #4af7ff 100%)",
+                boxShadow: loadingError
+                  ? "0 0 12px rgba(255, 77, 79, 0.6)"
+                  : "0 0 16px rgba(0, 212, 255, 0.55)",
+                transition: "width 280ms ease",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              color: loadingError ? "#ff9a98" : "#75e9ff",
+              fontSize: 12,
+              fontFamily: "monospace",
+              letterSpacing: 1,
+            }}
+          >
+            {loadingProgress}%
           </div>
 
           {loadingError ? (
