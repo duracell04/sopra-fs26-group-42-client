@@ -10,6 +10,11 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { MathProblem } from "@/types/problem";
 import { GameSession } from "@/types/session";
 import { generateMathProblems, normalizeMathProblems } from "@/utils/mathProblems";
+import {
+  GameSummaryOverlay,
+  type GameSummaryResponse,
+  type SummaryState,
+} from "@/play_test/GameSummaryOverlay";
 
 //-----------------------------------------------------------------------------
 // -------------- Gameplay and session configuration constants ----------------
@@ -105,6 +110,21 @@ type SessionProblemsResponse = {
 type SessionProblemErrorPayload = {
   error?: string;
 };
+
+const buildLocalSummary = (
+  score: number,
+  elapsedSeconds: number,
+): GameSummaryResponse => ({
+  score,
+  elapsedSeconds,
+  newHighscore: false,
+  feedback:
+    `Great run. You scored ${score} points in ${formatElapsedTime(elapsedSeconds)}. ` +
+    "Keep focusing on fast factor recognition and avoiding risky shots.",
+  totalScore: score,
+  highestScore: score,
+  timePlayed: elapsedSeconds,
+});
 
 // General utility helpers
 function formatElapsedTime(totalSeconds: number) {
@@ -309,6 +329,7 @@ function PlayTestContent() {
   const finalElapsedSecondsRef = useRef<number | null>(null);
   const isGameFinishedRef = useRef(false);
   const finishRequestStartedRef = useRef(false);
+  const summaryRequestStartedRef = useRef(false);
 
   // Play-again ready gate (both players must click before restarting)
   const isLocalCreatorRef = useRef(true);
@@ -322,6 +343,7 @@ function PlayTestContent() {
   const [isPaused, setIsPaused] = useState(false);
   const isSlowModeRef = useRef(false);
   const [isSlowMode, setIsSlowMode] = useState(false);
+  const [summaryState, setSummaryState] = useState<SummaryState>({ status: "idle" });
 
   // Eliminated block IDs — persists even after blocks are filtered from blocksRef
   const eliminatedBlockIdsRef = useRef<Set<number>>(new Set());
@@ -450,6 +472,59 @@ function PlayTestContent() {
     }
   }, []);
 
+  const finishGameWithSummary = useCallback(async (elapsedOverride?: number) => {
+    if (summaryRequestStartedRef.current) {
+      return;
+    }
+
+    summaryRequestStartedRef.current = true;
+    const score = scoreRef.current;
+    const elapsedSeconds = Math.max(
+      0,
+      elapsedOverride ?? finalElapsedSecondsRef.current ?? displayedElapsedSecondsRef.current,
+    );
+    const livesRemaining = lifeRef.current;
+
+    setSummaryState({ status: "loading" });
+
+    if (!code) {
+      setSummaryState({
+        status: "ready",
+        data: buildLocalSummary(score, elapsedSeconds),
+        source: "local",
+      });
+      return;
+    }
+
+    const userId = getStoredUserId();
+    if (!userId) {
+      setSummaryState({
+        status: "error",
+        data: buildLocalSummary(score, elapsedSeconds),
+        error: "Missing player session. Final stats could not be saved.",
+        source: "local",
+      });
+      return;
+    }
+
+    try {
+      const summary = await apiService.post<GameSummaryResponse>(`/sessions/${code}/summary`, {
+        userId,
+        score,
+        elapsedSeconds,
+        livesRemaining,
+      });
+      setSummaryState({ status: "ready", data: summary, source: "backend" });
+    } catch (error) {
+      setSummaryState({
+        status: "error",
+        data: buildLocalSummary(score, elapsedSeconds),
+        error: formatErrorMessage(error, "Final stats could not be saved."),
+        source: "local",
+      });
+    }
+  }, [apiService, code]);
+
   // Realtime message handler
   const handleMessage = useCallback((message: unknown) => {
     const data = message as Partial<RealtimeMessage>;
@@ -473,6 +548,7 @@ function PlayTestContent() {
         pressedKeysRef.current.left = false;
         pressedKeysRef.current.right = false;
         setIsPenaltyGameOver(true);
+        void finishGameWithSummary();
       }
 
       let shouldPlayDestroyedSound = false;
@@ -611,7 +687,7 @@ function PlayTestContent() {
       new BulletObject({ x: data.x, y: data.y, playerId: data.playerId }),
     );
     playSound(laserAudioRef.current);
-  }, [playDestroyedSound, playSound, scheduleIncorrectReset, syncPairProgressFromBlocks]);
+  }, [finishGameWithSummary, playDestroyedSound, playSound, scheduleIncorrectReset, syncPairProgressFromBlocks]);
   
 
   // functions for live scores
@@ -634,8 +710,9 @@ function PlayTestContent() {
       pressedKeysRef.current.left = false;
       pressedKeysRef.current.right = false;
       setIsPenaltyGameOver(true);
+      void finishGameWithSummary();
     }
-  }, []);
+  }, [finishGameWithSummary]);
 
   const resetRoundStats = useCallback(() => {
     scoreRef.current = 0;
@@ -644,6 +721,7 @@ function PlayTestContent() {
     gameOverRef.current = false;
     isGameFinishedRef.current = false;
     finishRequestStartedRef.current = false;
+    summaryRequestStartedRef.current = false;
     setScoreUi(0);
     setLifeUi(INITIAL_LIFE);
     setIsPenaltyGameOver(false);
@@ -651,6 +729,7 @@ function PlayTestContent() {
     setDisplayedElapsedSeconds(0);
     setFinalElapsedSeconds(null);
     setIsGameFinished(false);
+    setSummaryState({ status: "idle" });
   }, []);
 
   const triggerGameOver = useCallback((message: string) => {
@@ -661,8 +740,13 @@ function PlayTestContent() {
     gameOverRef.current = true;
     setLoadingStatus("Game Over");
     setLoadingError(message);
-    setIsLoadingProblems(true);
-  }, []);
+    penaltyGameOverRef.current = true;
+    pressedKeysRef.current.left = false;
+    pressedKeysRef.current.right = false;
+    setIsPenaltyGameOver(true);
+    setIsLoadingProblems(false);
+    void finishGameWithSummary();
+  }, [finishGameWithSummary]);
 
  // Session problem initialization helpers
   const applyProblems = useCallback((candidate: unknown) => {
@@ -812,12 +896,19 @@ function PlayTestContent() {
 
     freezeTimer(fallbackElapsedSeconds);
 
-    if (!code || finishRequestStartedRef.current) {
+    if (!code) {
+      void finishGameWithSummary(fallbackElapsedSeconds);
+      return;
+    }
+
+    if (finishRequestStartedRef.current) {
+      void finishGameWithSummary(fallbackElapsedSeconds);
       return;
     }
 
     const userId = getStoredUserId();
     if (!userId) {
+      void finishGameWithSummary(fallbackElapsedSeconds);
       return;
     }
 
@@ -834,11 +925,14 @@ function PlayTestContent() {
         setTimerSourceMs(startedAtMsFromSession);
       }
 
-      freezeTimer(finishedSession.elapsedSeconds ?? fallbackElapsedSeconds);
+      const elapsedSeconds = finishedSession.elapsedSeconds ?? fallbackElapsedSeconds;
+      freezeTimer(elapsedSeconds);
+      void finishGameWithSummary(elapsedSeconds);
     } catch (error) {
       console.warn("Failed to synchronize finished session timer:", error);
+      void finishGameWithSummary(fallbackElapsedSeconds);
     }
-  }, [apiService, code, freezeTimer]);
+  }, [apiService, code, finishGameWithSummary, freezeTimer]);
 
   useEffect(() => {
     if (
@@ -1697,7 +1791,7 @@ function PlayTestContent() {
         position: "relative",
       }}
     >
-      {isLoadingProblems && (
+      {isLoadingProblems && summaryState.status === "idle" && (
         <div
           style={{
             position: "absolute",
@@ -1926,7 +2020,7 @@ function PlayTestContent() {
             }}
           />
         )}
-        {isGameFinished && !isPenaltyGameOver && !isLoadingProblems && (
+        {isGameFinished && !isPenaltyGameOver && !isLoadingProblems && summaryState.status === "idle" && (
           <div
             style={{
               position: "absolute",
@@ -2022,7 +2116,7 @@ function PlayTestContent() {
             </div>
           </div>
         )}
-        {isPenaltyGameOver && !isLoadingProblems && (
+        {isPenaltyGameOver && !isLoadingProblems && summaryState.status === "idle" && (
           <div
             style={{
               position: "absolute",
@@ -2106,6 +2200,15 @@ function PlayTestContent() {
               </div>
             </div>
           </div>
+        )}
+        {summaryState.status !== "idle" && (
+          <GameSummaryOverlay
+            summaryState={summaryState}
+            formatElapsedTime={formatElapsedTime}
+            onReturnToMenu={() => {
+              window.location.href = "/menu";
+            }}
+          />
         )}
       </div>
     </div>
