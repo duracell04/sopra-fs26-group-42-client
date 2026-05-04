@@ -43,8 +43,7 @@ reason).
 |                 |  | 27.03.2026   | [https://github.com/duracell04/sopra-fs26-group-42-server/compare/main...user-registration-form] | Adapt user entity and DTO to include pwd hash (and creation date) | The server now stores hashed user pwd for security/privacy |
 |**Csaba Vizhanyo** |**[@csaba_vi]**   | [29.03.2026]   | [https://github.com/duracell04/sopra-fs26-group-42-server/commit/9e8f96771c4d200d5377be3a791ffaa03e441391] | [Implemented log-in functionallity (backend validation)]| [Allows users to login to acces their profile page after registration] |
 |                    |  | [29.03.2026]   | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/4939a6b1a3605ccf68058d1df0e0450c1b9c82dd] | [Implemented log-in functionallity (front end token validation)] | [Allows users to login to acces their profile page after registration] |
-|**Attila Vizhanyo**  |**[@liroAV]**  | [29.03.2026]   | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/bd9b3c256424cd12276b57546e3ad76bd4073188] | implement logout function for logged in users | [Allows users to login to logout of their profile] |
-
+|**Attila Vizhanyo**  |**[@liroAV]**  | [29.03.2026]   | [https://github.com/duracell04/sopra-fs26-group-42-client/commit/bd9b3c256424cd12276b57546e3ad76bd4073188] | Implemented logout: (1) clears auth token and user ID from localStorage on logout, (2) redirects user to /login and protects the menu route from unauthenticated access| [Two distinct tasks: session teardown logic and route guard behavior — both required for secure auth flow]|
 
 
 ---
@@ -64,7 +63,7 @@ reason).
 | **Csaba Vizhanyo** | **[@csaba_vi]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/37bc48fa8b2d3e12efec564f55359bfde4a5d811 | creating websocket backend setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
 |                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/721bc045a3ade41e2aa66fb1a68738b91a525838 | create ship entity and render it on the frontend | creating player for later gameplay |
 |                 |                   | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/1fd57ab10081706c9ad1516790d5f06e575412ec | creating frontend websocket setup | ensure infrastructure for websocket works, so it can later be used for critical game features like shooting and moving |
-| **Attila Vizhanyo** | **[@liroAV]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/58928dec989c9da9aeb1783da79041604ac47266 | implementation of creating session, and making a unique joining code | This step is important to correctly setup a game, so you and your friend can play together |
+| **Attila Vizhanyo** | **[@liroAV]** | 11.03.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/58928dec989c9da9aeb1783da79041604ac47266 | Implemented session creation flow: (1) POST to backend to create a session and receive a unique code, (2) display the join code in the lobby UI so a second player can enter it | Two distinct tasks: backend API integration and lobby UI display — both required for multiplayer session setup |
 
 ---
 
@@ -101,8 +100,8 @@ reason).
 |                 |                |  Apr 21, 2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/b3fbd287bb6aba3e812aac03a47d6ce4955d977a | updated frontend page for penalty system and gameover state (#12)| It is needed for implementing penalty system |
 |**Csaba Vizhanyo** |**[@csaba_vi]** | Apr 22, 2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/90eff20fe0da5c2105ba3e3186175fe6fa39be9e | Implementat game over feature and improved game UI | Game over feature is essential to close the gameplay loop |
 |                   |                | Apr 24, 2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/86b042eb55551ceff82c3a6573e6860ee9b56db2 | There was a bug where the numbers didnt update after shooting the correct combination, i fixed the bug | Important to not have any bugs before completing milestone 3|
-|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
-|                    |              | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | 26.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/de24919e8fa7d441642a6953d866adaa884cccc5 | Fixed play-again synchronization so both players must confirm before a new game starts; differentiated player colors (creator=red, joiner=blue); reduced level generation time from ~30s to ~2s | Critical multiplayer correctness and UX fixes |
+|**Attila Vizhanyo** |**[@liroAV]** |26.04.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/fd357c0fb1d7ca28713bc00612c682e0f9572631 | Added pause/resume feature (P key + button synced via WebSocket); added slow-mode toggle; overhauled navigation with consistent back arrows across all screens | Extended gameplay controls and polished navigation |
 
 ---
 
@@ -118,8 +117,8 @@ reason).
 |                 |                | 01.05.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/cf67f788d0efdac84b6a8b775020f5829312854f | fixed a but: bullet passes through blocks on hit | According to the game design, bullets fired by both the local and the other player should disappear after successfully hitting a numberblock.|
 |**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
 |                   |                | date | ########################### | ########################### | ########################### |
-|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
-|                    |              | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | 01.05.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/d2040fd66804251e0f2b53fab9750248d85dfc5b | Fixed multiplayer block tracking bug where impossible targets kept reappearing after their factors were eliminated; implemented synchronized game start so both players' blocks appear at the same time | Core gameplay correctness in multiplayer |
+|                    |              | 01.05.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/0ada2051fa03aa2c56cae0468e91b22773d8f0b3 | Fixed production deployment — client was connecting to localhost:8080 instead of the App Engine server, making the online version completely non-functional | Required for the deployed app to work at all |
 
 ---
 
