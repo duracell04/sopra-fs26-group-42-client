@@ -99,8 +99,8 @@ reason).
 |**Siyang Jiang** |**[@yang0731]** | Apr 21, 2026 | https://github.com/duracell04/sopra-fs26-group-42-server/pull/70/changes/027cb7e236a718a53eec294dc3c8586e800fda02 | Updates backend logic to properly trigger game over state when sharedlives reach zero (#12) | it is needed for penalty system |
 |                 |                | Apr 21, 2026 |https://github.com/duracell04/sopra-fs26-group-42-client/commit/5f953618299595b8eb3541bb2dfbed955589b1a4 | implement screen flash when selecting incorrect pairs (#12) | It is needed for the penalty system so that players are clearly notified and warned when shared lives are deducted. |
 |                 |                |  Apr 21, 2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/b3fbd287bb6aba3e812aac03a47d6ce4955d977a | updated frontend page for penalty system and gameover state (#12)| It is needed for implementing penalty system |
-|**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
-|                   |                | date | ########################### | ########################### | ########################### |
+|**Csaba Vizhanyo** |**[@csaba_vi]** | Apr 22, 2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/90eff20fe0da5c2105ba3e3186175fe6fa39be9e | Implementat game over feature and improved game UI | Game over feature is essential to close the gameplay loop |
+|                   |                | Apr 24, 2026 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/86b042eb55551ceff82c3a6573e6860ee9b56db2 | There was a bug where the numbers didnt update after shooting the correct combination, i fixed the bug | Important to not have any bugs before completing milestone 3|
 |**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
 |                    |              | date | ########################### | ########################### | ########################### |
 
