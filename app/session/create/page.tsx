@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
+import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { GameSession } from "@/types/session";
 
 const { Title, Text } = Typography;
@@ -26,18 +27,17 @@ export default function CreateSessionPage() {
     if (createdRef.current) return;
     createdRef.current = true;
 
-    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-    const parsedId: string | null = rawId ? JSON.parse(rawId) : null;
+    const userId = getStoredAuthenticatedUserId();
 
-    if (!parsedId) {
-      router.push("/login");
+    if (!userId) {
+      router.replace("/login");
       return;
     }
 
     const create = async () => {
       try {
         const result = await apiService.post<GameSession>("/sessions", {
-          creatorId: Number(parsedId),
+          creatorId: userId,
         });
         setSession(result);
         sessionCodeRef.current = result.code;
@@ -103,10 +103,15 @@ export default function CreateSessionPage() {
 
   const handleCancel = async () => {
     if (!session) return;
-    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-    const parsedId: string | null = rawId ? JSON.parse(rawId) : null;
+    const userId = getStoredAuthenticatedUserId();
+
+    if (!userId) {
+      router.replace("/login");
+      return;
+    }
+
     try {
-      await apiService.delete(`/sessions/${session.code}?userId=${parsedId}`);
+      await apiService.delete(`/sessions/${session.code}?userId=${userId}`);
     } catch {
       // session might already be gone
     } finally {
@@ -116,11 +121,16 @@ export default function CreateSessionPage() {
 
   const handleStartGame = async () => {
     if (!session) return;
-    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-    const parsedId: string | null = rawId ? JSON.parse(rawId) : null;
+    const userId = getStoredAuthenticatedUserId();
+
+    if (!userId) {
+      router.replace("/login");
+      return;
+    }
+
     try {
       await apiService.post(`/sessions/${session.code}/start`, {
-        userId: Number(parsedId),
+        userId,
       });
       if (pollRef.current) clearInterval(pollRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -195,8 +205,7 @@ export default function CreateSessionPage() {
 
   const playerCount = session?.players?.length ?? 0;
   const canStart = playerCount === 2;
-  const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-  const currentUserId = rawId ? Number(JSON.parse(rawId)) : null;
+  const currentUserId = getStoredAuthenticatedUserId();
   const isCreator = session?.creatorId === currentUserId;
 
   return (

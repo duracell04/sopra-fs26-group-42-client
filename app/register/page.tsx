@@ -3,34 +3,35 @@
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { useRequireNoAuth } from "@/hooks/useAuthGuard";
+import { clearStoredAuthSession } from "@/utils/authStorage";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
 import { useState } from "react";
 
 const Register: React.FC = () => {
   const router = useRouter();
-  useRequireNoAuth();
   const apiService = useApi();
   const [form] = Form.useForm();
   const [error, setError] = useState<string | null>(null);
   const { set: setToken } = useLocalStorage<string>("token", "");
   const { set: setUserId } = useLocalStorage<string>("id", "");
+  const { set: setUsername } = useLocalStorage<string>("username", "");
 
   const handleRegister = async (values: { username: string; password: string; name: string }) => {
     try {
       setError(null);
       const response = await apiService.post<User>("/users", values);
 
-      if (response.token) {
-        setToken(response.token);
+      if (!response.token || !response.id || !response.username) {
+        throw new Error("Registration did not return a complete session.");
       }
 
-      if (response.id) {
-        setUserId(String(response.id));
-      }
+      clearStoredAuthSession();
+      setToken(response.token);
+      setUserId(String(response.id));
+      setUsername(response.username);
 
-      router.push("/menu");
+      router.replace("/menu");
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);

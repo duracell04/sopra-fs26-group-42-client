@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
-import useLocalStorage from "@/hooks/useLocalStorage";
+import { clearStoredAuthSession, getStoredAuthSession } from "@/utils/authStorage";
 import { User } from "@/types/user";
 import { Button, Card, Table } from "antd";
 import type { TableProps } from "antd"; // antd component library allows imports of types
@@ -36,31 +36,22 @@ const Dashboard: React.FC = () => {
   const apiService = useApi();
   const [users, setUsers] = useState<User[] | null>(null);
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
-  // useLocalStorage hook example use
-  // The hook returns an object with the value and two functions
-  // Simply choose what you need from the hook:
-  const {
-    // value: token, // is commented out because we dont need to know the token value for logout
-    // set: setToken, // is commented out because we dont need to set or update the token value
-    clear: clearToken, // all we need in this scenario is a method to clear the token
-  } = useLocalStorage<string>("token", ""); // if you wanted to select a different token, i.e "lobby", useLocalStorage<string>("lobby", "");
-  const {
-    value: userId, // we need the user id to tell the backend which user is logging out
-    clear: clearUserId,
-  } = useLocalStorage<string>("id", "");
 
   const handleLogout = async (): Promise<void> => {
+    const { userId } = getStoredAuthSession();
+
     try {
       // Tell the backend the user logged out so the status gets updated
-      await apiService.put(`/users/${userId}/logout`, {});
+      if (userId) {
+        await apiService.put(`/users/${userId}/logout`, {});
+      }
     } catch (error) {
       if (error instanceof Error) {
         console.error("Logout request failed:", error.message);
       }
     }
     // Clear stored user data regardless of whether the backend call succeeded
-    clearToken();
-    clearUserId();
+    clearStoredAuthSession();
     // replace() removes this protected page from the immediate history entry.
     // That avoids navigating "back" into a stale /users screen after logout.
     router.replace("/login");
@@ -74,8 +65,10 @@ const Dashboard: React.FC = () => {
         // Read localStorage directly before fetching protected data.
         // The custom hook hydrates after the first render, so relying on its
         // initial state here could redirect valid sessions by mistake.
-        const storedToken = globalThis.localStorage.getItem("token");
-        if (!storedToken) {
+        const { isAuthenticated } = getStoredAuthSession();
+
+        if (!isAuthenticated) {
+          clearStoredAuthSession();
           router.replace("/login");
           return;
         }

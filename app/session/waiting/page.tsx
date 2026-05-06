@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
+import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { GameSession } from "@/types/session";
 import { Button, Card, Space, Typography, Spin } from "antd";
 
@@ -69,8 +70,13 @@ function WaitingSessionPageContent() {
   }, [code, apiService, router]);
 
   const handleLeave = async () => {
-    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-    const userId = rawId ? JSON.parse(rawId) : null;
+    const userId = getStoredAuthenticatedUserId();
+
+    if (!userId) {
+      router.replace("/login");
+      return;
+    }
+
     try {
       await apiService.delete(`/sessions/${code}?userId=${userId}`);
     } catch {

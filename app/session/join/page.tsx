@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Card, Input, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
+import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { GameSession } from "@/types/session";
 
 const { Title, Text } = Typography;
@@ -18,18 +19,7 @@ const formatErrorMessage = (error: unknown, fallback: string): string => {
 };
 
 function getStoredUserId() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const rawId = localStorage.getItem("id");
-  if (!rawId) {
-    return null;
-  }
-
-  const parsedId = JSON.parse(rawId);
-  const userId = Number(parsedId);
-  return Number.isFinite(userId) ? userId : null;
+  return getStoredAuthenticatedUserId();
 }
 
 function getStatusLabel(status?: GameSession["status"]) {

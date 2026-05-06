@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
+import { useRequireAuth } from "@/hooks/useAuthGuard";
+import { clearStoredAuthSession, getStoredAuthSession } from "@/utils/authStorage";
 import { Spin } from "antd";
 import StarBackground from "@/components/StarBackground";
 
@@ -43,17 +45,18 @@ function formatTimePlayed(seconds: number): string {
 export default function ProfilePage() {
   const router = useRouter();
   const apiService = useApi();
+  useRequireAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const rawId = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-    const userId = rawId ? JSON.parse(rawId) : null;
+    const { userId } = getStoredAuthSession();
 
     if (!userId) {
-      router.push("/login");
+      clearStoredAuthSession();
+      router.replace("/login");
       return;
     }
 

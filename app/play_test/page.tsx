@@ -8,6 +8,7 @@ import { NumberBlockObject, GameBlockState } from "@/utils/gameObject/gameBlockO
 import { ShipObject } from "@/utils/gameObject/ship";
 import { useApi } from "@/hooks/useApi";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { MathProblem } from "@/types/problem";
 import { GameSession } from "@/types/session";
 import { generateMathProblems, normalizeMathProblems } from "@/utils/mathProblems";
@@ -146,23 +147,7 @@ function sleep(ms: number) {
 }
 
 function getStoredUserId(): number | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const rawId = localStorage.getItem("id");
-  if (!rawId) {
-    return null;
-  }
-
-  try {
-    const parsedId = JSON.parse(rawId);
-    const userId = Number(parsedId);
-    return Number.isFinite(userId) ? userId : null;
-  } catch {
-    const userId = Number(rawId);
-    return Number.isFinite(userId) ? userId : null;
-  }
+  return getStoredAuthenticatedUserId();
 }
 
 function formatErrorMessage(error: unknown, fallbackMessage: string): string {

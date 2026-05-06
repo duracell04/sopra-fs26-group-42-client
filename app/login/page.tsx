@@ -3,14 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import { useRequireNoAuth } from "@/hooks/useAuthGuard";
+import { clearStoredAuthSession } from "@/utils/authStorage";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
 import { useState } from "react";
 
 const Login: React.FC = () => {
   const router = useRouter();
-  useRequireNoAuth();
   const apiService = useApi();
   const [form] = Form.useForm();
   const [error, setError] = useState<string | null>(null);
@@ -20,21 +19,19 @@ const Login: React.FC = () => {
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {
+      setError(null);
       const response = await apiService.post<User>("/users/login", values);
 
-      if (response.token) {
-        setToken(response.token);
+      if (!response.token || !response.id || !response.username) {
+        throw new Error("Login did not return a complete session.");
       }
 
-      if (response.id) {
-        setUserId(String(response.id));
-      }
+      clearStoredAuthSession();
+      setToken(response.token);
+      setUserId(String(response.id));
+      setUsername(response.username);
 
-      if (response.username) {
-        setUsername(response.username);
-      }
-
-      router.push("/menu");
+      router.replace("/menu");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred during login.");
     }
