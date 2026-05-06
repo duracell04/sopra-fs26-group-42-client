@@ -580,16 +580,25 @@ a {
 
 .profile-back-btn {
   align-self: flex-start;
-  background: none;
-  border: none;
-  color: rgba(233, 239, 255, 0.6);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 6px 14px 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: rgba(233, 239, 255, 0.75);
   cursor: pointer;
-  font-size: 0.88rem;
-  padding: 0 0 20px 0;
-  transition: color 0.15s;
+  font-size: 0.84rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
 }
 
 .profile-back-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
