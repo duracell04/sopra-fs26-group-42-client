@@ -17,7 +17,15 @@ function WaitingSessionPageContent() {
 
   const [session, setSession] = useState<GameSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -68,6 +76,23 @@ function WaitingSessionPageContent() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [code, apiService, router]);
+
+  useEffect(() => {
+    if (!session?.expiresAt || session.status !== "WAITING") return;
+
+    const updateTimeLeft = () => {
+      const expiry = new Date(session.expiresAt).getTime();
+      const secs = Math.max(0, Math.floor((expiry - Date.now()) / 1000));
+      setTimeLeft(secs);
+    };
+
+    updateTimeLeft();
+    timerRef.current = setInterval(updateTimeLeft, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [session?.expiresAt, session?.status]);
 
   const handleLeave = async () => {
     const userId = getStoredAuthenticatedUserId();
@@ -134,6 +159,10 @@ function WaitingSessionPageContent() {
             <div className="session-simple-info-row">
               <Text className="session-simple-info-label">Players</Text>
               <Text className="session-simple-info-value">{playerCount}/2</Text>
+            </div>
+            <div className="session-simple-info-row">
+              <Text className="session-simple-info-label">Expires In</Text>
+              <Text className="session-simple-info-value">{formatTime(timeLeft)}</Text>
             </div>
           </div>
 
