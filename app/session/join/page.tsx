@@ -6,6 +6,7 @@ import { Button, Card, Input, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
 import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { GameSession } from "@/types/session";
+import { getSessionTimeLeftSeconds } from "@/utils/sessionTime";
 
 const { Title, Text } = Typography;
 
@@ -132,9 +133,7 @@ function JoinSessionPageContent() {
     if (!session?.expiresAt || session.status !== "WAITING") return;
 
     const updateTimeLeft = () => {
-      const expiry = new Date(session.expiresAt).getTime();
-      const secs = Math.max(0, Math.floor((expiry - Date.now()) / 1000));
-      setTimeLeft(secs);
+      setTimeLeft(getSessionTimeLeftSeconds(session));
     };
 
     updateTimeLeft();
