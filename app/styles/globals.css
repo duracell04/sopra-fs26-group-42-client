@@ -738,8 +738,12 @@ a {
   justify-content: center;
   overflow: hidden;
   background:
-    radial-gradient(circle at top, rgba(117, 189, 157, 0.18), transparent 34%),
-    linear-gradient(180deg, #050915 0%, #071120 46%, #040913 100%);
+    radial-gradient(ellipse at 20% 25%, rgba(80, 30, 160, 0.38) 0%, transparent 42%),
+    radial-gradient(ellipse at 78% 65%, rgba(20, 55, 130, 0.32) 0%, transparent 44%),
+    radial-gradient(ellipse at 55% 85%, rgba(40, 80, 180, 0.22) 0%, transparent 38%),
+    radial-gradient(ellipse at 10% 80%, rgba(100, 30, 80, 0.18) 0%, transparent 36%),
+    radial-gradient(ellipse at 90% 15%, rgba(60, 20, 120, 0.22) 0%, transparent 34%),
+    linear-gradient(180deg, #01020d 0%, #030816 45%, #020610 100%);
 }
 
 .game-shell::before {
@@ -747,20 +751,20 @@ a {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.55) 0 1px, transparent 1.4px),
-    radial-gradient(circle at 1px 1px, rgba(117, 189, 157, 0.34) 0 1px, transparent 1.4px),
-    linear-gradient(rgba(159, 211, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(159, 211, 255, 0.05) 1px, transparent 1px);
-  background-size: 48px 48px, 70px 70px, 24px 24px, 24px 24px;
-  background-position: 0 0, 10px 16px, 0 0, 0 0;
-  opacity: 0.62;
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.85) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 1px 1px, rgba(180, 210, 255, 0.7) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 1px 1px, rgba(255, 230, 200, 0.5) 0 0.8px, transparent 1.2px),
+    radial-gradient(circle at 1px 1px, rgba(200, 180, 255, 0.55) 0 1.4px, transparent 2px);
+  background-size: 55px 55px, 85px 85px, 38px 38px, 130px 130px;
+  background-position: 0 0, 18px 28px, 9px 14px, 40px 60px;
+  opacity: 0.85;
   pointer-events: none;
 }
 
 .game-shell--fallback {
   background:
-    radial-gradient(circle at top, rgba(117, 189, 157, 0.15), transparent 32%),
-    linear-gradient(180deg, #040813 0%, #09111e 100%);
+    radial-gradient(ellipse at 50% 20%, rgba(60, 20, 120, 0.3) 0%, transparent 40%),
+    linear-gradient(180deg, #01020d 0%, #030816 100%);
 }
 
 .game-stage-frame {
@@ -897,6 +901,7 @@ a {
   position: absolute;
   top: 0;
   display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 

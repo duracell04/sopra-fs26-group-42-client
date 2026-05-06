@@ -476,6 +476,7 @@ function PlayTestContent() {
         selectedBlockIdsRef.current.clear();
         eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        bulletsRef.current = [];
       }
       return;
     }
@@ -1273,24 +1274,24 @@ function PlayTestContent() {
 
 	      ctx.fillStyle = glowColor;
 	      ctx.beginPath();
-	      ctx.ellipse(0, 15, 30, 7, 0, 0, Math.PI * 2);
+	      ctx.ellipse(0, 20, 39, 9, 0, 0, Math.PI * 2);
 	      ctx.fill();
 
 	      ctx.shadowColor = glowColor;
-	      ctx.shadowBlur = 18;
+	      ctx.shadowBlur = 24;
 
 	      ctx.fillStyle = hullColor;
 	      ctx.beginPath();
-	      ctx.ellipse(0, 4, 28, 12, 0, 0, Math.PI * 2);
+	      ctx.ellipse(0, 5, 36, 16, 0, 0, Math.PI * 2);
 	      ctx.fill();
 	      ctx.strokeStyle = "rgba(6, 18, 34, 0.72)";
 	      ctx.lineWidth = 2;
 	      ctx.stroke();
 
-	      ctx.shadowBlur = 10;
+	      ctx.shadowBlur = 14;
 	      ctx.fillStyle = domeColor;
 	      ctx.beginPath();
-	      ctx.ellipse(0, -6, 15, 10, 0, Math.PI, 0, true);
+	      ctx.ellipse(0, -8, 20, 13, 0, Math.PI, 0, true);
 	      ctx.closePath();
 	      ctx.fill();
 
@@ -1298,17 +1299,17 @@ function PlayTestContent() {
 	      for (let i = -1; i <= 1; i += 1) {
 	        ctx.fillStyle = windowColors[i + 1];
 	        ctx.beginPath();
-	        ctx.arc(i * 10, 4, 3.3, 0, Math.PI * 2);
+	        ctx.arc(i * 13, 5, 4.3, 0, Math.PI * 2);
 	        ctx.fill();
 	      }
 
 	      ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
-	      ctx.font = "800 18px \"Geist Mono\", monospace";
+	      ctx.font = "800 23px \"Geist Mono\", monospace";
 	      ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
 	      ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
 	      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
 	      ctx.shadowBlur = 6;
-	      ctx.fillText(String(block.value), 0, 4);
+	      ctx.fillText(String(block.value), 0, 5);
 	      ctx.restore();
 	    };
 
@@ -1406,6 +1407,7 @@ function PlayTestContent() {
         currentPairIndexRef.current = 0;
         eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        bulletsRef.current = [];
         blockImmunityUntilRef.current = performance.now() + 2000;
         broadcastPairAdvance(0, nextLevel);
         return false;
@@ -1792,17 +1794,17 @@ function PlayTestContent() {
             <div className="game-stage-hud" aria-hidden="true">
               <div className="game-stage-hud__cluster game-stage-hud__cluster--left">
                 <div className="game-stage-hud__metric">
-                  <span className="game-stage-hud__label">LVL</span>
+                  <span className="game-stage-hud__label">Level</span>
                   <strong className="game-stage-hud__value">
                     {problemsRef.current.length ? currentLevelRef.current + 1 : "--"}
                   </strong>
                 </div>
                 <div className="game-stage-hud__metric">
-                  <span className="game-stage-hud__label">SCR</span>
+                  <span className="game-stage-hud__label">Score</span>
                   <strong className="game-stage-hud__value">{scoreUi}</strong>
                 </div>
                 <div className="game-stage-hud__metric">
-                  <span className="game-stage-hud__label">LIF</span>
+                  <span className="game-stage-hud__label">Lives</span>
                   <strong className="game-stage-hud__value game-stage-hud__value--danger">{lifeUi}</strong>
                 </div>
               </div>
