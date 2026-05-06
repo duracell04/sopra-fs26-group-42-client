@@ -1255,21 +1255,21 @@ function PlayTestContent() {
 	          ? "#ffd786"
 	          : block.state === GameBlockState.INCORRECT
 	            ? "#ff9d9d"
-	            : "#9fd3ff";
+	            : "#476b9a";
 	      const domeColor = isSuccessFlashing
 	        ? "#d6ffea"
 	        : block.state === GameBlockState.SELECTED
 	          ? "#fff0c2"
 	          : block.state === GameBlockState.INCORRECT
 	            ? "#ffe1e1"
-	            : "#e7f7ff";
+	            : "#7fa6d2";
 	      const glowColor = isSuccessFlashing
 	        ? "rgba(127, 243, 169, 0.45)"
 	        : block.state === GameBlockState.SELECTED
 	          ? "rgba(255, 215, 134, 0.38)"
 	          : block.state === GameBlockState.INCORRECT
 	            ? "rgba(255, 107, 107, 0.34)"
-	            : "rgba(159, 211, 255, 0.34)";
+	            : "rgba(90, 138, 196, 0.28)";
 
 	      ctx.fillStyle = glowColor;
 	      ctx.beginPath();

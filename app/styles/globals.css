@@ -766,19 +766,13 @@ a {
 .game-stage-frame {
   position: relative;
   z-index: 1;
-  width: min(1120px, 100%);
-  padding: 22px;
-  border-radius: 32px;
-  overflow: hidden;
-  border: 1px solid rgba(159, 211, 255, 0.18);
-  background:
-    linear-gradient(rgba(5, 12, 24, 0.82), rgba(5, 12, 24, 0.94)),
-    url('/sprites/space-background.png');
-  background-size: auto, 220px 220px;
-  background-repeat: no-repeat, repeat;
-  box-shadow:
-    0 28px 90px rgba(0, 0, 0, 0.52),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  width: min(960px, 100%);
+  padding: 0;
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .game-stage-frame__content {
@@ -916,26 +910,21 @@ a {
 
 .game-stage-hud__metric,
 .game-stage-hud__target {
-  min-width: 86px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(159, 211, 255, 0.18);
-  background: rgba(6, 14, 26, 0.72);
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(8px);
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .game-stage-hud__target {
   position: absolute;
   left: 50%;
   top: 0;
-  min-width: 190px;
+  min-width: 0;
   transform: translateX(-50%);
   text-align: center;
-  background:
-    linear-gradient(180deg, rgba(34, 66, 107, 0.78), rgba(8, 18, 34, 0.88));
 }
 
 .game-stage-hud__label {
@@ -946,6 +935,7 @@ a {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-family: var(--font-geist-mono), monospace;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 .game-stage-hud__value,
@@ -956,6 +946,7 @@ a {
   line-height: 1;
   font-weight: 800;
   font-family: var(--font-geist-mono), monospace;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.92);
 }
 
 .game-stage-hud__value {
@@ -1066,7 +1057,7 @@ a {
 }
 
 .game-modal__subtitle--compact {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .game-modal__subtitle--danger {
@@ -1246,8 +1237,7 @@ a {
   }
 
   .game-stage-frame {
-    padding: 18px;
-    border-radius: 24px;
+    width: min(960px, 100%);
   }
 
   .game-stage-hud {
@@ -1264,7 +1254,7 @@ a {
   }
 
   .game-stage-hud__target {
-    min-width: 160px;
+    min-width: 0;
   }
 }
 
@@ -1274,7 +1264,7 @@ a {
   }
 
   .game-stage-frame {
-    padding: 14px;
+    width: 100%;
   }
 
   .game-control-button,
