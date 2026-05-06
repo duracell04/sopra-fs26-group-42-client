@@ -14,6 +14,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { set: setToken } = useLocalStorage<string>("token", "");
   const { set: setUserId } = useLocalStorage<string>("id", "");
+  const { set: setUsername } = useLocalStorage<string>("username", "");
 
   const handleLogin = async (values: { username: string; password: string }) => {
     try {
@@ -25,6 +26,10 @@ const Login: React.FC = () => {
 
       if (response.id) {
         setUserId(String(response.id));
+      }
+
+      if (response.username) {
+        setUsername(response.username);
       }
 
       router.push("/menu");
