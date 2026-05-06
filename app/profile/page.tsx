@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
-import { Button, Card, Space, Typography, Spin, Alert } from "antd";
-
-const { Title, Text } = Typography;
+import { Spin } from "antd";
+import StarBackground from "@/components/StarBackground";
 
 interface UserProfile {
   username: string;
@@ -13,6 +12,32 @@ interface UserProfile {
   highestScore: number;
   totalScore: number;
   timePlayed: number;
+}
+
+interface StatTileProps {
+  label: string;
+  value: string | number;
+  color: string;
+  icon: string;
+}
+
+function StatTile({ label, value, color, icon }: StatTileProps) {
+  return (
+    <div className="profile-stat-tile">
+      <span className="profile-stat-icon">{icon}</span>
+      <span className="profile-stat-value" style={{ color }}>
+        {value}
+      </span>
+      <span className="profile-stat-label">{label}</span>
+    </div>
+  );
+}
+
+function formatTimePlayed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 }
 
 export default function ProfilePage() {
@@ -54,54 +79,65 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-container">
-      <Card className="profile-card">
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <div className="profile-header">
-            <button
-              type="button"
-              onClick={() => router.push("/menu")}
-              style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, padding: "0 0 4px 0", alignSelf: "flex-start" }}
-            >
-              ← Back to Menu
-            </button>
-            <Title level={2} className="profile-title">
-              User Profile
-            </Title>
+      <StarBackground />
+
+      <div className="profile-card">
+        <button
+          type="button"
+          className="profile-back-btn"
+          onClick={() => router.push("/menu")}
+        >
+          ← Back to Menu
+        </button>
+
+        {loading && (
+          <div className="profile-loading">
+            <Spin size="large" />
           </div>
+        )}
 
-          {loading && <Spin size="large" />}
+        {!loading && error && (
+          <div className="profile-error">
+            <span className="profile-error-icon">⚠</span>
+            <p className="profile-error-text">{error}</p>
+          </div>
+        )}
 
-          {!loading && error && (
-            <Alert
-              message="Could not load user profile"
-              description={error}
-              type="error"
-              showIcon
-            />
-          )}
+        {!loading && profile && (
+          <>
+            <div className="profile-avatar-area">
+              <div className="profile-avatar">
+                {profile.username.charAt(0).toUpperCase()}
+              </div>
+              <h2 className="profile-username">{profile.username}</h2>
+              <span className="profile-join-date">Joined {profile.joinDate}</span>
+            </div>
 
-          {!loading && profile && (
-            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-              <Text className="profile-text">
-                <strong>Username:</strong> {profile.username}
-              </Text>
-              <Text className="profile-text">
-                <strong>Joining Date:</strong> {profile.joinDate}
-              </Text>
-              <Text className="profile-text">
-                <strong>Highest Score:</strong> {profile.highestScore}
-              </Text>
-              <Text className="profile-text">
-                <strong>Total Score:</strong> {profile.totalScore}
-              </Text>
-              <Text className="profile-text">
-                <strong>Time Played:</strong> {profile.timePlayed}
-              </Text>
-            </Space>
-          )}
+            <div className="profile-divider" />
 
-        </Space>
-      </Card>
+            <div className="profile-stats-grid">
+              <StatTile
+                icon="🏆"
+                label="Highest Score"
+                value={profile.highestScore}
+                color="#ffd786"
+              />
+              <StatTile
+                icon="⭐"
+                label="Total Score"
+                value={profile.totalScore}
+                color="#75bd9d"
+              />
+              <StatTile
+                icon="⏱"
+                label="Time Played"
+                value={formatTimePlayed(profile.timePlayed)}
+                color="#9fd3ff"
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
