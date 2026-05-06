@@ -3,9 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
-import { Button, Card, Space, Typography, Spin } from "antd";
-
-const { Title, Text } = Typography;
 import { Spin } from "antd";
 import StarBackground from "@/components/StarBackground";
 
@@ -116,42 +113,6 @@ export default function ProfilePage() {
               <span className="profile-join-date">Joined {profile.joinDate}</span>
             </div>
 
-          {loading && <Spin size="large" />}
-
-          {!loading && error && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "12px 16px", borderRadius: 8,
-              backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
-              color: "#ff7875", fontWeight: 600, fontSize: 15,
-            }}>
-              <span style={{ fontSize: 18 }}>⚠</span>
-              Error: {error}
-            </div>
-          )}
-
-          {!loading && profile && (
-            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-              <Text className="profile-text">
-                <strong>Username:</strong> {profile.username}
-              </Text>
-              <Text className="profile-text">
-                <strong>Joining Date:</strong> {profile.joinDate}
-              </Text>
-              <Text className="profile-text">
-                <strong>Highest Score:</strong> {profile.highestScore}
-              </Text>
-              <Text className="profile-text">
-                <strong>Total Score:</strong> {profile.totalScore}
-              </Text>
-              <Text className="profile-text">
-                <strong>Time Played:</strong> {profile.timePlayed}
-              </Text>
-            </Space>
-          )}
-
-        </Space>
-      </Card>
             <div className="profile-divider" />
 
             <div className="profile-stats-grid">
