@@ -233,6 +233,14 @@ export default function CreateSessionPage() {
             <div className="session-simple-code">{session?.code}</div>
           </div>
 
+          <div className="session-simple-timer-card">
+            <Text className="session-simple-timer-label">Session Expires In</Text>
+            <div className="session-simple-timer-value">{formatTime(timeLeft)}</div>
+            <Text className="session-simple-timer-hint">
+              This lobby closes automatically after 5 minutes.
+            </Text>
+          </div>
+
           <div className="session-simple-info-list">
             <div className="session-simple-info-row">
               <Text className="session-simple-info-label">Status</Text>
@@ -241,10 +249,6 @@ export default function CreateSessionPage() {
             <div className="session-simple-info-row">
               <Text className="session-simple-info-label">Players</Text>
               <Text className="session-simple-info-value">{playerCount}/2</Text>
-            </div>
-            <div className="session-simple-info-row">
-              <Text className="session-simple-info-label">Expires In</Text>
-              <Text className="session-simple-info-value">{formatTime(timeLeft)}</Text>
             </div>
           </div>
 
