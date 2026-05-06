@@ -312,6 +312,7 @@ function PlayTestContent() {
   const destroyedAudioRef = useRef<HTMLAudioElement | null>(null);
   const successFlashUntilRef = useRef<Map<number, number>>(new Map());
   const lastDestroyedSoundAtRef = useRef(0);
+  const blockImmunityUntilRef = useRef(0);
 
 
   const localShipRef = useRef(
@@ -1451,6 +1452,7 @@ function PlayTestContent() {
         currentPairIndexRef.current = 0;
         eliminatedBlockIdsRef.current.clear();
         blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        blockImmunityUntilRef.current = performance.now() + 2000;
         broadcastPairAdvance(0, nextLevel);
         return false;
       }
@@ -1470,6 +1472,10 @@ function PlayTestContent() {
     const handleBlockHit = (_bullet: BulletObject, block: NumberBlockObject): boolean => {
       if (block.state === GameBlockState.ELIMINATED) {
         return false;
+      }
+
+      if (performance.now() < blockImmunityUntilRef.current) {
+        return true;
       }
 
       if (selectedBlockIdsRef.current.has(block.id)) {
