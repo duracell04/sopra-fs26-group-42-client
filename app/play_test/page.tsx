@@ -70,7 +70,7 @@ const BLOCK_STYLE = {
 // Realtime and API payload types
 type RealtimeMessage =
 |{
-  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "slow_on" | "slow_off" | "game_ready_ack";
+  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "game_ready_ack";
   playerId: number;
   x: number;
   y: number;
@@ -136,15 +136,6 @@ function formatElapsedTime(totalSeconds: number) {
     .padStart(2, "0");
 
   return `${minutes}:${seconds}`;
-}
-
-function parseTimestamp(value: string | null | undefined): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : null;
 }
 
 function sleep(ms: number) {
@@ -384,11 +375,8 @@ function PlayTestContent() {
   const [playAgainReadyCount, setPlayAgainReadyCount] = useState(0);
   const lastMoveSendRef = useRef(0);
 
-  // Pause and slow-mode (slow-mode persists in localStorage across play-again reloads)
   const isPausedRef = useRef(false);
   const [isPaused, setIsPaused] = useState(false);
-  const isSlowModeRef = useRef(false);
-  const [isSlowMode, setIsSlowMode] = useState(false);
   const [summaryState, setSummaryState] = useState<SummaryState>({ status: "idle" });
 
   // Eliminated block IDs — persists even after blocks are filtered from blocksRef
@@ -451,15 +439,6 @@ function PlayTestContent() {
     playSound(destroyedAudioRef.current);
   }, [playSound]);
 
-
-  // Restore slow mode from previous session
-  useEffect(() => {
-    const stored = localStorage.getItem("mi_slow_mode") === "1";
-    if (stored) {
-      isSlowModeRef.current = true;
-      setIsSlowMode(true);
-    }
-  }, []);
 
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
@@ -667,6 +646,11 @@ function PlayTestContent() {
       gameReadyPlayersRef.current.add(data.playerId);
       if (gameReadyPlayersRef.current.size >= 2 && problemsAppliedRef.current) {
         setIsLoadingProblems(false);
+        if (timerSourceMsRef.current === null) {
+          const now = Date.now();
+          timerSourceMsRef.current = now;
+          setTimerSourceMs(now);
+        }
       }
       return;
     }
@@ -680,18 +664,6 @@ function PlayTestContent() {
     if (data.type === "resume" && !isFromSelf) {
       isPausedRef.current = false;
       setIsPaused(false);
-      return;
-    }
-
-    if (data.type === "slow_on" && !isFromSelf) {
-      isSlowModeRef.current = true;
-      setIsSlowMode(true);
-      return;
-    }
-
-    if (data.type === "slow_off" && !isFromSelf) {
-      isSlowModeRef.current = false;
-      setIsSlowMode(false);
       return;
     }
 
@@ -867,16 +839,6 @@ function PlayTestContent() {
     }
   }, [code, sendMessage]);
 
-  const handleSlowToggle = useCallback(() => {
-    const next = !isSlowModeRef.current;
-    isSlowModeRef.current = next;
-    setIsSlowMode(next);
-    localStorage.setItem("mi_slow_mode", next ? "1" : "0");
-    if (code) {
-      sendMessage("/app/move", { type: next ? "slow_on" : "slow_off", playerId: localShipRef.current.playerId, x: 0, y: 0 });
-    }
-  }, [code, sendMessage]);
-
   // Broadcast game_ready_ack for 10 seconds after problems are ready.
   // The partner may unlock and stop sending their own acks very quickly (because
   // our acks arrived before they finished loading), so we must keep broadcasting
@@ -961,19 +923,12 @@ function PlayTestContent() {
     finishRequestStartedRef.current = true;
 
     try {
-      const finishedSession = await apiService.post<GameSession>(`/sessions/${code}/finish`, {
+      await apiService.post<GameSession>(`/sessions/${code}/finish`, {
         userId,
       });
 
-      const startedAtMsFromSession = parseTimestamp(finishedSession.startedAt);
-      if (startedAtMsFromSession !== null) {
-        timerSourceMsRef.current = startedAtMsFromSession;
-        setTimerSourceMs(startedAtMsFromSession);
-      }
-
-      const elapsedSeconds = finishedSession.elapsedSeconds ?? fallbackElapsedSeconds;
-      freezeTimer(elapsedSeconds);
-      void finishGameWithSummary(elapsedSeconds);
+      freezeTimer(fallbackElapsedSeconds);
+      void finishGameWithSummary(fallbackElapsedSeconds);
     } catch (error) {
       console.warn("Failed to synchronize finished session timer:", error);
       void finishGameWithSummary(fallbackElapsedSeconds);
@@ -1238,16 +1193,6 @@ function PlayTestContent() {
 
         if (cancelled) {
           return;
-        }
-
-        const startedAtMs = parseTimestamp(session.startedAt);
-        if (startedAtMs !== null) {
-          timerSourceMsRef.current = startedAtMs;
-          setTimerSourceMs(startedAtMs);
-        }
-
-        if (typeof session.elapsedSeconds === "number") {
-          setDisplayedElapsedSeconds(Math.max(0, session.elapsedSeconds));
         }
 
         if (session.status === "CANCELLED") {
@@ -1674,7 +1619,7 @@ function PlayTestContent() {
           return false;
         }
 
-        block.yPosition += (isSlowModeRef.current ? FALLING_BLOCK_SPEED * 0.35 : FALLING_BLOCK_SPEED) * deltaSeconds;
+        block.yPosition += FALLING_BLOCK_SPEED * deltaSeconds;
 
         if (block.yPosition >= groundLimit) {
           selectedBlockIdsRef.current.delete(block.id);
@@ -2003,23 +1948,6 @@ function PlayTestContent() {
               ← Menu
             </button>
             <div style={{ position: "absolute", top: 10, right: 10, zIndex: 5, display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={handleSlowToggle}
-                title="Toggle slow mode (blocks fall slower)"
-                style={{
-                  padding: "6px 14px",
-                  backgroundColor: isSlowMode ? "#7c4dff" : "rgba(0,0,0,0.55)",
-                  color: isSlowMode ? "#fff" : "#aaa",
-                  border: `1px solid ${isSlowMode ? "#7c4dff" : "#444"}`,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
-              >
-                {isSlowMode ? "🐢 Slow ON" : "🐢 Slow"}
-              </button>
               <button
                 type="button"
                 onClick={handlePauseToggle}
