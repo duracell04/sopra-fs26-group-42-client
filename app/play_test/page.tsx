@@ -21,8 +21,8 @@ import {
 //-----------------------------------------------------------------------------
 // -------------- Gameplay and session configuration constants ----------------
 //-----------------------------------------------------------------------------
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+const CANVAS_WIDTH = 960;
+const CANVAS_HEIGHT = 720;
 const SHIP_HALF_WIDTH = 15;
 const SHIP_MOVE_SPEED = 420;
 const FALLING_BLOCK_SPEED = 21;
@@ -46,6 +46,11 @@ const BLOCK_SPRITE_HALF_SIZE = BLOCK_SPRITE_RENDER_SIZE / 2;
 const LASER_SOUND_PATH = "/sounds/laser4.wav";
 const DESTROYED_SOUND_PATH = "/sounds/explosion.wav";
 const SUCCESS_FLASH_MS = 140;
+const HUD_MONO_FONT_FAMILY = "\"Geist Mono\", monospace";
+const LOCAL_SHIP_START_X = CANVAS_WIDTH / 2;
+const LOCAL_SHIP_START_Y = CANVAS_HEIGHT - 70;
+const REMOTE_SHIP_START_X = CANVAS_WIDTH / 3;
+const REMOTE_SHIP_START_Y = CANVAS_HEIGHT - 70;
 
 
 // Section: Canvas rendering style configuration
@@ -61,7 +66,7 @@ const BLOCK_STYLE = {
     } satisfies Record<GameBlockState, string>,
     text: {
       fillStyle: "white",
-      font: "18px Arial",
+      font: `700 19px ${HUD_MONO_FONT_FAMILY}`,
       textAlign: "center" as const,
       textBaseline: "middle" as const,
     },
@@ -232,7 +237,11 @@ function isOverlapping(
 
 // Problem data transformation helpers
 function buildBlocks(problem: MathProblem): NumberBlockObject[] {
-  const xPositions = [70, 150, 230, 310, 390, 470, 550, 630, 710, 760];
+  const horizontalPadding = 88;
+  const blockCount = problem.blocks.length;
+  const slotSpacing = blockCount > 1
+    ? (CANVAS_WIDTH - horizontalPadding * 2) / (blockCount - 1)
+    : 0;
   const pairInstanceCounts = new Array(problem.pairs.length).fill(0);
 
   return problem.blocks.map((block, idx) => {
@@ -244,7 +253,7 @@ function buildBlocks(problem: MathProblem): NumberBlockObject[] {
       name: `Block ${idx}`,
       id: block.pairIndex * 2 + pairOffset,
       value: block.value,
-      xPosition: xPositions[idx],
+      xPosition: Math.round(horizontalPadding + slotSpacing * idx),
       yPosition: -60,
       state: GameBlockState.DEFAULT,
     });
@@ -307,8 +316,8 @@ function PlayTestContent() {
       uuid: "ship-local",
       name: "Player Ship",
       playerId: getStoredUserId() ?? 1,
-      xPosition: 400,
-      yPosition: 550,
+      xPosition: LOCAL_SHIP_START_X,
+      yPosition: LOCAL_SHIP_START_Y,
     }),
   );
   const remoteShipRef = useRef(
@@ -316,11 +325,11 @@ function PlayTestContent() {
       uuid: "ship-remote",
       name: "Partner Ship",
       playerId: -1,
-      xPosition: 250,
-      yPosition: 550,
+      xPosition: REMOTE_SHIP_START_X,
+      yPosition: REMOTE_SHIP_START_Y,
     }),
   );
-  const remoteTargetRef = useRef({ x: 250, y: 550 });
+  const remoteTargetRef = useRef({ x: REMOTE_SHIP_START_X, y: REMOTE_SHIP_START_Y });
 
   const scoreRef = useRef(0);
 
@@ -1296,7 +1305,7 @@ function PlayTestContent() {
 
       ctx.save();
       ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
-      ctx.font = "bold 18px Arial";
+	      ctx.font = BLOCK_STYLE.block.text.font;
       ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
       ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
       ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
@@ -1371,48 +1380,8 @@ function PlayTestContent() {
       ctx.fill();
     };
 
-
-    const drawHud = () => {
-      const problem = problemsRef.current[currentLevelRef.current];
-      const pair = problem?.pairs[currentPairIndexRef.current];
-      const elapsedSeconds = finalElapsedSecondsRef.current ?? displayedElapsedSecondsRef.current;
-
-      if (!pair) {
-        return;
-      }
-
-      const clearedCount = currentPairIndexRef.current;
-
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(0, 0, CANVAS_WIDTH, 64);
-
-      ctx.fillStyle = "#00d4ff";
-      ctx.font = "bold 22px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`TARGET: ${pair.product}`, CANVAS_WIDTH / 2, 25);
-
-      ctx.fillStyle = "#aaa";
-      ctx.font = "14px Arial";
-      ctx.textAlign = "left";
-      ctx.fillText(`Level ${currentLevelRef.current + 1}`, 12, 18);
-
-      ctx.fillStyle = "#2ecc71";
-      ctx.fillText(`Score: ${scoreRef.current}`, 12, 36);
-
-      ctx.fillStyle = "#ff7675";
-      ctx.fillText(`Life: ${lifeRef.current}`, 12, 54);
-      ctx.fillStyle = "#aaa";
-      ctx.fillText(`Time: ${formatElapsedTime(elapsedSeconds)}`, 160, 18);
-
-      ctx.fillStyle = "#aaa";
-      ctx.textAlign = "right";
-      ctx.fillText(`Pairs: ${clearedCount}/5`, CANVAS_WIDTH - 12, 18);
-      ctx.fillText(`Points: ${scoreRef.current}`, CANVAS_WIDTH - 12, 36);
-    };
-
-    const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
-      if (!code) return;
+	    const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
+	      if (!code) return;
       sendMessage("/app/move", {
         type: "pair_advance",
         playerId: localShipRef.current.playerId,
@@ -1693,9 +1662,8 @@ function PlayTestContent() {
         }
       }
 
-      bulletsRef.current = nextBullets;
-      drawHud();
-    };
+	      bulletsRef.current = nextBullets;
+	    };
 
     animationId = requestAnimationFrame(gameLoop);
 
@@ -1776,351 +1744,163 @@ function PlayTestContent() {
     };
   }, [code, completeGame, decreaseLife, increaseScore, playDestroyedSound, playSound, scheduleIncorrectReset, sendMessage, triggerGameOver]);
 
-  // UI layout and loading overlay
+  const currentProblem = problemsRef.current[currentLevelRef.current];
+  const currentPair = currentProblem?.pairs[currentPairIndexRef.current];
+  const totalPairs = currentProblem?.pairs.length ?? 0;
+  const currentPairNumber = totalPairs > 0
+    ? Math.min(currentPairIndexRef.current + 1, totalPairs)
+    : 0;
+  const currentTarget = currentPair?.product ?? "--";
+  const sessionLabel = code ? `Session ${code}` : "Direct Start";
+  const pilotLabel = code
+    ? (isLocalCreatorRef.current ? "Host Pilot" : "Wing Pilot")
+    : "Solo Pilot";
+  const leaveGameHref = code ? `/session/waiting?code=${code}` : "/menu";
+  const playAgainLabel = code && localPlayAgainReadyRef.current
+    ? `Ready ${playAgainReadyCount}/2`
+    : "Play Again";
+
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "#050b1a",
-        position: "relative",
-      }}
-    >
-      {isLoadingProblems && summaryState.status === "idle" && (
+    <div className="game-shell">
+      <div className="game-stage-frame">
         <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 24,
-            zIndex: 10,
-            padding: 24,
-            textAlign: "center",
-          }}
+          className={`game-stage-frame__content${
+            isLoadingProblems && summaryState.status === "idle" ? " game-stage-frame__content--hidden" : ""
+          }`}
         >
-          <div
-            style={{
-              color: "#00d4ff",
-              fontSize: 28,
-              fontFamily: "monospace",
-              fontWeight: 900,
-              letterSpacing: 4,
-            }}
-          >
-            MATH INVADERS
-          </div>
-          <div style={{ color: loadingError ? "#ff7875" : "#aaa", fontSize: 16, maxWidth: 560 }}>
-            {loadingStatus}
-          </div>
-  
-          <div // add loading bar
-            style={{
-              width: "min(560px, 88vw)",
-              height: 14,
-              borderRadius: 999,
-              backgroundColor: "rgba(255,255,255,0.1)",
-              overflow: "hidden",
-              border: `1px solid ${loadingError ? "rgba(255,120,117,0.55)" : "rgba(0,212,255,0.35)"}`,
-            }}
-          >
-            <div
-              style={{
-                width: `${loadingProgress}%`,
-                height: "100%",
-                background: loadingError
-                  ? "linear-gradient(90deg, #ff4d4f 0%, #ff7875 100%)"
-                  : "linear-gradient(90deg, #00d4ff 0%, #4af7ff 100%)",
-                boxShadow: loadingError
-                  ? "0 0 12px rgba(255, 77, 79, 0.6)"
-                  : "0 0 16px rgba(0, 212, 255, 0.55)",
-                transition: "width 280ms ease",
-              }}
-            />
-          </div>
-          <div
-            style={{
-              color: loadingError ? "#ff9a98" : "#75e9ff",
-              fontSize: 12,
-              fontFamily: "monospace",
-              letterSpacing: 1,
-            }}
-          >
-            {loadingProgress}%
-          </div>
-
-          {loadingError ? (
-            <div style={{ display: "flex", gap: 12 }}>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                style={{
-                  padding: "10px 18px",
-                  backgroundColor: "#00d4ff",
-                  color: "#001018",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                Retry
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = code ? `/session/waiting?code=${code}` : "/menu";
-                }}
-                style={{
-                  padding: "10px 18px",
-                  backgroundColor: "#1a1a2e",
-                  color: "#e0e0e0",
-                  border: "1px solid #444",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                Leave Game
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: "flex", gap: 8 }}>
-              {[0, 1, 2].map((dot) => (
-                <div
-                  key={dot}
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    backgroundColor: "#00d4ff",
-                    animation: `pulse 1.2s ease-in-out ${dot * 0.4}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <style>{`@keyframes pulse { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }`}</style>
-        </div>
-      )}
-
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          visibility: isLoadingProblems ? "hidden" : "visible",
-        }}
-      >
-        {!isGameFinished && !isPenaltyGameOver && (
-          <>
+          <div className="game-topbar">
             <button
               type="button"
-              onClick={() => { window.location.href = "/menu"; }}
-              style={{
-                position: "absolute",
-                top: 10,
-                left: 10,
-                zIndex: 5,
-                padding: "6px 14px",
-                backgroundColor: "rgba(0,0,0,0.55)",
-                color: "#aaa",
-                border: "1px solid #444",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontWeight: 600,
-                fontSize: 13,
+              className="game-control-button"
+              onClick={() => {
+                window.location.href = "/menu";
               }}
             >
-              ← Menu
+              Menu
             </button>
-            <div style={{ position: "absolute", top: 10, right: 10, zIndex: 5, display: "flex", gap: 8 }}>
+
+            <div className="game-status-pills">
+              <span className="game-status-pill">{sessionLabel}</span>
+              <span className="game-status-pill game-status-pill--accent">{pilotLabel}</span>
+            </div>
+
+            {!isGameFinished && !isPenaltyGameOver ? (
               <button
                 type="button"
+                className={`game-control-button${isPaused ? " game-control-button--warning" : ""}`}
                 onClick={handlePauseToggle}
                 title="Pause / Resume (P)"
-                style={{
-                  padding: "6px 14px",
-                  backgroundColor: isPaused ? "#ff9800" : "rgba(0,0,0,0.55)",
-                  color: isPaused ? "#000" : "#aaa",
-                  border: `1px solid ${isPaused ? "#ff9800" : "#444"}`,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
               >
-                {isPaused ? "▶ Resume" : "⏸ Pause"}
+                {isPaused ? "Resume" : "Pause"}
               </button>
+            ) : (
+              <div className="game-topbar-spacer" aria-hidden="true" />
+            )}
+          </div>
+
+          <div className="game-hud-grid">
+            <div className="game-hud-card game-hud-card--target">
+              <span className="game-hud-label">Target Product</span>
+              <strong className="game-hud-value game-hud-value--target">{currentTarget}</strong>
+              <span className="game-hud-note">
+                {totalPairs > 0
+                  ? `Current pair ${currentPairNumber} of ${totalPairs}`
+                  : "Generating the next wave"}
+              </span>
             </div>
-          </>
-        )}
+
+            <div className="game-hud-card">
+              <span className="game-hud-label">Level</span>
+              <strong className="game-hud-value">
+                {problemsRef.current.length ? currentLevelRef.current + 1 : "--"}
+              </strong>
+            </div>
+
+            <div className="game-hud-card">
+              <span className="game-hud-label">Score</span>
+              <strong className="game-hud-value game-hud-value--score">{scoreUi}</strong>
+            </div>
+
+            <div className="game-hud-card">
+              <span className="game-hud-label">Lives</span>
+              <strong className="game-hud-value game-hud-value--danger">{lifeUi}</strong>
+            </div>
+
+            <div className="game-hud-card">
+              <span className="game-hud-label">Time</span>
+              <strong className="game-hud-value">
+                {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
+              </strong>
+            </div>
+          </div>
+
+          <div className="game-stage">
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              className="game-canvas"
+            />
+
+            {isErrorFlash && <div className="game-stage-flash" />}
+          </div>
+        </div>
 
         {isPaused && !isGameFinished && !isPenaltyGameOver && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(0,0,0,0.72)",
-              zIndex: 15,
-              gap: 20,
-            }}
-          >
-            <div style={{ color: "#ff9800", fontFamily: "monospace", fontSize: 36, fontWeight: 900, letterSpacing: 4 }}>
-              PAUSED
-            </div>
-            <div style={{ color: "#888", fontSize: 14 }}>Press P or click Resume to continue</div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button
-                type="button"
-                onClick={handlePauseToggle}
-                style={{
-                  padding: "12px 28px",
-                  backgroundColor: "#ff9800",
-                  color: "#000",
-                  border: "none",
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  fontWeight: 800,
-                  fontSize: 16,
-                }}
-              >
-                ▶ Resume
-              </button>
-              <button
-                type="button"
-                onClick={() => { window.location.href = "/menu"; }}
-                style={{
-                  padding: "12px 28px",
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                  color: "#ccc",
-                  border: "1px solid #555",
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  fontSize: 16,
-                }}
-              >
-                ← Menu
-              </button>
+          <div className="game-overlay">
+            <div className="game-modal">
+              <div className="game-modal__kicker game-modal__kicker--warm">Pause Menu</div>
+              <h2 className="game-modal__title">Systems on standby</h2>
+              <p className="game-modal__subtitle">
+                Press <span className="game-inline-key">P</span> or use Resume to jump back in.
+              </p>
+
+              <div className="game-modal__actions">
+                <button
+                  type="button"
+                  className="game-button game-button--warning"
+                  onClick={handlePauseToggle}
+                >
+                  Resume Run
+                </button>
+                <button
+                  type="button"
+                  className="game-button game-button--ghost"
+                  onClick={() => {
+                    window.location.href = "/menu";
+                  }}
+                >
+                  Return to Menu
+                </button>
+              </div>
             </div>
           </div>
         )}
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          style={{ border: "1px solid #8fd8ff", boxShadow: "0 0 40px rgba(0, 212, 255, 0.18)" }}
 
-        />
-        {isErrorFlash && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: "rgba(220, 0, 0, 0.35)",
-              pointerEvents: "none",
-            }}
-          />
-        )}
         {isGameFinished && !isPenaltyGameOver && !isLoadingProblems && summaryState.status === "idle" && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(0, 0, 0, 0.68)",
-              zIndex: 20,
-              padding: 24,
-            }}
-          >
-            <div
-              style={{
-                width: "min(420px, 100%)",
-                padding: 28,
-                borderRadius: 16,
-                border: "1px solid #1f6f8b",
-                backgroundColor: "#08131f",
-                color: "#e8f7ff",
-                textAlign: "center",
-                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.45)",
-              }}
-            >
-              <div
-                style={{
-                  color: "#00d4ff",
-                  fontFamily: "monospace",
-                  fontSize: 28,
-                  fontWeight: 900,
-                  letterSpacing: 2,
-                  marginBottom: 12,
-                }}
-              >
-                Game finished
-              </div>
-              <div style={{ fontSize: 16, color: "#9bc4d8", marginBottom: 8 }}>
-                Final elapsed time
-              </div>
-              <div
-                style={{
-                  fontSize: 40,
-                  fontWeight: 900,
-                  fontFamily: "monospace",
-                  color: "#ffffff",
-                  marginBottom: 16,
-                }}
-              >
+          <div className="game-overlay">
+            <div className="game-modal">
+              <div className="game-modal__kicker">Stage Clear</div>
+              <h2 className="game-modal__title">Target zone secured</h2>
+              <p className="game-modal__subtitle">Final elapsed time</p>
+              <div className="game-modal__time">
                 {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
               </div>
-              <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+
+              <div className="game-modal__actions">
                 <button
                   type="button"
+                  className="game-button game-button--accent"
                   onClick={handlePlayAgainReady}
                   disabled={localPlayAgainReadyRef.current}
-                  style={{
-                    padding: "12px 18px",
-                    border: "none",
-                    borderRadius: 10,
-                    backgroundColor: localPlayAgainReadyRef.current ? "#0a8fa8" : "#00d4ff",
-                    color: "#031019",
-                    fontWeight: 800,
-                    cursor: localPlayAgainReadyRef.current ? "default" : "pointer",
-                    minWidth: 160,
-                    opacity: localPlayAgainReadyRef.current ? 0.7 : 1,
-                  }}
                 >
-                  {code
-                    ? localPlayAgainReadyRef.current
-                      ? `Ready ${playAgainReadyCount}/2`
-                      : "Play Again"
-                    : "Play Again"}
+                  {playAgainLabel}
                 </button>
                 <button
                   type="button"
+                  className="game-button game-button--ghost"
                   onClick={() => {
                     window.location.href = "/menu";
-                  }}
-                  style={{
-                    padding: "12px 18px",
-                    border: "1px solid #1f6f8b",
-                    borderRadius: 10,
-                    backgroundColor: "#08131f",
-                    color: "#e8f7ff",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    minWidth: 140,
                   }}
                 >
                   Leave Game
@@ -2129,83 +1909,30 @@ function PlayTestContent() {
             </div>
           </div>
         )}
+
         {isPenaltyGameOver && !isLoadingProblems && summaryState.status === "idle" && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(0, 0, 0, 0.68)",
-              zIndex: 20,
-              padding: 24,
-            }}
-          >
-            <div
-              style={{
-                width: "min(420px, 100%)",
-                padding: 28,
-                borderRadius: 16,
-                border: "1px solid #8b1f1f",
-                backgroundColor: "#160b0b",
-                color: "#f7eaea",
-                textAlign: "center",
-                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.45)",
-              }}
-            >
-              <div
-                style={{
-                  color: "#ff6b6b",
-                  fontFamily: "monospace",
-                  fontSize: 28,
-                  fontWeight: 900,
-                  letterSpacing: 2,
-                  marginBottom: 12,
-                }}
-              >
-                Game Over
-              </div>
-              <div style={{ fontSize: 16, color: "#d8b1b1", marginBottom: 20 }}>
-                Shared lives reached zero.
-              </div>
-              <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+          <div className="game-overlay">
+            <div className="game-modal game-modal--danger">
+              <div className="game-modal__kicker game-modal__kicker--danger">Game Over</div>
+              <h2 className="game-modal__title">Shared shields depleted</h2>
+              <p className="game-modal__subtitle game-modal__subtitle--danger">
+                Your team lost all remaining lives before clearing the stage.
+              </p>
+
+              <div className="game-modal__actions">
                 <button
                   type="button"
+                  className="game-button game-button--danger"
                   onClick={handlePlayAgainReady}
                   disabled={localPlayAgainReadyRef.current}
-                  style={{
-                    padding: "12px 18px",
-                    border: "none",
-                    borderRadius: 10,
-                    backgroundColor: localPlayAgainReadyRef.current ? "#7f2122" : "#ff4d4f",
-                    color: "#fff5f5",
-                    fontWeight: 800,
-                    cursor: localPlayAgainReadyRef.current ? "default" : "pointer",
-                    minWidth: 160,
-                    opacity: localPlayAgainReadyRef.current ? 0.7 : 1,
-                  }}
                 >
-                  {code
-                    ? localPlayAgainReadyRef.current
-                      ? `Ready ${playAgainReadyCount}/2`
-                      : "Play Again"
-                    : "Play Again"}
+                  {playAgainLabel}
                 </button>
                 <button
                   type="button"
+                  className="game-button game-button--ghost"
                   onClick={() => {
                     window.location.href = "/menu";
-                  }}
-                  style={{
-                    padding: "12px 18px",
-                    border: "1px solid #5b3d3d",
-                    borderRadius: 10,
-                    backgroundColor: "#241414",
-                    color: "#f0e4e4",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    minWidth: 140,
                   }}
                 >
                   Leave Game
@@ -2214,6 +1941,7 @@ function PlayTestContent() {
             </div>
           </div>
         )}
+
         {summaryState.status !== "idle" && (
           <GameSummaryOverlay
             summaryState={summaryState}
@@ -2224,6 +1952,62 @@ function PlayTestContent() {
           />
         )}
       </div>
+
+      {isLoadingProblems && summaryState.status === "idle" && (
+        <div className="game-overlay game-overlay--fullscreen">
+          <div className={`game-modal game-modal--wide${loadingError ? " game-modal--danger" : ""}`}>
+            <div className={`game-modal__kicker${loadingError ? " game-modal__kicker--danger" : ""}`}>
+              Math Invaders
+            </div>
+            <h2 className="game-modal__title">
+              {loadingError ? "Launch interrupted" : "Preparing the battle grid"}
+            </h2>
+            <p className={`game-modal__subtitle${loadingError ? " game-modal__subtitle--danger" : ""}`}>
+              {loadingStatus}
+            </p>
+
+            <div className="game-loading-bar">
+              <div
+                className={`game-loading-bar__fill${loadingError ? " game-loading-bar__fill--danger" : ""}`}
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+
+            <div className="game-loading-percent">{loadingProgress}% synced</div>
+
+            {loadingError ? (
+              <div className="game-modal__actions">
+                <button
+                  type="button"
+                  className="game-button game-button--accent"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  className="game-button game-button--ghost"
+                  onClick={() => {
+                    window.location.href = leaveGameHref;
+                  }}
+                >
+                  Leave Game
+                </button>
+              </div>
+            ) : (
+              <div className="game-loading-dots" aria-hidden="true">
+                {[0, 1, 2].map((dot) => (
+                  <span
+                    key={dot}
+                    className="game-loading-dot"
+                    style={{ animationDelay: `${dot * 0.18}s` }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2231,22 +2015,8 @@ function PlayTestContent() {
 // Suspense fallback component
 function PlayTestFallback() {
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#0a0a0a",
-        color: "#00d4ff",
-        fontFamily: "monospace",
-        fontSize: 20,
-        fontWeight: 900,
-        letterSpacing: 3,
-      }}
-    >
-      MATH INVADERS
+    <div className="game-shell game-shell--fallback">
+      <div className="game-fallback-wordmark">MATH INVADERS</div>
     </div>
   );
 }

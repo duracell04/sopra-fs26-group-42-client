@@ -28,74 +28,26 @@ export function GameSummaryOverlay({
   onReturnToMenu,
 }: GameSummaryOverlayProps) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.68)",
-        zIndex: 30,
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: "min(540px, 100%)",
-          padding: 28,
-          borderRadius: 8,
-          border: "1px solid #30456f",
-          backgroundColor: "#101a31",
-          color: "#f7fbff",
-          textAlign: "left",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.45)",
-          position: "relative",
-        }}
-      >
+    <div className="game-overlay">
+      <div className="game-modal game-modal--wide">
         <button
           type="button"
           aria-label="Return to menu"
+          className="game-modal__close"
           onClick={onReturnToMenu}
-          style={{
-            position: "absolute",
-            top: 14,
-            right: 14,
-            width: 34,
-            height: 34,
-            borderRadius: 999,
-            border: "1px solid #3e5888",
-            backgroundColor: "#16213e",
-            color: "#e8f1ff",
-            cursor: "pointer",
-            fontSize: 20,
-            lineHeight: "28px",
-          }}
         >
-          X
+          x
         </button>
 
-        <div
-          style={{
-            color: "#00d4ff",
-            fontFamily: "monospace",
-            fontSize: 14,
-            fontWeight: 900,
-            letterSpacing: 3,
-            marginBottom: 8,
-            textTransform: "uppercase",
-          }}
-        >
-          Game Summary
-        </div>
-        <div style={{ fontSize: 30, fontWeight: 900, marginBottom: 20 }}>
+        <div className="game-modal__kicker">Game Summary</div>
+        <h2 className="game-modal__title">
           {summaryState.status === "loading" ? "Saving final run..." : "Game Over"}
-        </div>
+        </h2>
 
         {summaryState.status === "loading" ? (
-          <div style={{ color: "#b6c8e8", fontSize: 16 }}>
+          <p className="game-modal__subtitle">
             Generating feedback and saving your score.
-          </div>
+          </p>
         ) : (
           <SummaryContent
             summaryState={summaryState}
@@ -120,25 +72,10 @@ function SummaryContent({
   return (
     <>
       {summaryState.status === "error" && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "12px 16px", borderRadius: 8, marginBottom: 16,
-          backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
-          color: "#ff7875", fontWeight: 600, fontSize: 15,
-        }}>
-          <span style={{ fontSize: 18 }}>⚠</span>
-          Error: {summaryState.error}
-        </div>
+        <div className="game-error-banner">Error: {summaryState.error}</div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 12,
-          marginBottom: 18,
-        }}
-      >
+      <div className="game-summary-grid">
         <SummaryMetric label="Score" value={String(summaryState.data.score)} />
         <SummaryMetric label="Time" value={formatElapsedTime(summaryState.data.elapsedSeconds)} />
         {summaryState.source === "backend" && (
@@ -150,49 +87,15 @@ function SummaryContent({
       </div>
 
       {summaryState.source === "backend" && summaryState.data.newHighscore && (
-        <div
-          style={{
-            padding: "10px 12px",
-            borderRadius: 8,
-            backgroundColor: "#123626",
-            border: "1px solid #2f9f70",
-            color: "#b8f0d9",
-            fontWeight: 800,
-            marginBottom: 16,
-            textAlign: "center",
-          }}
-        >
-          New Highscore
-        </div>
+        <div className="game-summary-banner">New Highscore</div>
       )}
 
-      <div
-        style={{
-          padding: 16,
-          borderRadius: 8,
-          backgroundColor: "#16213e",
-          border: "1px solid #30456f",
-          color: "#dce8ff",
-          lineHeight: 1.5,
-          marginBottom: 18,
-        }}
-      >
-        {summaryState.data.feedback}
-      </div>
+      <div className="game-summary-feedback">{summaryState.data.feedback}</div>
 
       <button
         type="button"
+        className="game-button game-button--accent game-button--full"
         onClick={onReturnToMenu}
-        style={{
-          width: "100%",
-          padding: "12px 18px",
-          border: "none",
-          borderRadius: 8,
-          backgroundColor: "#00d4ff",
-          color: "#001018",
-          fontWeight: 900,
-          cursor: "pointer",
-        }}
       >
         Return to Menu
       </button>
@@ -202,29 +105,9 @@ function SummaryContent({
 
 function SummaryMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        padding: 14,
-        borderRadius: 8,
-        backgroundColor: "#16213e",
-        border: "1px solid #30456f",
-      }}
-    >
-      <div
-        style={{
-          color: "#98abd2",
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: 1.5,
-          textTransform: "uppercase",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </div>
-      <div style={{ color: "#fff", fontSize: 24, fontWeight: 900 }}>
-        {value}
-      </div>
+    <div className="game-summary-metric">
+      <div className="game-summary-metric__label">{label}</div>
+      <div className="game-summary-metric__value">{value}</div>
     </div>
   );
 }
