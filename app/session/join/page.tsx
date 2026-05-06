@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Alert, Button, Card, Input, Space, Spin, Typography } from "antd";
+import { Button, Card, Input, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
 import { GameSession } from "@/types/session";
 
@@ -11,8 +11,11 @@ const { Title, Text } = Typography;
 const normalizeSessionCode = (value: string) =>
   value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 
-const formatErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof Error ? error.message : fallback;
+const formatErrorMessage = (error: unknown, fallback: string): string => {
+  const message = error instanceof Error ? error.message : fallback;
+  if (/not found/i.test(message)) return "Wrong Session Code";
+  return message;
+};
 
 function getStoredUserId() {
   if (typeof window === "undefined") {
@@ -299,7 +302,23 @@ function JoinSessionPageContent() {
             />
           </Space>
 
-          {error && <Alert message={error} type="error" showIcon />}
+          {error && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "12px 16px",
+              borderRadius: 8,
+              backgroundColor: "#2a0a0a",
+              border: "1px solid #ff4d4f",
+              color: "#ff7875",
+              fontWeight: 600,
+              fontSize: 15,
+            }}>
+              <span style={{ fontSize: 18 }}>⚠</span>
+              Error: {error}
+            </div>
+          )}
 
           <Space style={{ width: "100%" }} size="middle">
             <Button
