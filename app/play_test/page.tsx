@@ -35,13 +35,10 @@ const INCORRECT_FLASH_MS = 1000;
 const BACKGROUND_SPRITE_PATH = "/sprites/space-background.png";
 const HOST_SHIP_SPRITE_PATH = "/sprites/ship-host.png";
 const JOINER_SHIP_SPRITE_PATH = "/sprites/ship-joiner.png";
-const BLOCK_SPRITE_PATH = "/sprites/asteroid.png";
 const SHIP_RENDER_WIDTH = 64;
 const SHIP_RENDER_HEIGHT = 64;
 const SHIP_RENDER_HALF_WIDTH = SHIP_RENDER_WIDTH / 2;
 const SHIP_RENDER_HALF_HEIGHT = SHIP_RENDER_HEIGHT / 2;
-const BLOCK_SPRITE_RENDER_SIZE = 70;
-const BLOCK_SPRITE_HALF_SIZE = BLOCK_SPRITE_RENDER_SIZE / 2;
 
 const LASER_SOUND_PATH = "/sounds/laser4.wav";
 const DESTROYED_SOUND_PATH = "/sounds/explosion.wav";
@@ -296,16 +293,15 @@ function PlayTestContent() {
 
   // Section: Refs for canvas, controls, and entities
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const bulletsRef = useRef<BulletObject[]>([]);
-  const pressedKeysRef = useRef({ left: false, right: false });
+	  const bulletsRef = useRef<BulletObject[]>([]);
+	  const pressedKeysRef = useRef({ left: false, right: false });
 
-  const backgroundSpriteRef = useRef<HTMLImageElement | null>(null);
-  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
-  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
-  const blockSpriteRef = useRef<HTMLImageElement | null>(null);
-  
-  const laserAudioRef = useRef<HTMLAudioElement | null>(null);
-  const destroyedAudioRef = useRef<HTMLAudioElement | null>(null);
+	  const backgroundSpriteRef = useRef<HTMLImageElement | null>(null);
+	  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
+	  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
+	  
+	  const laserAudioRef = useRef<HTMLAudioElement | null>(null);
+	  const destroyedAudioRef = useRef<HTMLAudioElement | null>(null);
   const successFlashUntilRef = useRef<Map<number, number>>(new Map());
   const lastDestroyedSoundAtRef = useRef(0);
   const blockImmunityUntilRef = useRef(0);
@@ -399,13 +395,12 @@ function PlayTestContent() {
     };
 
 
-    backgroundSpriteRef.current = loadImage(BACKGROUND_SPRITE_PATH);
-    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
-    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
-    blockSpriteRef.current = loadImage(BLOCK_SPRITE_PATH);
+	    backgroundSpriteRef.current = loadImage(BACKGROUND_SPRITE_PATH);
+	    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
+	    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
 
-    laserAudioRef.current = loadAudio(LASER_SOUND_PATH);
-    destroyedAudioRef.current = loadAudio(DESTROYED_SOUND_PATH);
+	    laserAudioRef.current = loadAudio(LASER_SOUND_PATH);
+	    destroyedAudioRef.current = loadAudio(DESTROYED_SOUND_PATH);
   }, []);
 
 
@@ -1240,79 +1235,82 @@ function PlayTestContent() {
     let animationId = 0;
     let lastTimestamp: number | null = null;
 
-    const drawBlock = (block: NumberBlockObject) => {
-      const successFlashUntil = successFlashUntilRef.current.get(block.id);
-      const isSuccessFlashing =
+	    const drawBlock = (block: NumberBlockObject) => {
+	      const successFlashUntil = successFlashUntilRef.current.get(block.id);
+	      const isSuccessFlashing =
         block.state === GameBlockState.ELIMINATED &&
         typeof successFlashUntil === "number" &&
         successFlashUntil > performance.now();
 
-      if (block.state === GameBlockState.ELIMINATED && !isSuccessFlashing) {
-        return;
-      }
+	      if (block.state === GameBlockState.ELIMINATED && !isSuccessFlashing) {
+	        return;
+	      }
 
-      const spriteLeft = block.xPosition - BLOCK_SPRITE_HALF_SIZE;
-      const spriteTop = block.yPosition - BLOCK_SPRITE_HALF_SIZE;
+	      ctx.save();
+	      ctx.translate(block.xPosition, block.yPosition);
 
-      const tint =
-        isSuccessFlashing
-          ? "rgba(46, 204, 113, 0.45)"
-          : block.state === GameBlockState.SELECTED
-            ? "rgba(241, 196, 15, 0.45)"
-            : block.state === GameBlockState.INCORRECT
-              ? "rgba(231, 76, 60, 0.45)"
-              : null;
+	      const hullColor = isSuccessFlashing
+	        ? "#7ff3a9"
+	        : block.state === GameBlockState.SELECTED
+	          ? "#ffd786"
+	          : block.state === GameBlockState.INCORRECT
+	            ? "#ff9d9d"
+	            : "#9fd3ff";
+	      const domeColor = isSuccessFlashing
+	        ? "#d6ffea"
+	        : block.state === GameBlockState.SELECTED
+	          ? "#fff0c2"
+	          : block.state === GameBlockState.INCORRECT
+	            ? "#ffe1e1"
+	            : "#e7f7ff";
+	      const glowColor = isSuccessFlashing
+	        ? "rgba(127, 243, 169, 0.45)"
+	        : block.state === GameBlockState.SELECTED
+	          ? "rgba(255, 215, 134, 0.38)"
+	          : block.state === GameBlockState.INCORRECT
+	            ? "rgba(255, 107, 107, 0.34)"
+	            : "rgba(159, 211, 255, 0.34)";
 
-      const blockSprite = blockSpriteRef.current;
+	      ctx.fillStyle = glowColor;
+	      ctx.beginPath();
+	      ctx.ellipse(0, 15, 30, 7, 0, 0, Math.PI * 2);
+	      ctx.fill();
 
-      if (isLoadedImage(blockSprite)) {
-        ctx.drawImage(
-          blockSprite,
-          spriteLeft,
-          spriteTop,
-          BLOCK_SPRITE_RENDER_SIZE,
-          BLOCK_SPRITE_RENDER_SIZE,
-        );
+	      ctx.shadowColor = glowColor;
+	      ctx.shadowBlur = 18;
 
-        if (tint) {
-          ctx.save();
-          ctx.globalCompositeOperation = "source-atop";
-          ctx.fillStyle = tint;
-          ctx.fillRect(
-            spriteLeft,
-            spriteTop,
-            BLOCK_SPRITE_RENDER_SIZE,
-            BLOCK_SPRITE_RENDER_SIZE,
-          );
-          ctx.restore();
-        }
-      } else {
-        ctx.fillStyle = isSuccessFlashing
-          ? "#2ecc71"
-          : BLOCK_STYLE.block.fillByState[
-              block.state === GameBlockState.ELIMINATED
-                ? GameBlockState.DEFAULT
-                : block.state
-            ];
+	      ctx.fillStyle = hullColor;
+	      ctx.beginPath();
+	      ctx.ellipse(0, 4, 28, 12, 0, 0, Math.PI * 2);
+	      ctx.fill();
+	      ctx.strokeStyle = "rgba(6, 18, 34, 0.72)";
+	      ctx.lineWidth = 2;
+	      ctx.stroke();
 
-        ctx.fillRect(
-          block.xPosition - BLOCK_STYLE.block.halfSize,
-          block.yPosition - BLOCK_STYLE.block.halfSize,
-          BLOCK_STYLE.block.size,
-          BLOCK_STYLE.block.size,
-        );
-      }
+	      ctx.shadowBlur = 10;
+	      ctx.fillStyle = domeColor;
+	      ctx.beginPath();
+	      ctx.ellipse(0, -6, 15, 10, 0, Math.PI, 0, true);
+	      ctx.closePath();
+	      ctx.fill();
 
-      ctx.save();
-      ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
-	      ctx.font = BLOCK_STYLE.block.text.font;
-      ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
-      ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
-      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
-      ctx.shadowBlur = 6;
-      ctx.fillText(String(block.value), block.xPosition, block.yPosition);
-      ctx.restore();
-    };
+	      const windowColors = ["#4ed3ff", "#ffd786", "#4ed3ff"];
+	      for (let i = -1; i <= 1; i += 1) {
+	        ctx.fillStyle = windowColors[i + 1];
+	        ctx.beginPath();
+	        ctx.arc(i * 10, 4, 3.3, 0, Math.PI * 2);
+	        ctx.fill();
+	      }
+
+	      ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
+	      ctx.font = "800 18px \"Geist Mono\", monospace";
+	      ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
+	      ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
+	      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+	      ctx.shadowBlur = 6;
+	      ctx.fillText(String(block.value), 0, 4);
+	      ctx.restore();
+	    };
 
 
     const drawCoverImage = (
@@ -1746,15 +1744,7 @@ function PlayTestContent() {
 
   const currentProblem = problemsRef.current[currentLevelRef.current];
   const currentPair = currentProblem?.pairs[currentPairIndexRef.current];
-  const totalPairs = currentProblem?.pairs.length ?? 0;
-  const currentPairNumber = totalPairs > 0
-    ? Math.min(currentPairIndexRef.current + 1, totalPairs)
-    : 0;
   const currentTarget = currentPair?.product ?? "--";
-  const sessionLabel = code ? `Session ${code}` : "Direct Start";
-  const pilotLabel = code
-    ? (isLocalCreatorRef.current ? "Host Pilot" : "Wing Pilot")
-    : "Solo Pilot";
   const leaveGameHref = code ? `/session/waiting?code=${code}` : "/menu";
   const playAgainLabel = code && localPlayAgainReadyRef.current
     ? `Ready ${playAgainReadyCount}/2`
@@ -1768,7 +1758,7 @@ function PlayTestContent() {
             isLoadingProblems && summaryState.status === "idle" ? " game-stage-frame__content--hidden" : ""
           }`}
         >
-          <div className="game-topbar">
+          <div className="game-external-controls">
             <button
               type="button"
               className="game-control-button"
@@ -1779,12 +1769,7 @@ function PlayTestContent() {
               Menu
             </button>
 
-            <div className="game-status-pills">
-              <span className="game-status-pill">{sessionLabel}</span>
-              <span className="game-status-pill game-status-pill--accent">{pilotLabel}</span>
-            </div>
-
-            {!isGameFinished && !isPenaltyGameOver ? (
+            {!isGameFinished && !isPenaltyGameOver && (
               <button
                 type="button"
                 className={`game-control-button${isPaused ? " game-control-button--warning" : ""}`}
@@ -1793,45 +1778,7 @@ function PlayTestContent() {
               >
                 {isPaused ? "Resume" : "Pause"}
               </button>
-            ) : (
-              <div className="game-topbar-spacer" aria-hidden="true" />
             )}
-          </div>
-
-          <div className="game-hud-grid">
-            <div className="game-hud-card game-hud-card--target">
-              <span className="game-hud-label">Target Product</span>
-              <strong className="game-hud-value game-hud-value--target">{currentTarget}</strong>
-              <span className="game-hud-note">
-                {totalPairs > 0
-                  ? `Current pair ${currentPairNumber} of ${totalPairs}`
-                  : "Generating the next wave"}
-              </span>
-            </div>
-
-            <div className="game-hud-card">
-              <span className="game-hud-label">Level</span>
-              <strong className="game-hud-value">
-                {problemsRef.current.length ? currentLevelRef.current + 1 : "--"}
-              </strong>
-            </div>
-
-            <div className="game-hud-card">
-              <span className="game-hud-label">Score</span>
-              <strong className="game-hud-value game-hud-value--score">{scoreUi}</strong>
-            </div>
-
-            <div className="game-hud-card">
-              <span className="game-hud-label">Lives</span>
-              <strong className="game-hud-value game-hud-value--danger">{lifeUi}</strong>
-            </div>
-
-            <div className="game-hud-card">
-              <span className="game-hud-label">Time</span>
-              <strong className="game-hud-value">
-                {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
-              </strong>
-            </div>
           </div>
 
           <div className="game-stage">
@@ -1841,6 +1788,39 @@ function PlayTestContent() {
               height={CANVAS_HEIGHT}
               className="game-canvas"
             />
+
+            <div className="game-stage-hud" aria-hidden="true">
+              <div className="game-stage-hud__cluster game-stage-hud__cluster--left">
+                <div className="game-stage-hud__metric">
+                  <span className="game-stage-hud__label">LVL</span>
+                  <strong className="game-stage-hud__value">
+                    {problemsRef.current.length ? currentLevelRef.current + 1 : "--"}
+                  </strong>
+                </div>
+                <div className="game-stage-hud__metric">
+                  <span className="game-stage-hud__label">SCR</span>
+                  <strong className="game-stage-hud__value">{scoreUi}</strong>
+                </div>
+                <div className="game-stage-hud__metric">
+                  <span className="game-stage-hud__label">LIF</span>
+                  <strong className="game-stage-hud__value game-stage-hud__value--danger">{lifeUi}</strong>
+                </div>
+              </div>
+
+              <div className="game-stage-hud__target">
+                <span className="game-stage-hud__label">Target Product</span>
+                <strong className="game-stage-hud__target-value">{currentTarget}</strong>
+              </div>
+
+              <div className="game-stage-hud__cluster game-stage-hud__cluster--right">
+                <div className="game-stage-hud__metric">
+                  <span className="game-stage-hud__label">TIME</span>
+                  <strong className="game-stage-hud__value">
+                    {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
+                  </strong>
+                </div>
+              </div>
+            </div>
 
             {isErrorFlash && <div className="game-stage-flash" />}
           </div>
@@ -1962,7 +1942,7 @@ function PlayTestContent() {
             <h2 className="game-modal__title">
               {loadingError ? "Launch interrupted" : "Preparing the battle grid"}
             </h2>
-            <p className={`game-modal__subtitle${loadingError ? " game-modal__subtitle--danger" : ""}`}>
+            <p className={`game-modal__subtitle game-modal__subtitle--compact${loadingError ? " game-modal__subtitle--danger" : ""}`}>
               {loadingStatus}
             </p>
 
