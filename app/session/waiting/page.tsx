@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { GameSession } from "@/types/session";
+import { getSessionTimeLeftSeconds } from "@/utils/sessionTime";
 import { Button, Card, Space, Typography, Spin } from "antd";
 
 const { Title, Text } = Typography;
@@ -81,9 +82,7 @@ function WaitingSessionPageContent() {
     if (!session?.expiresAt || session.status !== "WAITING") return;
 
     const updateTimeLeft = () => {
-      const expiry = new Date(session.expiresAt).getTime();
-      const secs = Math.max(0, Math.floor((expiry - Date.now()) / 1000));
-      setTimeLeft(secs);
+      setTimeLeft(getSessionTimeLeftSeconds(session));
     };
 
     updateTimeLeft();

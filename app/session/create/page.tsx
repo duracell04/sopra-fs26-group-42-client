@@ -6,6 +6,7 @@ import { Button, Card, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
 import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { GameSession } from "@/types/session";
+import { getSessionTimeLeftSeconds } from "@/utils/sessionTime";
 
 const { Title, Text } = Typography;
 
@@ -41,9 +42,7 @@ export default function CreateSessionPage() {
         });
         setSession(result);
         sessionCodeRef.current = result.code;
-
-        const expiry = new Date(result.expiresAt).getTime();
-        setTimeLeft(Math.max(0, Math.floor((expiry - Date.now()) / 1000)));
+        setTimeLeft(getSessionTimeLeftSeconds(result));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to create session");
       } finally {
@@ -91,9 +90,7 @@ export default function CreateSessionPage() {
     if (!session?.expiresAt || session.status !== "WAITING") return;
 
     timerRef.current = setInterval(() => {
-      const expiry = new Date(session.expiresAt).getTime();
-      const secs = Math.max(0, Math.floor((expiry - Date.now()) / 1000));
-      setTimeLeft(secs);
+      setTimeLeft(getSessionTimeLeftSeconds(session));
     }, 1000);
 
     return () => {
