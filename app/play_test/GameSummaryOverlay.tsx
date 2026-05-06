@@ -120,17 +120,14 @@ function SummaryContent({
   return (
     <>
       {summaryState.status === "error" && (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 8,
-            border: "1px solid #8b5d23",
-            backgroundColor: "#2a2112",
-            color: "#ffd786",
-            marginBottom: 16,
-          }}
-        >
-          {summaryState.error}
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "12px 16px", borderRadius: 8, marginBottom: 16,
+          backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
+          color: "#ff7875", fontWeight: 600, fontSize: 15,
+        }}>
+          <span style={{ fontSize: 18 }}>⚠</span>
+          Error: {summaryState.error}
         </div>
       )}
 

@@ -1,17 +1,17 @@
 "use client"; // For components that need React hooks and browser APIs, SSR (server side rendering) has to be disabled. Read more here: https://nextjs.org/docs/pages/building-your-application/rendering/server-side-rendering
 
-import { useRouter } from "next/navigation"; // use NextJS router for navigation
+import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
-// Optionally, you can import a CSS module or file for additional styling:
-// import styles from "@/styles/page.module.css";
+import { useState } from "react";
 
 const Login: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
   const [form] = Form.useForm();
+  const [error, setError] = useState<string | null>(null);
   const { set: setToken } = useLocalStorage<string>("token", "");
   const { set: setUserId } = useLocalStorage<string>("id", "");
 
@@ -28,12 +28,8 @@ const Login: React.FC = () => {
       }
 
       router.push("/menu");
-    } catch (error) {
-      if (error instanceof Error) {
-        alert(`Something went wrong during the login:\n${error.message}`);
-      } else {
-        console.error("An unknown error occurred during login.");
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred during login.");
     }
   };
 
@@ -41,6 +37,17 @@ const Login: React.FC = () => {
     <div className="login-container">
       <div className="login-card">
         <h1 className="login-title">Math Invaders</h1>
+        {error && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "12px 16px", borderRadius: 8, marginBottom: 16,
+            backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
+            color: "#ff7875", fontWeight: 600, fontSize: 15,
+          }}>
+            <span style={{ fontSize: 18 }}>⚠</span>
+            Error: {error}
+          </div>
+        )}
       <Form
         form={form}
         name="login"

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, Space, Spin, Typography } from "antd";
+import { Button, Card, Space, Spin, Typography } from "antd";
 import { useApi } from "@/hooks/useApi";
 import { GameSession } from "@/types/session";
 
@@ -69,7 +69,6 @@ export default function CreateSessionPage() {
         if (updated.status === "CANCELLED") {
           clearInterval(pollRef.current!);
           clearInterval(timerRef.current!);
-          alert("Session has expired or been cancelled.");
           router.push("/menu");
         } else if (updated.status === "ACTIVE") {
           clearInterval(pollRef.current!);
@@ -127,7 +126,7 @@ export default function CreateSessionPage() {
       if (timerRef.current) clearInterval(timerRef.current);
       router.push(`/play_test?code=${session.code}`);
     } catch (err) {
-      alert(`Failed to start game: ${err instanceof Error ? err.message : "Unknown error"}`);
+      setError(err instanceof Error ? err.message : "Failed to start game.");
     }
   };
 
@@ -175,7 +174,15 @@ export default function CreateSessionPage() {
               </Text>
             </div>
 
-            <Alert message={error} type="error" showIcon />
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", borderRadius: 8,
+              backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
+              color: "#ff7875", fontWeight: 600, fontSize: 15,
+            }}>
+              <span style={{ fontSize: 18 }}>⚠</span>
+              Error: {error}
+            </div>
 
             <Button className="session-simple-secondary-button" size="large" onClick={() => router.push("/menu")}>
               Back to Menu

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
-import { Button, Card, Space, Typography, Spin, Alert } from "antd";
+import { Button, Card, Space, Typography, Spin } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -72,12 +72,15 @@ export default function ProfilePage() {
           {loading && <Spin size="large" />}
 
           {!loading && error && (
-            <Alert
-              message="Could not load user profile"
-              description={error}
-              type="error"
-              showIcon
-            />
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", borderRadius: 8,
+              backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
+              color: "#ff7875", fontWeight: 600, fontSize: 15,
+            }}>
+              <span style={{ fontSize: 18 }}>⚠</span>
+              Error: {error}
+            </div>
           )}
 
           {!loading && profile && (
