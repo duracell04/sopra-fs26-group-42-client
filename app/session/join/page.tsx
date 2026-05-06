@@ -44,7 +44,15 @@ function JoinSessionPageContent() {
   const [loadingSession, setLoadingSession] = useState(Boolean(queryCode));
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const handleSessionState = (updatedSession: GameSession) => {
     if (updatedSession.status === "ACTIVE") {
@@ -119,6 +127,25 @@ function JoinSessionPageContent() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.code, apiService, router]);
+
+  useEffect(() => {
+    if (!session?.expiresAt || session.status !== "WAITING") return;
+
+    const updateTimeLeft = () => {
+      const expiry = new Date(session.expiresAt).getTime();
+      const secs = Math.max(0, Math.floor((expiry - Date.now()) / 1000));
+      setTimeLeft(secs);
+    };
+
+    updateTimeLeft();
+    timerRef.current = setInterval(updateTimeLeft, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [session?.expiresAt, session?.status]);
 
   const handleJoin = async () => {
     const userId = getStoredUserId();
@@ -201,6 +228,10 @@ function JoinSessionPageContent() {
               <div className="session-simple-info-row">
                 <Text className="session-simple-info-label">Players</Text>
                 <Text className="session-simple-info-value">{playerCount}/2</Text>
+              </div>
+              <div className="session-simple-info-row">
+                <Text className="session-simple-info-label">Expires In</Text>
+                <Text className="session-simple-info-value">{formatTime(timeLeft)}</Text>
               </div>
             </div>
 
