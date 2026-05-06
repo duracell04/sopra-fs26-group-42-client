@@ -9,7 +9,7 @@ export default function UserStatusButton() {
   const { value: username } = useLocalStorage<string>("username", "");
 
   const isLoggedIn = Boolean(token);
-  const displayName = username || "Guest";
+  const displayName = username // || "Guest";
   const statusLabel = isLoggedIn ? "Logged In" : "Logged Out";
 
   return (
