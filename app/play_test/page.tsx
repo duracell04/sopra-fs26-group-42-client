@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRequireAuth } from "@/hooks/useAuthGuard";
 import { BulletObject } from "@/utils/gameObject/bullet";
 import { NumberBlockObject, GameBlockState } from "@/utils/gameObject/gameBlockObject";
 import { ShipObject } from "@/utils/gameObject/ship";
@@ -292,7 +293,8 @@ function parseStoredProblemError(problemsJson: unknown): string | null {
 
 // Main game page content component
 function PlayTestContent() {
-  
+  useRequireAuth();
+
   // Section: Router and service hooks
   const searchParams = useSearchParams();
   const code = searchParams.get("code") ?? "";

@@ -3,11 +3,13 @@
 import { useRouter } from "next/navigation";
 import { Button, Card, Space, Typography } from "antd";
 import UserStatusButton from "@/components/UserStatusButton";
+import { useRequireAuth } from "@/hooks/useAuthGuard";
 
 const { Title, Text } = Typography;
 
 export default function MenuPage() {
   const router = useRouter();
+  useRequireAuth();
 
   return (
     <div className="menu-container">

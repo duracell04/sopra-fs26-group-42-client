@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import { useRequireNoAuth } from "@/hooks/useAuthGuard";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
 import { useState } from "react";
 
 const Login: React.FC = () => {
   const router = useRouter();
+  useRequireNoAuth();
   const apiService = useApi();
   const [form] = Form.useForm();
   const [error, setError] = useState<string | null>(null);
