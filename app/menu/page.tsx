@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button, Card, Space, Typography } from "antd";
+import UserStatusButton from "@/components/UserStatusButton";
 
 const { Title, Text } = Typography;
 
@@ -10,6 +11,7 @@ export default function MenuPage() {
 
   return (
     <div className="menu-container">
+      <UserStatusButton />
       <Card className="menu-card">
         <Space orientation="vertical" size="large" style={{ width: "100%" }}>
           <div>
