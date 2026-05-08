@@ -126,8 +126,8 @@ reason).
 
 | **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
-|**Remy Klemenz** |**[@remy20cent]** | date | ########################### | ########################### | ########################### |
-|                 |                  | date | ########################### | ########################### | ########################### |
+|**Remy Klemenz** |**[@remy20cent]** | 07.05.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/cb78cb4dd4dff30606dbeae65495190eb576b11c | Added tests for GameSessionControllerTest | Test Suite was incomplete and was missing negative and edge cases (also M3-feedback pointed this out) |
+|                 |                  | 08.05.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/fb6e5f6752a54bce4a73e1626cc93defbe92cc5e | Added a simple How-to-play page | M3-feedback recommended adding a tutorial for the game, makes sense |
 |**Enrique Georg Zbinden** |**[@duracell04]** | date | ########################### | ########################### | ########################### |
 |                          |                  | date | ########################### | ########################### | ########################### |
 |**Siyang Jiang** |**[@yang0731]** | date | ########################### | ########################### | ########################### |
