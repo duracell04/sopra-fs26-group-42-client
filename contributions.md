@@ -135,5 +135,5 @@ reason).
 |                 |                | date | ########################### | ########################### | ########################### ||
 |**Csaba Vizhanyo** |**[@csaba_vi]** | date | ########################### | ########################### | ########################### |
 |                   |                | date | ########################### | ########################### | ########################### |
-|**Attila Vizhanyo** |**[@liroAV]** | date | ########################### | ########################### | ########################### |
-|                    |              | date | ########################### | ########################### | ########################### |
+|**Attila Vizhanyo** |**[@liroAV]** | 10.05.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/b363f66 | Added GameServiceTest (6 tests) and GameBlockTest (6 tests) covering core game logic, pair resolution, score accumulation, and entity state | Improves backend test coverage toward 80% SonarQube target |
+|                    |              | 10.05.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/c6a96ff | Added DTOMapperTest extensions, GlobalExceptionAdviceTest, and GameSessionRepositoryIntegrationTest covering DTO mapping, exception handlers, and repository queries | Further improves backend test coverage toward 80% SonarQube target |
