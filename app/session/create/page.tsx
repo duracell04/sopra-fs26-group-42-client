@@ -17,6 +17,7 @@ export default function CreateSessionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(300);
+  const [isExpired, setIsExpired] = useState(false);
 
   const createdRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -90,7 +91,13 @@ export default function CreateSessionPage() {
     if (!session?.expiresAt || session.status !== "WAITING") return;
 
     timerRef.current = setInterval(() => {
-      setTimeLeft(getSessionTimeLeftSeconds(session));
+      const secondsLeft = getSessionTimeLeftSeconds(session);
+      setTimeLeft(secondsLeft);
+      
+      if (secondsLeft <= 0) {
+        setIsExpired(true);
+        if (timerRef.current) clearInterval(timerRef.current);
+      }
     }, 1000);
 
     return () => {
@@ -236,6 +243,11 @@ export default function CreateSessionPage() {
             <Text className="session-simple-timer-hint">
               This lobby closes automatically after 5 minutes.
             </Text>
+            {isExpired && (
+              <Text style={{ color: "#ff7875", marginTop: "12px", display: "block", fontWeight: 500 }}>
+                Session expired, please create a new session to play the game
+              </Text>
+            )}
           </div>
 
           <div className="session-simple-info-list">
@@ -272,10 +284,12 @@ export default function CreateSessionPage() {
               type="primary"
               size="large"
               className="session-simple-primary-button"
-              disabled={!canStart || !isCreator}
+              disabled={!canStart || !isCreator || isExpired}
               onClick={handleStartGame}
             >
-              {!isCreator
+              {isExpired
+                ? "Session expired"
+                : !isCreator
                 ? "Only the host can start"
                 : canStart
                 ? "Start Game"
