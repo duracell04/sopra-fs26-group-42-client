@@ -32,7 +32,6 @@ const SESSION_PROBLEM_POLL_INTERVAL_MS = 400;
 const INITIAL_LIFE = 3;
 const INCORRECT_FLASH_MS = 1000;
 
-const BACKGROUND_SPRITE_PATH = "/sprites/space-background.png";
 const HOST_SHIP_SPRITE_PATH = "/sprites/ship-host.png";
 const JOINER_SHIP_SPRITE_PATH = "/sprites/ship-joiner.png";
 const SHIP_RENDER_WIDTH = 64;
@@ -296,7 +295,6 @@ function PlayTestContent() {
 	  const bulletsRef = useRef<BulletObject[]>([]);
 	  const pressedKeysRef = useRef({ left: false, right: false });
 
-	  const backgroundSpriteRef = useRef<HTMLImageElement | null>(null);
 	  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
 	  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
 	  
@@ -397,7 +395,6 @@ function PlayTestContent() {
     };
 
 
-	    backgroundSpriteRef.current = loadImage(BACKGROUND_SPRITE_PATH);
 	    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
 	    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
 
@@ -1314,7 +1311,7 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
 	      }
 
 	      ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
-	      ctx.font = "800 23px \"Geist Mono\", monospace";
+	      ctx.font = "14px 'Press Start 2P', monospace";
 	      ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
 	      ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
 	      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
@@ -1324,44 +1321,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
 	    };
 
 
-    const drawCoverImage = (
-      image: HTMLImageElement,
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-    ) => {
-      const imageRatio = image.naturalWidth / image.naturalHeight;
-      const targetRatio = width / height;
-
-      let sx = 0;
-      let sy = 0;
-      let sw = image.naturalWidth;
-      let sh = image.naturalHeight;
-
-      if (imageRatio > targetRatio) {
-        sw = image.naturalHeight * targetRatio;
-        sx = (image.naturalWidth - sw) / 2;
-      } else {
-        sh = image.naturalWidth / targetRatio;
-        sy = (image.naturalHeight - sh) / 2;
-      }
-
-      ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
-    };
-
     const drawBackground = () => {
-      const backgroundSprite = backgroundSpriteRef.current;
-
-      if (isLoadedImage(backgroundSprite)) {
-        drawCoverImage(backgroundSprite, 0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "rgba(4, 10, 24, 0.28)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        return;
-      }
-
-      ctx.fillStyle = "#050b1a";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     const drawShip = (
@@ -1764,35 +1725,35 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
 
   return (
     <div className="game-shell">
+      <div className="game-external-controls">
+        <button
+          type="button"
+          className="game-control-button"
+          onClick={() => {
+            window.location.href = "/menu";
+          }}
+        >
+          Menu
+        </button>
+
+        {!isGameFinished && !isPenaltyGameOver && (
+          <button
+            type="button"
+            className={`game-control-button${isPaused ? " game-control-button--warning" : ""}`}
+            onClick={handlePauseToggle}
+            title="Pause / Resume (P)"
+          >
+            {isPaused ? "Resume" : "Pause"}
+          </button>
+        )}
+      </div>
+
       <div className="game-stage-frame">
         <div
           className={`game-stage-frame__content${
             isLoadingProblems && summaryState.status === "idle" ? " game-stage-frame__content--hidden" : ""
           }`}
         >
-          <div className="game-external-controls">
-            <button
-              type="button"
-              className="game-control-button"
-              onClick={() => {
-                window.location.href = "/menu";
-              }}
-            >
-              Menu
-            </button>
-
-            {!isGameFinished && !isPenaltyGameOver && (
-              <button
-                type="button"
-                className={`game-control-button${isPaused ? " game-control-button--warning" : ""}`}
-                onClick={handlePauseToggle}
-                title="Pause / Resume (P)"
-              >
-                {isPaused ? "Resume" : "Pause"}
-              </button>
-            )}
-          </div>
-
           <div className="game-stage">
             <canvas
               ref={canvasRef}
