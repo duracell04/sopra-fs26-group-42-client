@@ -1,6 +1,13 @@
 import { getApiDomain } from "@/utils/domain";
 import { ApplicationError } from "@/types/error";
 
+type ErrorResponseBody = {
+  message?: unknown;
+  detail?: unknown;
+  error?: unknown;
+  title?: unknown;
+};
+
 export class ApiService {
   private baseURL: string;
   private defaultHeaders: HeadersInit;
@@ -10,6 +17,27 @@ export class ApiService {
     this.defaultHeaders = {
       "Content-Type": "application/json",
     };
+  }
+
+  private getErrorDetail(errorInfo: unknown, fallback: string): string {
+    if (typeof errorInfo === "string") {
+      return errorInfo;
+    }
+
+    if (errorInfo && typeof errorInfo === "object") {
+      const errorBody = errorInfo as ErrorResponseBody;
+      const detail =
+        errorBody.message ??
+        errorBody.detail ??
+        errorBody.error ??
+        errorBody.title;
+
+      if (typeof detail === "string" && detail.trim()) {
+        return detail;
+      }
+    }
+
+    return fallback;
   }
 
   /**
@@ -29,15 +57,11 @@ export class ApiService {
       let errorDetail = res.statusText;
       try {
         const errorInfo = await res.json();
-        if (errorInfo?.message) {
-          errorDetail = errorInfo.message;
-        } else {
-          errorDetail = JSON.stringify(errorInfo);
-        }
+        errorDetail = this.getErrorDetail(errorInfo, res.statusText);
       } catch {
         // If parsing fails, keep using res.statusText
       }
-      const detailedMessage = `${errorMessage} (${res.status}: ${errorDetail})`;
+      const detailedMessage = `${errorMessage.trim()} (${res.status}: ${errorDetail})`;
       const error: ApplicationError = new Error(
         detailedMessage,
       ) as ApplicationError;
