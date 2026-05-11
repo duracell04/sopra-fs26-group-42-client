@@ -358,8 +358,10 @@ function PlayTestContent() {
   const displayedElapsedSecondsRef = useRef(0);
   const finalElapsedSecondsRef = useRef<number | null>(null);
   const isGameFinishedRef = useRef(false);
+  
   const finishRequestStartedRef = useRef(false);
   const summaryRequestStartedRef = useRef(false);
+  const completeGameRef = useRef<(() => Promise<void>) | null>(null);
 
   // Play-again ready gate (both players must click before restarting)
   const isLocalCreatorRef = useRef(true);
@@ -449,46 +451,49 @@ function PlayTestContent() {
     incorrectResetTimeoutsRef.current.set(blockId, timeoutId);
   }, []);
 
-  const syncPairProgressFromBlocks = useCallback(() => {
-    const currentProblem = problemsRef.current[currentLevelRef.current];
-    if (!currentProblem) {
-      return;
+
+const syncPairProgressFromBlocks = useCallback((): boolean => {
+  const currentProblem = problemsRef.current[currentLevelRef.current];
+  if (!currentProblem) {
+    return false;
+  }
+
+  const elimCountByPair = new Map<number, number>();
+  for (const blockId of eliminatedBlockIdsRef.current) {
+    const pairIdx = Math.floor(blockId / 2);
+    elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
+  }
+
+  const completedPairSet = new Set<number>();
+  for (const [pairIdx, count] of elimCountByPair) {
+    if (count >= 2) completedPairSet.add(pairIdx);
+  }
+
+  if (completedPairSet.size >= currentProblem.pairs.length) {
+    const nextLevel = currentLevelRef.current + 1;
+
+    if (nextLevel < problemsRef.current.length) {
+      currentLevelRef.current = nextLevel;
+      currentPairIndexRef.current = 0;
+      selectedBlockIdsRef.current.clear();
+      eliminatedBlockIdsRef.current.clear();
+      blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+      bulletsRef.current = [];
+      return false;
     }
 
-    // Use the persistent eliminatedBlockIdsRef — blocks may already be filtered
-    // out of blocksRef.current by the game loop before this runs.
-    const elimCountByPair = new Map<number, number>();
-    for (const blockId of eliminatedBlockIdsRef.current) {
-      const pairIdx = Math.floor(blockId / 2);
-      elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
-    }
+    return true;
+  }
 
-    const completedPairSet = new Set<number>();
-    for (const [pairIdx, count] of elimCountByPair) {
-      if (count >= 2) completedPairSet.add(pairIdx);
+  for (let i = 0; i < currentProblem.pairs.length; i++) {
+    if (!completedPairSet.has(i)) {
+      currentPairIndexRef.current = i;
+      return false;
     }
+  }
 
-    if (completedPairSet.size >= currentProblem.pairs.length) {
-      const nextLevel = currentLevelRef.current + 1;
-      if (nextLevel < problemsRef.current.length) {
-        currentLevelRef.current = nextLevel;
-        currentPairIndexRef.current = 0;
-        selectedBlockIdsRef.current.clear();
-        eliminatedBlockIdsRef.current.clear();
-        blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
-        bulletsRef.current = [];
-      }
-      return;
-    }
-
-    // Advance to the first pair that is not yet completed
-    for (let i = 0; i < currentProblem.pairs.length; i++) {
-      if (!completedPairSet.has(i)) {
-        currentPairIndexRef.current = i;
-        return;
-      }
-    }
-  }, []);
+  return false;
+}, []);
 
   const finishGameWithSummary = useCallback(async (elapsedOverride?: number) => {
     if (summaryRequestStartedRef.current) {
@@ -616,7 +621,10 @@ function PlayTestContent() {
         playDestroyedSound();
       }
       selectedBlockIdsRef.current = new Set(data.selectedBlockIds ?? []);
-      syncPairProgressFromBlocks();
+      const didFinishFromRemoteState = syncPairProgressFromBlocks();
+      if (didFinishFromRemoteState) {
+        void completeGameRef.current?.();
+      }
       return;
     }
 
@@ -927,6 +935,8 @@ function PlayTestContent() {
       void finishGameWithSummary(fallbackElapsedSeconds);
     }
   }, [apiService, code, finishGameWithSummary, freezeTimer]);
+
+  completeGameRef.current = completeGame;
 
   useEffect(() => {
     if (
