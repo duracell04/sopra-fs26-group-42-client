@@ -45,9 +45,6 @@ export default function MenuPage() {
             <Title level={2} className="menu-title">
               Math Invaders
             </Title>
-            <Text className="menu-subtitle">
-              Play solo or team up with a friend.
-            </Text>
           </div>
 
           <Space orientation="vertical" size="middle" style={{ width: "100%" }}>

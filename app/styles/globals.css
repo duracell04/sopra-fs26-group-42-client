@@ -41,6 +41,15 @@ a {
   }
 }
 
+.login-title,
+.register-title,
+.menu-title,
+.session-simple-title,
+.tutorial-title {
+  font-family: var(--font-pixel), monospace !important;
+  font-weight: 400 !important;
+}
+
 .login-container,
 .register-container {
   position: relative;
@@ -173,6 +182,7 @@ a {
 }
 
 .session-simple-title {
+  font-size: 1.35rem !important;
   margin: 0 0 8px !important;
   color: #fff !important;
   text-align: center;
@@ -593,6 +603,14 @@ a {
 
 /* --- Profile Page --- */
 
+.profile-container,
+.profile-container input,
+.profile-container textarea,
+.profile-container select {
+  font-family: var(--font-pixel), monospace;
+  font-weight: 400;
+}
+
 .profile-container {
   position: relative;
   display: flex;
@@ -740,11 +758,11 @@ a {
 }
 
 .profile-stat-value {
-  font-size: 1.45rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 400;
   letter-spacing: 0.02em;
-  line-height: 1;
-  font-family: var(--font-geist-mono), monospace;
+  line-height: 1.25;
+  font-family: var(--font-pixel), monospace;
 }
 
 .profile-stat-label {
@@ -841,6 +859,7 @@ a {
 }
 
 .tutorial-title {
+  font-size: 1.45rem !important;
   margin: 0 !important;
   color: #fff !important;
 }
