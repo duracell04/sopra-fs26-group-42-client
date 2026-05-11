@@ -936,40 +936,22 @@ a {
 
 .game-shell {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
   padding: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 20% 25%, rgba(80, 30, 160, 0.38) 0%, transparent 42%),
-    radial-gradient(ellipse at 78% 65%, rgba(20, 55, 130, 0.32) 0%, transparent 44%),
-    radial-gradient(ellipse at 55% 85%, rgba(40, 80, 180, 0.22) 0%, transparent 38%),
-    radial-gradient(ellipse at 10% 80%, rgba(100, 30, 80, 0.18) 0%, transparent 36%),
-    radial-gradient(ellipse at 90% 15%, rgba(60, 20, 120, 0.22) 0%, transparent 34%),
-    linear-gradient(180deg, #01020d 0%, #030816 45%, #020610 100%);
-}
-
-.game-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.85) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 1px 1px, rgba(180, 210, 255, 0.7) 0 1.2px, transparent 1.8px),
-    radial-gradient(circle at 1px 1px, rgba(255, 230, 200, 0.5) 0 0.8px, transparent 1.2px),
-    radial-gradient(circle at 1px 1px, rgba(200, 180, 255, 0.55) 0 1.4px, transparent 2px);
-  background-size: 55px 55px, 85px 85px, 38px 38px, 130px 130px;
-  background-position: 0 0, 18px 28px, 9px 14px, 40px 60px;
-  opacity: 0.85;
-  pointer-events: none;
+  background-image: url('/images/starry_space_scene_with_glowing_nebulae_1440p.png');
+  background-size: cover;
+  background-position: center;
+  font-family: var(--font-pixel), monospace;
 }
 
 .game-shell--fallback {
-  background:
-    radial-gradient(ellipse at 50% 20%, rgba(60, 20, 120, 0.3) 0%, transparent 40%),
-    linear-gradient(180deg, #01020d 0%, #030816 100%);
+  background-image: url('/images/starry_space_scene_with_glowing_nebulae_1440p.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .game-stage-frame {
@@ -997,10 +979,14 @@ a {
 }
 
 .game-external-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  gap: 8px;
 }
 
 .game-control-button,
@@ -1010,9 +996,9 @@ a {
   border: 1px solid rgba(159, 211, 255, 0.18);
   background: rgba(9, 16, 29, 0.86);
   color: #f1f7ff;
-  font-family: var(--font-geist-sans), sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-family: var(--font-pixel), monospace;
+  font-size: 0.55rem;
+  font-weight: 400;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
@@ -1026,8 +1012,8 @@ a {
 }
 
 .game-control-button {
-  min-width: 112px;
-  padding: 10px 16px;
+  min-width: 64px;
+  padding: 8px 12px;
 }
 
 .game-control-button--warning {
@@ -1037,8 +1023,8 @@ a {
 }
 
 .game-button {
-  min-width: 150px;
-  padding: 12px 20px;
+  min-width: 120px;
+  padding: 12px 16px;
 }
 
 .game-button:disabled {
@@ -1077,16 +1063,14 @@ a {
 
 .game-stage {
   position: relative;
-  width: min(100%, 960px);
+  width: min(min(100%, 960px), calc((100vh - 56px) * 4 / 3));
   aspect-ratio: 4 / 3;
   margin: 0 auto;
   border-radius: 24px;
   overflow: hidden;
-  background: #030814;
-  border: 1px solid rgba(143, 216, 255, 0.34);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.42),
-    0 0 0 8px rgba(4, 11, 24, 0.65);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
 }
 
 .game-canvas {
@@ -1140,11 +1124,11 @@ a {
 .game-stage-hud__label {
   display: block;
   color: rgba(223, 232, 250, 0.76);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-pixel), monospace;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
@@ -1154,13 +1138,13 @@ a {
   margin-top: 5px;
   color: #fff;
   line-height: 1;
-  font-weight: 800;
-  font-family: var(--font-geist-mono), monospace;
+  font-weight: 400;
+  font-family: var(--font-pixel), monospace;
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.92);
 }
 
 .game-stage-hud__value {
-  font-size: 1.18rem;
+  font-size: 0.9rem;
 }
 
 .game-stage-hud__value--danger {
@@ -1169,7 +1153,7 @@ a {
 
 .game-stage-hud__target-value {
   color: #d7f4ff;
-  font-size: clamp(1.55rem, 3vw, 2.1rem);
+  font-size: clamp(0.9rem, 2vw, 1.3rem);
 }
 
 .game-stage-flash {
@@ -1237,9 +1221,9 @@ a {
   display: block;
   margin-bottom: 12px;
   color: #9fd3ff;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.26em;
+  font-size: 0.5rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
@@ -1254,20 +1238,20 @@ a {
 .game-modal__title {
   margin: 0;
   color: #fff;
-  font-size: clamp(1.9rem, 3vw, 2.5rem);
-  font-weight: 800;
+  font-size: clamp(0.65rem, 1.5vw, 0.85rem);
+  font-weight: 400;
   letter-spacing: 0.02em;
 }
 
 .game-modal__subtitle {
   margin: 12px 0 0;
   color: rgba(223, 232, 250, 0.76);
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 0.52rem;
+  line-height: 1.8;
 }
 
 .game-modal__subtitle--compact {
-  font-size: 0.82rem;
+  font-size: 0.48rem;
 }
 
 .game-modal__subtitle--danger {
@@ -1277,10 +1261,10 @@ a {
 .game-modal__time {
   margin: 20px 0 0;
   color: #fff;
-  font-size: clamp(2.8rem, 6vw, 4rem);
-  font-weight: 900;
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 400;
   letter-spacing: 0.04em;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-pixel), monospace;
 }
 
 .game-modal__actions {
@@ -1330,11 +1314,11 @@ a {
 .game-loading-percent {
   margin-top: 12px;
   color: #cde9ff;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-size: 0.5rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-pixel), monospace;
 }
 
 .game-loading-dots {
@@ -1371,17 +1355,17 @@ a {
   display: block;
   margin-bottom: 6px;
   color: rgba(223, 232, 250, 0.68);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: 0.44rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .game-summary-metric__value {
   color: #fff;
-  font-size: 1.5rem;
-  font-weight: 800;
-  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-family: var(--font-pixel), monospace;
 }
 
 .game-summary-banner {
