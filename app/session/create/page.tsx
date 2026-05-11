@@ -245,7 +245,7 @@ export default function CreateSessionPage() {
             </Text>
             {isExpired && (
               <Text style={{ color: "#ff7875", marginTop: "12px", display: "block", fontWeight: 500 }}>
-                Session expired, please create a new session to play the game
+                Session expired. Create a new session to continue.
               </Text>
             )}
           </div>
