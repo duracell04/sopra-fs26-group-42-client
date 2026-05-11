@@ -20,13 +20,13 @@ interface StatTileProps {
   label: string;
   value: string | number;
   color: string;
-  icon: string;
+  iconSrc: string;
 }
 
-function StatTile({ label, value, color, icon }: StatTileProps) {
+function StatTile({ label, value, color, iconSrc }: StatTileProps) {
   return (
     <div className="profile-stat-tile">
-      <span className="profile-stat-icon">{icon}</span>
+      <img src={iconSrc} alt="" aria-hidden="true" className="profile-stat-icon" />
       <span className="profile-stat-value" style={{ color }}>
         {value}
       </span>
@@ -120,19 +120,19 @@ export default function ProfilePage() {
 
             <div className="profile-stats-grid">
               <StatTile
-                icon="🏆"
+                iconSrc="/sprites/trophy-pixel.png"
                 label="Highest Score"
                 value={profile.highestScore}
                 color="#ffd786"
               />
               <StatTile
-                icon="⭐"
+                iconSrc="/sprites/star-pixel.png"
                 label="Total Score"
                 value={profile.totalScore}
                 color="#75bd9d"
               />
               <StatTile
-                icon="⏱"
+                iconSrc="/sprites/timer-pixel.png"
                 label="Time Played"
                 value={formatTimePlayed(profile.timePlayed)}
                 color="#9fd3ff"

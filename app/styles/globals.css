@@ -732,8 +732,11 @@ a {
 }
 
 .profile-stat-icon {
-  font-size: 1.4rem;
-  line-height: 1;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .profile-stat-value {
