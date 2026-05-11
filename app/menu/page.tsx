@@ -82,6 +82,15 @@ export default function MenuPage() {
               type="default"
               variant="solid"
               className="menu-button"
+              onClick={() => router.push("/menu/how-to-play")}
+            >
+              How to Play
+            </Button>
+
+            <Button
+              type="default"
+              variant="solid"
+              className="menu-button"
               loading={isLoggingOut}
               onClick={handleLogout}
             >
