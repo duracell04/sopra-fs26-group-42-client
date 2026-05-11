@@ -138,3 +138,12 @@ reason).
 |                   |                | 06.05.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/fc04d823b5507c893882693e023cab6484c8e7c4 | return meaningfull error messages | ensures enduser gets an understandable error message incase of failure (not a technical message only a developer would undertand)|
 |**Attila Vizhanyo** |**[@liroAV]** | 10.05.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/b363f66 | Added GameServiceTest (6 tests) and GameBlockTest (6 tests) covering core game logic, pair resolution, score accumulation, and entity state | Improves backend test coverage toward 80% SonarQube target |
 |                    |              | 10.05.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/c6a96ff | Added DTOMapperTest extensions, GlobalExceptionAdviceTest, and GameSessionRepositoryIntegrationTest covering DTO mapping, exception handlers, and repository queries | Further improves backend test coverage toward 80% SonarQube target |
+
+---
+
+## Contributions Week 7 - 10.05.26 to 17.05.26
+
+| **Student**        |**Github Username**| **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
+| ------------------ | ------------------| -------- | ------------------ | ------------------------------- | ----------------------------------- |
+|**Enrique Georg Zbinden** |**[@duracell04]** | 10.05.26 | https://github.com/duracell04/sopra-fs26-group-42-server/commit/605e99282965dd66457126e60eea706cc761152e | Fixed OpenRouter free-router feedback parsing and added focused `OpenRouterHttpClientTest` coverage for string, array, object, blank, missing-content, and non-2xx responses. | Makes the external API integration robust and increases meaningful backend test coverage for the final M4 submission. |
+|                          |                  | 11.05.26 | https://github.com/duracell04/sopra-fs26-group-42-client/commit/999e12bd0d133f44ad26561269e134f05943e867 | Improved authentication error handling and display by extracting clearer backend error messages, showing a specific invalid-login message for 401 responses, and replacing custom inline error markup with consistent Ant Design alerts. | Improves usability and robustness of the login/register flow, which supports the final M4 usability requirement. |
