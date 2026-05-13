@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Card, Space, Typography } from "antd";
+import StarBackground from "@/components/StarBackground";
 import UserStatusButton from "@/components/UserStatusButton";
 import { useApi } from "@/hooks/useApi";
 import { useRequireAuth } from "@/hooks/useAuthGuard";
@@ -37,65 +38,79 @@ export default function MenuPage() {
   };
 
   return (
-    <div className="menu-container">
+    <div className="menu-container menu-container--home">
       <UserStatusButton />
-      <Card className="menu-card">
-        <Space orientation="vertical" size="large" style={{ width: "100%" }}>
-          <div>
-            <Title level={2} className="menu-title">
-              Math Invaders
-            </Title>
-          </div>
+      <StarBackground />
 
-          <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
-            <Button
-              type="primary"
-              variant="solid"
-              className="menu-button"
-              onClick={() => router.push("/session/create")}
-            >
-              Create Multiplayer Session
-            </Button>
+      <div className="menu-grid-shell">
+        <div className="menu-hero">
+          <Text className="menu-kicker">Co-op Arcade Math Shooter</Text>
+          <Title level={1} className="menu-title-screen">
+            Math Invaders
+          </Title>
+          <Text className="menu-subtitle">
+            Team up with your co-pilot, lock in the right factors, and defend the galaxy from number waves.
+          </Text>
+        </div>
 
-            <Button
-              type="primary"
-              variant="solid"
-              className="menu-button"
-              onClick={() => router.push("/session/join")}
-            >
-              Join Session
-            </Button>
+        <Card className="menu-card menu-card--home">
+          <Space orientation="vertical" size="large" style={{ width: "100%" }}>
+            <Text className="menu-panel-label">Command Console</Text>
 
-            <Button
-              type="default"
-              variant="solid"
-              className="menu-button"
-              onClick={() => router.push("/profile")}
-            >
-              My Profile
-            </Button>
+            <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
+              <Button
+                type="primary"
+                variant="solid"
+                className="menu-button"
+                onClick={() => router.push("/session/create")}
+              >
+                Create Multiplayer Session
+              </Button>
 
-            <Button
-              type="default"
-              variant="solid"
-              className="menu-button"
-              onClick={() => router.push("/menu/how-to-play")}
-            >
-              How to Play
-            </Button>
+              <Button
+                type="primary"
+                variant="solid"
+                className="menu-button"
+                onClick={() => router.push("/session/join")}
+              >
+                Join Session
+              </Button>
 
-            <Button
-              type="default"
-              variant="solid"
-              className="menu-button"
-              loading={isLoggingOut}
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
+              <Button
+                type="default"
+                variant="solid"
+                className="menu-button"
+                onClick={() => router.push("/profile")}
+              >
+                My Profile
+              </Button>
+
+              <Button
+                type="default"
+                variant="solid"
+                className="menu-button"
+                onClick={() => router.push("/menu/how-to-play")}
+              >
+                How to Play
+              </Button>
+
+              <Button
+                type="default"
+                variant="solid"
+                className="menu-button"
+                loading={isLoggingOut}
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+
+              <Text className="menu-hint-text">Tip: New pilot? Start with How to Play.</Text>
+            </Space>
           </Space>
-        </Space>
-      </Card>
+
+          <div className="menu-scanline" aria-hidden="true" />
+        </Card>
+      </div>
     </div>
   );
 }
