@@ -75,21 +75,32 @@ export default function MenuPage() {
 
             <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
               <Button
-                type="primary"
-                variant="solid"
-                className="menu-button"
-                onClick={() => router.push("/session/create")}
-              >
-                Create Multiplayer Session
-              </Button>
+
+                  type="primary"
+                  variant="solid"
+                  className="menu-button menu-button--main menu-button--create"
+                  onClick={() => router.push("/session/create")}
+                >
+                  Create Multiplayer Session
+                </Button>
 
               <Button
-                type="primary"
+
+                  type="primary"
+                  variant="solid"
+                  className="menu-button menu-button--main menu-button--join"
+                  onClick={() => router.push("/session/join")}
+                >
+                  Join Session
+                </Button>
+
+              <Button
+                type="default"
                 variant="solid"
                 className="menu-button"
-                onClick={() => router.push("/session/join")}
+                onClick={() => router.push("/menu/how-to-play")}
               >
-                Join Session
+                How to Play
               </Button>
 
               <Button
@@ -99,15 +110,6 @@ export default function MenuPage() {
                 onClick={() => router.push("/profile")}
               >
                 My Profile
-              </Button>
-
-              <Button
-                type="default"
-                variant="solid"
-                className="menu-button"
-                onClick={() => router.push("/menu/how-to-play")}
-              >
-                How to Play
               </Button>
 
               <Button
