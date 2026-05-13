@@ -1,3 +1,40 @@
+.menu-button--main {
+  font-size: 1.13rem !important;
+  min-height: 54px;
+  font-weight: 700 !important;
+}
+
+.menu-button--create.ant-btn {
+  background: linear-gradient(90deg, #4fd1c5 0%, #4299e1 100%) !important;
+  border-color: #38b2ac !important;
+  color: #fff !important;
+  box-shadow: 0 8px 22px rgba(79, 209, 197, 0.18);
+}
+.menu-button--create.ant-btn:hover,
+.menu-button--create.ant-btn:focus-visible {
+  background: linear-gradient(90deg, #38b2ac 0%, #3182ce 100%) !important;
+  border-color: #4299e1 !important;
+}
+.menu-button--create.ant-btn:active {
+  background: linear-gradient(90deg, #319795 0%, #2b6cb0 100%) !important;
+  border-color: #319795 !important;
+}
+
+.menu-button--join.ant-btn {
+  background: linear-gradient(90deg, #805ad5 0%, #63b3ed 100%) !important;
+  border-color: #6b46c1 !important;
+  color: #fff !important;
+  box-shadow: 0 8px 22px rgba(128, 90, 213, 0.18);
+}
+.menu-button--join.ant-btn:hover,
+.menu-button--join.ant-btn:focus-visible {
+  background: linear-gradient(90deg, #6b46c1 0%, #4299e1 100%) !important;
+  border-color: #805ad5 !important;
+}
+.menu-button--join.ant-btn:active {
+  background: linear-gradient(90deg, #553c9a 0%, #3182ce 100%) !important;
+  border-color: #553c9a !important;
+}
 :root {
   --background: #ffffff;
   --foreground: #171717;
