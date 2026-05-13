@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Card, Space, Typography } from "antd";
@@ -41,21 +42,36 @@ export default function MenuPage() {
     <div className="menu-container menu-container--home">
       <UserStatusButton />
       <StarBackground />
+      <Image
+        src="/sprites/ship-host.png"
+        alt=""
+        width={160}
+        height={96}
+        className="menu-ship menu-ship--left"
+        aria-hidden="true"
+      />
+      <Image
+        src="/sprites/ship-joiner.png"
+        alt=""
+        width={160}
+        height={96}
+        className="menu-ship menu-ship--right"
+        aria-hidden="true"
+      />
 
       <div className="menu-grid-shell">
         <div className="menu-hero">
-          <Text className="menu-kicker">Co-op Arcade Math Shooter</Text>
           <Title level={1} className="menu-title-screen">
             Math Invaders
           </Title>
           <Text className="menu-subtitle">
-            Team up with your co-pilot, lock in the right factors, and defend the galaxy from number waves.
+            Team up with your co-pilot, lock in the right factors, and defend the galaxy from number spaceships.
           </Text>
         </div>
 
         <Card className="menu-card menu-card--home">
           <Space orientation="vertical" size="large" style={{ width: "100%" }}>
-            <Text className="menu-panel-label">Command Console</Text>
+            <Text className="menu-panel-label">MENU</Text>
 
             <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
               <Button

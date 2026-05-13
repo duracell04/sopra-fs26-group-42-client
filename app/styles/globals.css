@@ -168,6 +168,30 @@ a {
   align-items: center;
 }
 
+.menu-ship {
+  position: absolute;
+  z-index: 1;
+  width: clamp(110px, 13vw, 170px);
+  height: auto;
+  pointer-events: none;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+  animation: menu-ship-float 4.6s ease-in-out infinite;
+}
+
+.menu-ship--left {
+  left: clamp(8px, 3.4vw, 52px);
+  top: clamp(88px, 19vh, 220px);
+}
+
+.menu-ship--right {
+  right: clamp(8px, 3.4vw, 52px);
+  bottom: clamp(70px, 14vh, 180px);
+  transform: scaleX(-1);
+  animation-name: menu-ship-float-right;
+  animation-delay: 0.8s;
+}
+
 .menu-hero {
   display: flex;
   flex-direction: column;
@@ -189,7 +213,7 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   line-height: 0.95 !important;
-  font-size: clamp(3rem, 10vw, 6.1rem) !important;
+  font-size: clamp(2rem, 6vw, 4rem) !important;
   text-shadow:
     0 0 0 rgba(255, 255, 255, 0.16),
     0 8px 28px rgba(0, 0, 0, 0.45);
@@ -288,6 +312,28 @@ a {
 
   50% {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes menu-ship-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes menu-ship-float-right {
+  0%,
+  100% {
+    transform: scaleX(-1) translateY(0);
+  }
+
+  50% {
+    transform: scaleX(-1) translateY(-8px);
   }
 }
 
@@ -643,6 +689,21 @@ a {
   .menu-container,
   .session-shell {
     padding: 16px;
+  }
+
+  .menu-ship {
+    width: 94px;
+    opacity: 0.7;
+  }
+
+  .menu-ship--left {
+    left: 8px;
+    top: 74px;
+  }
+
+  .menu-ship--right {
+    right: 8px;
+    bottom: 88px;
   }
 
   .menu-grid-shell {
