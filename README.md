@@ -209,6 +209,12 @@ substituting `deno task` with `npm run`, i.e
 npm run dev
 ```
 
+## External API integration
+
+Math Invaders uses OpenRouter through the backend for AI-assisted gameplay enrichment. When the session creator starts a game, the client calls `POST /sessions/{code}/problems/generate`; the backend generates multiplication levels with OpenRouter when configured, stores the resulting problem JSON on the session, and exposes it to the second player through the existing `GET /sessions/{code}/problems` polling flow.
+
+The summary screen also calls `POST /sessions/{code}/summary` after the game ends. The backend first saves score, high score, total score, and time played, then asks OpenRouter for one short feedback sentence. If OpenRouter is missing, slow, or unavailable, the backend returns deterministic fallback levels and fallback feedback so gameplay and saved statistics still work.
+
 <br>
 <br>
 <br>

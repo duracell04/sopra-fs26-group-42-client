@@ -108,6 +108,7 @@ function isLoadedImage(image: HTMLImageElement | null): image is HTMLImageElemen
 
 type SessionProblemsResponse = {
   problemsJson?: unknown;
+  source?: "OPENROUTER" | "FALLBACK" | "EXISTING";
 };
 
 type SessionProblemErrorPayload = {
@@ -124,6 +125,8 @@ const buildLocalSummary = (
   feedback:
     `Great run. You scored ${score} points in ${formatElapsedTime(elapsedSeconds)}. ` +
     "Keep focusing on fast factor recognition and avoiding risky shots.",
+  tip: "Scan for factor pairs before shooting.",
+  feedbackSource: "FALLBACK",
   totalScore: score,
   highestScore: score,
   timePlayed: elapsedSeconds,
@@ -173,7 +176,7 @@ function getLoadingProgress(status: string, hasError: boolean): number {
     return 75;
   }
 
-  if (status.includes("Generating levels locally")) {
+  if (status.includes("Generating levels")) {
     return 55;
   }
 
@@ -1048,9 +1051,47 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     };
 
     const loadCreatorProblems = async (sessionCode?: string) => {
-      configureAsCreator(getStoredUserId() ?? 1);
+      const creatorId = getStoredUserId();
+      configureAsCreator(creatorId ?? 1);
       setLoadingError(null);
-      setLoadingStatus("Generating levels locally...");
+
+      if (sessionCode) {
+        if (!creatorId) {
+          setFatalLoadingError("Missing player session. Please sign in again before generating levels.");
+          return;
+        }
+
+        setLoadingStatus("Generating levels...");
+
+        try {
+          const generated = await apiService.post<SessionProblemsResponse>(
+            `/sessions/${sessionCode}/problems/generate`,
+            {
+              userId: creatorId,
+              levelCount: 10,
+            },
+          );
+          const problems = parseStoredProblems(generated?.problemsJson);
+
+          if (!problems.length) {
+            throw new Error("Generated level response was empty.");
+          }
+
+          if (!cancelled) {
+            applyProblems(problems);
+          }
+          return;
+        } catch (error) {
+          if (cancelled) {
+            return;
+          }
+
+          console.warn("Backend level generation failed, using local fallback:", error);
+          setLoadingStatus("Generating fallback levels...");
+        }
+      } else {
+        setLoadingStatus("Generating levels locally...");
+      }
 
       let problems: MathProblem[];
 

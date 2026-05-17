@@ -5,6 +5,8 @@ export type GameSummaryResponse = {
   elapsedSeconds: number;
   newHighscore: boolean;
   feedback: string;
+  tip?: string;
+  feedbackSource?: "OPENROUTER" | "FALLBACK";
   totalScore: number;
   highestScore: number;
   timePlayed: number;
@@ -45,9 +47,15 @@ export function GameSummaryOverlay({
         </h2>
 
         {summaryState.status === "loading" ? (
-          <p className="game-modal__subtitle">
-            Generating feedback and saving your score.
-          </p>
+          <div className="game-summary-loading" role="status" aria-live="polite">
+            <p className="game-modal__subtitle">
+              Saving score and generating feedback...
+            </p>
+            <p className="game-summary-loading__hint">This can take a few seconds.</p>
+            <div className="game-summary-loading__bar" aria-hidden="true">
+              <div className="game-summary-loading__bar-fill" />
+            </div>
+          </div>
         ) : (
           <SummaryContent
             summaryState={summaryState}
@@ -91,6 +99,13 @@ function SummaryContent({
       )}
 
       <div className="game-summary-feedback">{summaryState.data.feedback}</div>
+
+      {summaryState.data.tip && (
+        <div className="game-summary-tip">
+          <span className="game-summary-tip__label">Next round</span>
+          {summaryState.data.tip}
+        </div>
+      )}
 
       <button
         type="button"

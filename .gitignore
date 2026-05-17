@@ -136,3 +136,6 @@ yarn-error.log*
 # misc
 .DS_Store
 *.pem
+*service-account*.json
+*private-key*.json
+sopra-fs26-group-42-server-*.json
