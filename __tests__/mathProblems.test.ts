@@ -1,49 +1,63 @@
 import {
+  BLOCK_COUNT_PER_LEVEL,
+  DEFAULT_LEVEL_COUNT,
   generateMathProblems,
   normalizeMathProblem,
   normalizeMathProblems,
   PROBLEM_PAIR_COUNT,
-  BLOCK_COUNT_PER_LEVEL,
-  DEFAULT_LEVEL_COUNT,
-} from '@/utils/mathProblems';
+} from "@/utils/mathProblems";
 
 // ---------------------------------------------------------------------------
 // generateMathProblems
 // ---------------------------------------------------------------------------
 
-describe('generateMathProblems – output structure', () => {
+describe("generateMathProblems – output structure", () => {
   let problems: ReturnType<typeof generateMathProblems>;
 
   beforeAll(() => {
     problems = generateMathProblems();
   });
 
-  it('generates DEFAULT_LEVEL_COUNT problems when called with no arguments', () => {
+  it("generates DEFAULT_LEVEL_COUNT problems when called with no arguments", () => {
     expect(problems).toHaveLength(DEFAULT_LEVEL_COUNT);
   });
 
-  it('generates the exact number of problems requested', () => {
+  it("generates the exact number of problems requested", () => {
     expect(generateMathProblems(1)).toHaveLength(1);
     expect(generateMathProblems(3)).toHaveLength(3);
   });
 
-  it('each problem has exactly PROBLEM_PAIR_COUNT pairs', () => {
+  it("each problem has exactly PROBLEM_PAIR_COUNT pairs", () => {
     problems.forEach((p) => expect(p.pairs).toHaveLength(PROBLEM_PAIR_COUNT));
   });
 
-  it('each problem has exactly BLOCK_COUNT_PER_LEVEL blocks', () => {
-    problems.forEach((p) => expect(p.blocks).toHaveLength(BLOCK_COUNT_PER_LEVEL));
+  it("each problem has exactly BLOCK_COUNT_PER_LEVEL blocks", () => {
+    problems.forEach((p) =>
+      expect(p.blocks).toHaveLength(BLOCK_COUNT_PER_LEVEL)
+    );
+  });
+
+  it("selects a unique level template for each default problem", () => {
+    const signatures = problems.map((problem) =>
+      problem.pairs
+        .map((pair) =>
+          [Math.min(pair.a, pair.b), Math.max(pair.a, pair.b)].join("x")
+        )
+        .join("|")
+    );
+
+    expect(new Set(signatures).size).toBe(DEFAULT_LEVEL_COUNT);
   });
 });
 
-describe('generateMathProblems – pair correctness', () => {
+describe("generateMathProblems – pair correctness", () => {
   let problems: ReturnType<typeof generateMathProblems>;
 
   beforeAll(() => {
     problems = generateMathProblems();
   });
 
-  it('every pair satisfies product === a * b', () => {
+  it("every pair satisfies product === a * b", () => {
     problems.forEach((problem) => {
       problem.pairs.forEach((pair) => {
         expect(pair.product).toBe(pair.a * pair.b);
@@ -51,14 +65,14 @@ describe('generateMathProblems – pair correctness', () => {
     });
   });
 
-  it('all pair products within a level are unique (no duplicate targets)', () => {
+  it("all pair products within a level are unique (no duplicate targets)", () => {
     problems.forEach((problem) => {
       const products = problem.pairs.map((p) => p.product);
       expect(new Set(products).size).toBe(PROBLEM_PAIR_COUNT);
     });
   });
 
-  it('all factor values are within the valid range [1, 12]', () => {
+  it("all factor values are within the valid range [1, 12]", () => {
     problems.forEach((problem) => {
       problem.pairs.forEach((pair) => {
         expect(pair.a).toBeGreaterThanOrEqual(1);
@@ -68,16 +82,24 @@ describe('generateMathProblems – pair correctness', () => {
       });
     });
   });
+
+  it("never uses same-number factor pairs in generated levels", () => {
+    problems.forEach((problem) => {
+      problem.pairs.forEach((pair) => {
+        expect(pair.a).not.toBe(pair.b);
+      });
+    });
+  });
 });
 
-describe('generateMathProblems – block correctness', () => {
+describe("generateMathProblems – block correctness", () => {
   let problems: ReturnType<typeof generateMathProblems>;
 
   beforeAll(() => {
     problems = generateMathProblems();
   });
 
-  it('every block pairIndex is within [0, PROBLEM_PAIR_COUNT)', () => {
+  it("every block pairIndex is within [0, PROBLEM_PAIR_COUNT)", () => {
     problems.forEach((problem) => {
       problem.blocks.forEach((block) => {
         expect(block.pairIndex).toBeGreaterThanOrEqual(0);
@@ -86,10 +108,12 @@ describe('generateMathProblems – block correctness', () => {
     });
   });
 
-  it('each pairIndex appears exactly twice across all blocks', () => {
+  it("each pairIndex appears exactly twice across all blocks", () => {
     problems.forEach((problem) => {
       const counts = new Array(PROBLEM_PAIR_COUNT).fill(0);
-      problem.blocks.forEach((block) => { counts[block.pairIndex] += 1; });
+      problem.blocks.forEach((block) => {
+        counts[block.pairIndex] += 1;
+      });
       counts.forEach((count) => expect(count).toBe(2));
     });
   });
@@ -97,7 +121,9 @@ describe('generateMathProblems – block correctness', () => {
   it("each pair's two blocks multiply to that pair's target product", () => {
     problems.forEach((problem) => {
       problem.pairs.forEach((pair, pairIndex) => {
-        const pairBlocks = problem.blocks.filter((b) => b.pairIndex === pairIndex);
+        const pairBlocks = problem.blocks.filter((b) =>
+          b.pairIndex === pairIndex
+        );
         expect(pairBlocks).toHaveLength(2);
         expect(pairBlocks[0].value * pairBlocks[1].value).toBe(pair.product);
       });
@@ -105,7 +131,7 @@ describe('generateMathProblems – block correctness', () => {
   });
 });
 
-describe('generateMathProblems – unique solution guarantee', () => {
+describe("generateMathProblems – unique solution guarantee", () => {
   it("each pair's product can be formed in exactly one way from the blocks still on the board when that pair is active", () => {
     // Pairs are solved in order (pairs[0] first). When pairs[i] is the active
     // target, pairs[0..i-1] have already been cleared, so only blocks with
@@ -114,12 +140,17 @@ describe('generateMathProblems – unique solution guarantee', () => {
 
     problems.forEach((problem) => {
       problem.pairs.forEach((pair, pairIndex) => {
-        const remainingBlocks = problem.blocks.filter((b) => b.pairIndex >= pairIndex);
+        const remainingBlocks = problem.blocks.filter((b) =>
+          b.pairIndex >= pairIndex
+        );
         let matchCount = 0;
 
         for (let i = 0; i < remainingBlocks.length; i += 1) {
           for (let j = i + 1; j < remainingBlocks.length; j += 1) {
-            if (remainingBlocks[i].value * remainingBlocks[j].value === pair.product) {
+            if (
+              remainingBlocks[i].value * remainingBlocks[j].value ===
+                pair.product
+            ) {
               matchCount += 1;
             }
           }
@@ -135,29 +166,29 @@ describe('generateMathProblems – unique solution guarantee', () => {
 // normalizeMathProblem
 // ---------------------------------------------------------------------------
 
-describe('normalizeMathProblem – rejects invalid input', () => {
+describe("normalizeMathProblem – rejects invalid input", () => {
   it.each([
     [null],
     [undefined],
     [42],
-    ['string'],
+    ["string"],
     [{}],
     [{ pairs: [] }],
     [[]],
     [[[1, 2], [2, 3]]],
-  ])('returns null for %p', (input) => {
+  ])("returns null for %p", (input) => {
     expect(normalizeMathProblem(input)).toBeNull();
   });
 });
 
-describe('normalizeMathProblem – array format (list of [a, b] pairs)', () => {
-  it('parses five valid [a, b] pairs with unique products', () => {
+describe("normalizeMathProblem – array format (list of [a, b] pairs)", () => {
+  it("parses five valid [a, b] pairs with unique products", () => {
     const input = [
       [2, 3],
-      [3, 4],
-      [4, 5],
       [5, 6],
-      [6, 7],
+      [4, 9],
+      [7, 11],
+      [8, 12],
     ];
     const result = normalizeMathProblem(input);
     expect(result).not.toBeNull();
@@ -165,21 +196,36 @@ describe('normalizeMathProblem – array format (list of [a, b] pairs)', () => {
     expect(result?.blocks).toHaveLength(BLOCK_COUNT_PER_LEVEL);
   });
 
-  it('returns null when pairs share a product after clamping (not enough unique targets)', () => {
+  it("returns null when pairs share a product after clamping (not enough unique targets)", () => {
     // all a values clamp to 12, b=2 → every product is 24 → only 1 unique pair
-    const input = Array.from({ length: PROBLEM_PAIR_COUNT }, (_, i) => [100 + i, 2]);
+    const input = Array.from(
+      { length: PROBLEM_PAIR_COUNT },
+      (_, i) => [100 + i, 2],
+    );
+    expect(normalizeMathProblem(input)).toBeNull();
+  });
+
+  it("returns null when the pair set would create an ambiguous answer on the board", () => {
+    const input = [
+      [4, 5],
+      [2, 8],
+      [3, 10],
+      [7, 9],
+      [11, 12],
+    ];
+
     expect(normalizeMathProblem(input)).toBeNull();
   });
 });
 
-describe('normalizeMathProblem – object format {pairs, blocks}', () => {
+describe("normalizeMathProblem – object format {pairs, blocks}", () => {
   function makeValidInput() {
     const pairs = [
       { a: 2, b: 3, product: 6 },
-      { a: 3, b: 4, product: 12 },
-      { a: 4, b: 5, product: 20 },
       { a: 5, b: 6, product: 30 },
-      { a: 6, b: 7, product: 42 },
+      { a: 4, b: 9, product: 36 },
+      { a: 7, b: 11, product: 77 },
+      { a: 8, b: 12, product: 96 },
     ];
     const blocks = pairs.flatMap((pair, i) => [
       { value: pair.a, pairIndex: i },
@@ -188,18 +234,34 @@ describe('normalizeMathProblem – object format {pairs, blocks}', () => {
     return { pairs, blocks };
   }
 
-  it('parses a valid {pairs, blocks} object', () => {
+  it("parses a valid {pairs, blocks} object", () => {
     const result = normalizeMathProblem(makeValidInput());
     expect(result).not.toBeNull();
     expect(result?.pairs).toHaveLength(PROBLEM_PAIR_COUNT);
     expect(result?.blocks).toHaveLength(BLOCK_COUNT_PER_LEVEL);
   });
 
-  it('falls back to re-generating blocks when the blocks array is malformed', () => {
+  it("falls back to re-generating blocks when the blocks array is malformed", () => {
     const { pairs } = makeValidInput();
-    const result = normalizeMathProblem({ pairs, blocks: 'garbage' });
+    const result = normalizeMathProblem({ pairs, blocks: "garbage" });
     expect(result).not.toBeNull();
     expect(result?.blocks).toHaveLength(BLOCK_COUNT_PER_LEVEL);
+  });
+
+  it("rebuilds the blocks when provided blocks do not match the pair definitions", () => {
+    const { pairs, blocks } = makeValidInput();
+    const mismatchedBlocks = [...blocks];
+    mismatchedBlocks[0] = { value: 4, pairIndex: 0 };
+
+    const result = normalizeMathProblem({ pairs, blocks: mismatchedBlocks });
+    const rebuiltPairBlocks =
+      result?.blocks.filter((block) => block.pairIndex === 0) ?? [];
+    const rebuiltValues = rebuiltPairBlocks
+      .map((block) => block.value)
+      .sort((left, right) => left - right);
+
+    expect(result).not.toBeNull();
+    expect(rebuiltValues).toEqual([2, 3]);
   });
 });
 
@@ -207,24 +269,24 @@ describe('normalizeMathProblem – object format {pairs, blocks}', () => {
 // normalizeMathProblems
 // ---------------------------------------------------------------------------
 
-describe('normalizeMathProblems', () => {
-  it('returns [] for non-array input', () => {
+describe("normalizeMathProblems", () => {
+  it("returns [] for non-array input", () => {
     expect(normalizeMathProblems(null)).toEqual([]);
-    expect(normalizeMathProblems('string')).toEqual([]);
+    expect(normalizeMathProblems("string")).toEqual([]);
     expect(normalizeMathProblems(42)).toEqual([]);
   });
 
-  it('returns [] for an empty array', () => {
+  it("returns [] for an empty array", () => {
     expect(normalizeMathProblems([])).toEqual([]);
   });
 
-  it('silently filters out invalid problems from a mixed array', () => {
-    const result = normalizeMathProblems([{ garbage: true }, null, 'bad']);
+  it("silently filters out invalid problems from a mixed array", () => {
+    const result = normalizeMathProblems([{ garbage: true }, null, "bad"]);
     expect(result).toEqual([]);
   });
 
-  it('normalizes an array containing one valid problem in array format', () => {
-    const validProblem = [[2, 3], [3, 4], [4, 5], [5, 6], [6, 7]];
+  it("normalizes an array containing one valid problem in array format", () => {
+    const validProblem = [[2, 3], [5, 6], [4, 9], [7, 11], [8, 12]];
     const result = normalizeMathProblems([validProblem]);
     expect(result).toHaveLength(1);
     expect(result[0].pairs).toHaveLength(PROBLEM_PAIR_COUNT);
