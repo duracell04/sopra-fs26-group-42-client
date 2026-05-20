@@ -4,14 +4,20 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/hooks/useAuthGuard";
 import { BulletObject } from "@/utils/gameObject/bullet";
-import { NumberBlockObject, GameBlockState } from "@/utils/gameObject/gameBlockObject";
+import {
+  GameBlockState,
+  NumberBlockObject,
+} from "@/utils/gameObject/gameBlockObject";
 import { ShipObject } from "@/utils/gameObject/ship";
 import { useApi } from "@/hooks/useApi";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { getStoredAuthenticatedUserId } from "@/utils/authStorage";
 import { MathProblem } from "@/types/problem";
 import { GameSession } from "@/types/session";
-import { generateMathProblems, normalizeMathProblems } from "@/utils/mathProblems";
+import {
+  generateMathProblems,
+  normalizeMathProblems,
+} from "@/utils/mathProblems";
 import {
   GameSummaryOverlay,
   type GameSummaryResponse,
@@ -42,12 +48,11 @@ const SHIP_RENDER_HALF_HEIGHT = SHIP_RENDER_HEIGHT / 2;
 const LASER_SOUND_PATH = "/sounds/laser4.wav";
 const DESTROYED_SOUND_PATH = "/sounds/explosion.wav";
 const SUCCESS_FLASH_MS = 140;
-const HUD_MONO_FONT_FAMILY = "\"Geist Mono\", monospace";
+const HUD_MONO_FONT_FAMILY = '"Geist Mono", monospace';
 const LOCAL_SHIP_START_X = CANVAS_WIDTH / 2;
 const LOCAL_SHIP_START_Y = CANVAS_HEIGHT - 70;
 const REMOTE_SHIP_START_X = CANVAS_WIDTH / 3;
 const REMOTE_SHIP_START_Y = CANVAS_HEIGHT - 70;
-
 
 // Section: Canvas rendering style configuration
 const BLOCK_STYLE = {
@@ -72,37 +77,47 @@ const BLOCK_STYLE = {
 
 // Realtime and API payload types
 type RealtimeMessage =
-|{
-  type: "move" | "shoot" | "play_again_ready" | "pause" | "resume" | "game_ready_ack";
-  playerId: number;
-  x: number;
-  y: number;
-}
-|{
-  type: "pair_advance";
-  playerId: number;
-  x: number;
-  y: number;
-  pairIndex: number;
-  levelIndex: number;
-}
-|{
-  type: "game_state";
-  sessionCode: string;
-  playerId: number;
-  score: number;
-  life: number;
-  gameOver?: boolean;
-  result: "PENDING" | "CORRECT" | "INCORRECT";
-  selectedBlockIds: number[];
-  blocks: {
-    id: number;
-    value: number;
-    state: "DEFAULT" | "SELECTED" | "ELIMINATED" | "INCORRECT";
-  }[];
-};
+  | {
+    type:
+      | "move"
+      | "shoot"
+      | "play_again_ready"
+      | "pause"
+      | "resume"
+      | "game_ready_ack";
+    sessionCode: string;
+    playerId: number;
+    x: number;
+    y: number;
+  }
+  | {
+    type: "pair_advance";
+    sessionCode: string;
+    playerId: number;
+    x: number;
+    y: number;
+    pairIndex: number;
+    levelIndex: number;
+  }
+  | {
+    type: "game_state";
+    sessionCode: string;
+    playerId: number;
+    score: number;
+    life: number;
+    gameOver?: boolean;
+    result: "PENDING" | "CORRECT" | "INCORRECT";
+    selectedBlockIds: number[];
+    blocks: {
+      id: number;
+      value: number;
+      state: "DEFAULT" | "SELECTED" | "ELIMINATED" | "INCORRECT";
+    }[];
+  };
 
-function isLoadedImage(image: HTMLImageElement | null): image is HTMLImageElement {
+function isLoadedImage(
+  image: HTMLImageElement | null,
+): image is HTMLImageElement {
   return Boolean(image && image.complete && image.naturalWidth > 0);
 }
 
@@ -122,7 +137,9 @@ const buildLocalSummary = (
   elapsedSeconds,
   newHighscore: false,
   feedback:
-    `Great run. You scored ${score} points in ${formatElapsedTime(elapsedSeconds)}. ` +
+    `Great run. You scored ${score} points in ${
+      formatElapsedTime(elapsedSeconds)
+    }. ` +
     "Keep focusing on fast factor recognition and avoiding risky shots.",
   totalScore: score,
   highestScore: score,
@@ -145,6 +162,14 @@ function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function hasMatchingSessionCode(
+  message: { sessionCode?: unknown },
+  sessionCode: string,
+): boolean {
+  return typeof message.sessionCode === "string" &&
+    message.sessionCode === sessionCode;
 }
 
 function getStoredUserId(): number | null {
@@ -228,7 +253,8 @@ function isOverlapping(
   a: { left: number; right: number; top: number; bottom: number },
   b: { left: number; right: number; top: number; bottom: number },
 ) {
-  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+  return !(a.right < b.left || a.left > b.right || a.bottom < b.top ||
+    a.top > b.bottom);
 }
 
 // Problem data transformation helpers
@@ -292,18 +318,17 @@ function PlayTestContent() {
 
   // Section: Refs for canvas, controls, and entities
   const canvasRef = useRef<HTMLCanvasElement>(null);
-	  const bulletsRef = useRef<BulletObject[]>([]);
-	  const pressedKeysRef = useRef({ left: false, right: false });
+  const bulletsRef = useRef<BulletObject[]>([]);
+  const pressedKeysRef = useRef({ left: false, right: false });
 
-	  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
-	  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
-	  
-	  const laserAudioRef = useRef<HTMLAudioElement | null>(null);
-	  const destroyedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const hostShipSpriteRef = useRef<HTMLImageElement | null>(null);
+  const joinerShipSpriteRef = useRef<HTMLImageElement | null>(null);
+
+  const laserAudioRef = useRef<HTMLAudioElement | null>(null);
+  const destroyedAudioRef = useRef<HTMLAudioElement | null>(null);
   const successFlashUntilRef = useRef<Map<number, number>>(new Map());
   const lastDestroyedSoundAtRef = useRef(0);
   const blockImmunityUntilRef = useRef(0);
-
 
   const localShipRef = useRef(
     new ShipObject({
@@ -323,26 +348,33 @@ function PlayTestContent() {
       yPosition: REMOTE_SHIP_START_Y,
     }),
   );
-  const remoteTargetRef = useRef({ x: REMOTE_SHIP_START_X, y: REMOTE_SHIP_START_Y });
+  const remoteTargetRef = useRef({
+    x: REMOTE_SHIP_START_X,
+    y: REMOTE_SHIP_START_Y,
+  });
 
   const scoreRef = useRef(0);
 
   const lifeRef = useRef(INITIAL_LIFE);
   const penaltyGameOverRef = useRef(false);
 
-
   // Loading and level progression state
   const [isLoadingProblems, setIsLoadingProblems] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("Loading...");
   const [loadingError, setLoadingError] = useState<string | null>(null);
-  const loadingProgress = getLoadingProgress(loadingStatus, Boolean(loadingError));
+  const loadingProgress = getLoadingProgress(
+    loadingStatus,
+    Boolean(loadingError),
+  );
   const [scoreUi, setScoreUi] = useState(0);
   const [lifeUi, setLifeUi] = useState(INITIAL_LIFE);
   const [isPenaltyGameOver, setIsPenaltyGameOver] = useState(false);
   const [isErrorFlash, setIsErrorFlash] = useState(false);
   const [timerSourceMs, setTimerSourceMs] = useState<number | null>(null);
   const [displayedElapsedSeconds, setDisplayedElapsedSeconds] = useState(0);
-  const [finalElapsedSeconds, setFinalElapsedSeconds] = useState<number | null>(null);
+  const [finalElapsedSeconds, setFinalElapsedSeconds] = useState<number | null>(
+    null,
+  );
   const [isGameFinished, setIsGameFinished] = useState(false);
   const gameOverRef = useRef(false);
 
@@ -351,12 +383,14 @@ function PlayTestContent() {
   const currentPairIndexRef = useRef(0);
   const selectedBlockIdsRef = useRef<Set<number>>(new Set());
   const blocksRef = useRef<NumberBlockObject[]>([]);
-  const incorrectResetTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const incorrectResetTimeoutsRef = useRef<
+    Map<number, ReturnType<typeof setTimeout>>
+  >(new Map());
   const timerSourceMsRef = useRef<number | null>(null);
   const displayedElapsedSecondsRef = useRef(0);
   const finalElapsedSecondsRef = useRef<number | null>(null);
   const isGameFinishedRef = useRef(false);
-  
+
   const finishRequestStartedRef = useRef(false);
   const summaryRequestStartedRef = useRef(false);
   const completeGameRef = useRef<(() => Promise<void>) | null>(null);
@@ -370,7 +404,9 @@ function PlayTestContent() {
 
   const isPausedRef = useRef(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [summaryState, setSummaryState] = useState<SummaryState>({ status: "idle" });
+  const [summaryState, setSummaryState] = useState<SummaryState>({
+    status: "idle",
+  });
 
   // Eliminated block IDs — persists even after blocks are filtered from blocksRef
   const eliminatedBlockIdsRef = useRef<Set<number>>(new Set());
@@ -394,14 +430,12 @@ function PlayTestContent() {
       return audio;
     };
 
+    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
+    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
 
-	    hostShipSpriteRef.current = loadImage(HOST_SHIP_SPRITE_PATH);
-	    joinerShipSpriteRef.current = loadImage(JOINER_SHIP_SPRITE_PATH);
-
-	    laserAudioRef.current = loadAudio(LASER_SOUND_PATH);
-	    destroyedAudioRef.current = loadAudio(DESTROYED_SOUND_PATH);
+    laserAudioRef.current = loadAudio(LASER_SOUND_PATH);
+    destroyedAudioRef.current = loadAudio(DESTROYED_SOUND_PATH);
   }, []);
-
 
   const playSound = useCallback((audio: HTMLAudioElement | null) => {
     if (!audio?.src) {
@@ -430,7 +464,6 @@ function PlayTestContent() {
     playSound(destroyedAudioRef.current);
   }, [playSound]);
 
-
   const scheduleIncorrectReset = useCallback((blockId: number) => {
     const existingTimeout = incorrectResetTimeoutsRef.current.get(blockId);
     if (existingTimeout) {
@@ -438,7 +471,9 @@ function PlayTestContent() {
     }
 
     const timeoutId = setTimeout(() => {
-      const block = blocksRef.current.find((candidate) => candidate.id === blockId);
+      const block = blocksRef.current.find((candidate) =>
+        candidate.id === blockId
+      );
       if (block?.state === GameBlockState.INCORRECT) {
         block.state = GameBlockState.DEFAULT;
       }
@@ -448,106 +483,120 @@ function PlayTestContent() {
     incorrectResetTimeoutsRef.current.set(blockId, timeoutId);
   }, []);
 
+  const syncPairProgressFromBlocks = useCallback((): boolean => {
+    const currentProblem = problemsRef.current[currentLevelRef.current];
+    if (!currentProblem) {
+      return false;
+    }
 
-const syncPairProgressFromBlocks = useCallback((): boolean => {
-  const currentProblem = problemsRef.current[currentLevelRef.current];
-  if (!currentProblem) {
+    const elimCountByPair = new Map<number, number>();
+    for (const blockId of eliminatedBlockIdsRef.current) {
+      const pairIdx = Math.floor(blockId / 2);
+      elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
+    }
+
+    const completedPairSet = new Set<number>();
+    for (const [pairIdx, count] of elimCountByPair) {
+      if (count >= 2) completedPairSet.add(pairIdx);
+    }
+
+    if (completedPairSet.size >= currentProblem.pairs.length) {
+      const nextLevel = currentLevelRef.current + 1;
+
+      if (nextLevel < problemsRef.current.length) {
+        currentLevelRef.current = nextLevel;
+        currentPairIndexRef.current = 0;
+        selectedBlockIdsRef.current.clear();
+        eliminatedBlockIdsRef.current.clear();
+        blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
+        bulletsRef.current = [];
+        return false;
+      }
+
+      return true;
+    }
+
+    for (let i = 0; i < currentProblem.pairs.length; i++) {
+      if (!completedPairSet.has(i)) {
+        currentPairIndexRef.current = i;
+        return false;
+      }
+    }
+
     return false;
-  }
+  }, []);
 
-  const elimCountByPair = new Map<number, number>();
-  for (const blockId of eliminatedBlockIdsRef.current) {
-    const pairIdx = Math.floor(blockId / 2);
-    elimCountByPair.set(pairIdx, (elimCountByPair.get(pairIdx) ?? 0) + 1);
-  }
+  const finishGameWithSummary = useCallback(
+    async (elapsedOverride?: number) => {
+      if (summaryRequestStartedRef.current) {
+        return;
+      }
 
-  const completedPairSet = new Set<number>();
-  for (const [pairIdx, count] of elimCountByPair) {
-    if (count >= 2) completedPairSet.add(pairIdx);
-  }
+      summaryRequestStartedRef.current = true;
+      const score = scoreRef.current;
+      const elapsedSeconds = Math.max(
+        0,
+        elapsedOverride ?? finalElapsedSecondsRef.current ??
+          displayedElapsedSecondsRef.current,
+      );
+      const livesRemaining = lifeRef.current;
 
-  if (completedPairSet.size >= currentProblem.pairs.length) {
-    const nextLevel = currentLevelRef.current + 1;
+      setSummaryState({ status: "loading" });
 
-    if (nextLevel < problemsRef.current.length) {
-      currentLevelRef.current = nextLevel;
-      currentPairIndexRef.current = 0;
-      selectedBlockIdsRef.current.clear();
-      eliminatedBlockIdsRef.current.clear();
-      blocksRef.current = buildBlocks(problemsRef.current[nextLevel]);
-      bulletsRef.current = [];
-      return false;
-    }
+      if (!code) {
+        setSummaryState({
+          status: "ready",
+          data: buildLocalSummary(score, elapsedSeconds),
+          source: "local",
+        });
+        return;
+      }
 
-    return true;
-  }
+      const userId = getStoredUserId();
+      if (!userId) {
+        setSummaryState({
+          status: "error",
+          data: buildLocalSummary(score, elapsedSeconds),
+          error: "Missing player session. Final stats could not be saved.",
+          source: "local",
+        });
+        return;
+      }
 
-  for (let i = 0; i < currentProblem.pairs.length; i++) {
-    if (!completedPairSet.has(i)) {
-      currentPairIndexRef.current = i;
-      return false;
-    }
-  }
-
-  return false;
-}, []);
-
-  const finishGameWithSummary = useCallback(async (elapsedOverride?: number) => {
-    if (summaryRequestStartedRef.current) {
-      return;
-    }
-
-    summaryRequestStartedRef.current = true;
-    const score = scoreRef.current;
-    const elapsedSeconds = Math.max(
-      0,
-      elapsedOverride ?? finalElapsedSecondsRef.current ?? displayedElapsedSecondsRef.current,
-    );
-    const livesRemaining = lifeRef.current;
-
-    setSummaryState({ status: "loading" });
-
-    if (!code) {
-      setSummaryState({
-        status: "ready",
-        data: buildLocalSummary(score, elapsedSeconds),
-        source: "local",
-      });
-      return;
-    }
-
-    const userId = getStoredUserId();
-    if (!userId) {
-      setSummaryState({
-        status: "error",
-        data: buildLocalSummary(score, elapsedSeconds),
-        error: "Missing player session. Final stats could not be saved.",
-        source: "local",
-      });
-      return;
-    }
-
-    try {
-      const summary = await apiService.post<GameSummaryResponse>(`/sessions/${code}/summary`, {
-        userId,
-        score,
-        elapsedSeconds,
-        livesRemaining,
-      });
-      setSummaryState({ status: "ready", data: summary, source: "backend" });
-    } catch (error) {
-      setSummaryState({
-        status: "error",
-        data: buildLocalSummary(score, elapsedSeconds),
-        error: formatErrorMessage(error, "Final stats could not be saved."),
-        source: "local",
-      });
-    }
-  }, [apiService, code]);
+      try {
+        const summary = await apiService.post<GameSummaryResponse>(
+          `/sessions/${code}/summary`,
+          {
+            userId,
+            score,
+            elapsedSeconds,
+            livesRemaining,
+          },
+        );
+        setSummaryState({ status: "ready", data: summary, source: "backend" });
+      } catch (error) {
+        setSummaryState({
+          status: "error",
+          data: buildLocalSummary(score, elapsedSeconds),
+          error: formatErrorMessage(error, "Final stats could not be saved."),
+          source: "local",
+        });
+      }
+    },
+    [apiService, code],
+  );
 
   // Realtime message handler
   const handleMessage = useCallback((message: unknown) => {
+    if (!code) {
+      return;
+    }
+
     const data = message as Partial<RealtimeMessage>;
+
+    if (!hasMatchingSessionCode(data, code)) {
+      return;
+    }
 
     if (data.type === "game_state") {
       if (
@@ -574,7 +623,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       let shouldPlayDestroyedSound = false;
       const incomingBlocks = data.blocks;
       const nextBlocks = blocksRef.current.map((existingBlock) => {
-        const incoming = incomingBlocks.find((candidate) => candidate.id === existingBlock.id);
+        const incoming = incomingBlocks.find((candidate) =>
+          candidate.id === existingBlock.id
+        );
         if (!incoming) {
           return existingBlock;
         }
@@ -628,7 +679,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     if (data.type === "play_again_ready" && typeof data.playerId === "number") {
       if (data.playerId !== localShipRef.current.playerId) {
         remotePlayAgainReadyPlayersRef.current.add(data.playerId);
-        const total = (localPlayAgainReadyRef.current ? 1 : 0) + remotePlayAgainReadyPlayersRef.current.size;
+        const total = (localPlayAgainReadyRef.current ? 1 : 0) +
+          remotePlayAgainReadyPlayersRef.current.size;
         setPlayAgainReadyCount(total);
         if (total >= 2) {
           window.location.reload();
@@ -638,7 +690,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     }
 
     // All control messages below are ignored when echoed back from self
-    const isFromSelf = typeof data.playerId === "number" && data.playerId === localShipRef.current.playerId;
+    const isFromSelf = typeof data.playerId === "number" &&
+      data.playerId === localShipRef.current.playerId;
 
     if (data.type === "game_ready_ack" && typeof data.playerId === "number") {
       gameReadyPlayersRef.current.add(data.playerId);
@@ -665,12 +718,18 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       return;
     }
 
-    if (data.type === "pair_advance" && !isFromSelf && typeof (data as { pairIndex?: number }).pairIndex === "number") {
+    if (
+      data.type === "pair_advance" && !isFromSelf &&
+      typeof (data as { pairIndex?: number }).pairIndex === "number"
+    ) {
       const msg = data as { pairIndex: number; levelIndex: number };
       if (msg.levelIndex === currentLevelRef.current) {
         currentPairIndexRef.current = msg.pairIndex;
         selectedBlockIdsRef.current.clear();
-      } else if (msg.levelIndex > currentLevelRef.current && msg.levelIndex < problemsRef.current.length) {
+      } else if (
+        msg.levelIndex > currentLevelRef.current &&
+        msg.levelIndex < problemsRef.current.length
+      ) {
         currentLevelRef.current = msg.levelIndex;
         currentPairIndexRef.current = msg.pairIndex;
         selectedBlockIdsRef.current.clear();
@@ -703,8 +762,14 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       new BulletObject({ x: data.x, y: data.y, playerId: data.playerId }),
     );
     playSound(laserAudioRef.current);
-  }, [finishGameWithSummary, playDestroyedSound, playSound, scheduleIncorrectReset, syncPairProgressFromBlocks]);
-  
+  }, [
+    code,
+    finishGameWithSummary,
+    playDestroyedSound,
+    playSound,
+    scheduleIncorrectReset,
+    syncPairProgressFromBlocks,
+  ]);
 
   // functions for live scores
   const increaseScore = useCallback(() => {
@@ -764,7 +829,7 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     void finishGameWithSummary();
   }, [finishGameWithSummary]);
 
- // Session problem initialization helpers
+  // Session problem initialization helpers
   const applyProblems = useCallback((candidate: unknown) => {
     const problems = normalizeMathProblems(candidate);
 
@@ -806,7 +871,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
   }, [code, resetRoundStats]);
 
   // WebSocket integration
-  const { sendMessage } = useWebSocket(handleMessage);
+  const { sendMessage } = useWebSocket(handleMessage, {
+    enabled: Boolean(code),
+  });
 
   const handlePlayAgainReady = useCallback(() => {
     if (!code) {
@@ -819,6 +886,7 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     setPlayAgainReadyCount(total);
     sendMessage("/app/move", {
       type: "play_again_ready",
+      sessionCode: code,
       playerId: localShipRef.current.playerId,
       x: 0,
       y: 0,
@@ -833,7 +901,13 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     isPausedRef.current = next;
     setIsPaused(next);
     if (code) {
-      sendMessage("/app/move", { type: next ? "pause" : "resume", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+      sendMessage("/app/move", {
+        type: next ? "pause" : "resume",
+        sessionCode: code,
+        playerId: localShipRef.current.playerId,
+        x: 0,
+        y: 0,
+      });
     }
   }, [code, sendMessage]);
 
@@ -847,6 +921,7 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     const send = () =>
       sendMessage("/app/move", {
         type: "game_ready_ack",
+        sessionCode: code,
         playerId: localShipRef.current.playerId,
         x: 0,
         y: 0,
@@ -895,8 +970,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     }
 
     const startedAtMs = timerSourceMsRef.current;
-    const fallbackElapsedSeconds = finalElapsedSecondsRef.current
-      ?? (startedAtMs !== null
+    const fallbackElapsedSeconds = finalElapsedSecondsRef.current ??
+      (startedAtMs !== null
         ? Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000))
         : displayedElapsedSecondsRef.current);
 
@@ -980,7 +1055,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         }
       }
 
-      throw lastError ?? new Error("Failed to store generated problems in the session.");
+      throw lastError ??
+        new Error("Failed to store generated problems in the session.");
     },
     [apiService],
   );
@@ -1065,9 +1141,14 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
 
         if (sessionCode) {
           try {
-            await persistSessionProblemState(sessionCode, { error: "Level generation failed" });
+            await persistSessionProblemState(sessionCode, {
+              error: "Level generation failed",
+            });
           } catch (persistError) {
-            console.error("Failed to synchronize generation error to the session:", persistError);
+            console.error(
+              "Failed to synchronize generation error to the session:",
+              persistError,
+            );
           }
         }
 
@@ -1086,10 +1167,12 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
           }
 
           setFatalLoadingError(
-            `Failed to synchronize the generated level with session ${sessionCode}. ${formatErrorMessage(
-              error,
-              "Please restart the session and try again.",
-            )}`,
+            `Failed to synchronize the generated level with session ${sessionCode}. ${
+              formatErrorMessage(
+                error,
+                "Please restart the session and try again.",
+              )
+            }`,
           );
           return;
         }
@@ -1136,10 +1219,14 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
 
         if (attempts >= SESSION_PROBLEM_POLL_LIMIT) {
           try {
-            const session = await apiService.get<GameSession>(`/sessions/${code}`);
+            const session = await apiService.get<GameSession>(
+              `/sessions/${code}`,
+            );
 
             if (session.status === "CANCELLED") {
-              setFatalLoadingError("The session was cancelled before the level data was shared.");
+              setFatalLoadingError(
+                "The session was cancelled before the level data was shared.",
+              );
               return;
             }
           } catch {
@@ -1153,7 +1240,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         }
 
         setLoadingStatus(
-          `Waiting for host to generate levels${".".repeat(((attempts - 1) % 3) + 1)}`,
+          `Waiting for host to generate levels${
+            ".".repeat(((attempts - 1) % 3) + 1)
+          }`,
         );
         clearPollTimeout();
         pollTimeout = setTimeout(() => {
@@ -1179,7 +1268,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     }
 
     if (!userId) {
-      setFatalLoadingError("Missing player session. Please sign in again before starting the game.");
+      setFatalLoadingError(
+        "Missing player session. Please sign in again before starting the game.",
+      );
 
       return () => {
         cancelled = true;
@@ -1210,10 +1301,12 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       } catch (error) {
         if (!cancelled) {
           setFatalLoadingError(
-            `Failed to load session ${code}. ${formatErrorMessage(
-              error,
-              "Please return to the session lobby and try again.",
-            )}`,
+            `Failed to load session ${code}. ${
+              formatErrorMessage(
+                error,
+                "Please return to the session lobby and try again.",
+              )
+            }`,
           );
         }
       }
@@ -1243,83 +1336,81 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     let animationId = 0;
     let lastTimestamp: number | null = null;
 
-	    const drawBlock = (block: NumberBlockObject) => {
-	      const successFlashUntil = successFlashUntilRef.current.get(block.id);
-	      const isSuccessFlashing =
-        block.state === GameBlockState.ELIMINATED &&
+    const drawBlock = (block: NumberBlockObject) => {
+      const successFlashUntil = successFlashUntilRef.current.get(block.id);
+      const isSuccessFlashing = block.state === GameBlockState.ELIMINATED &&
         typeof successFlashUntil === "number" &&
         successFlashUntil > performance.now();
 
-	      if (block.state === GameBlockState.ELIMINATED && !isSuccessFlashing) {
-	        return;
-	      }
+      if (block.state === GameBlockState.ELIMINATED && !isSuccessFlashing) {
+        return;
+      }
 
-	      ctx.save();
-	      ctx.translate(block.xPosition, block.yPosition);
+      ctx.save();
+      ctx.translate(block.xPosition, block.yPosition);
 
-	      const hullColor = isSuccessFlashing
-	        ? "#7ff3a9"
-	        : block.state === GameBlockState.SELECTED
-	          ? "#ffd786"
-	          : block.state === GameBlockState.INCORRECT
-	            ? "#ff9d9d"
-	            : "#476b9a";
-	      const domeColor = isSuccessFlashing
-	        ? "#d6ffea"
-	        : block.state === GameBlockState.SELECTED
-	          ? "#fff0c2"
-	          : block.state === GameBlockState.INCORRECT
-	            ? "#ffe1e1"
-	            : "#7fa6d2";
-	      const glowColor = isSuccessFlashing
-	        ? "rgba(127, 243, 169, 0.45)"
-	        : block.state === GameBlockState.SELECTED
-	          ? "rgba(255, 215, 134, 0.38)"
-	          : block.state === GameBlockState.INCORRECT
-	            ? "rgba(255, 107, 107, 0.34)"
-	            : "rgba(90, 138, 196, 0.28)";
+      const hullColor = isSuccessFlashing
+        ? "#7ff3a9"
+        : block.state === GameBlockState.SELECTED
+        ? "#ffd786"
+        : block.state === GameBlockState.INCORRECT
+        ? "#ff9d9d"
+        : "#476b9a";
+      const domeColor = isSuccessFlashing
+        ? "#d6ffea"
+        : block.state === GameBlockState.SELECTED
+        ? "#fff0c2"
+        : block.state === GameBlockState.INCORRECT
+        ? "#ffe1e1"
+        : "#7fa6d2";
+      const glowColor = isSuccessFlashing
+        ? "rgba(127, 243, 169, 0.45)"
+        : block.state === GameBlockState.SELECTED
+        ? "rgba(255, 215, 134, 0.38)"
+        : block.state === GameBlockState.INCORRECT
+        ? "rgba(255, 107, 107, 0.34)"
+        : "rgba(90, 138, 196, 0.28)";
 
-	      ctx.fillStyle = glowColor;
-	      ctx.beginPath();
-	      ctx.ellipse(0, 20, 39, 9, 0, 0, Math.PI * 2);
-	      ctx.fill();
+      ctx.fillStyle = glowColor;
+      ctx.beginPath();
+      ctx.ellipse(0, 20, 39, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-	      ctx.shadowColor = glowColor;
-	      ctx.shadowBlur = 24;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 24;
 
-	      ctx.fillStyle = hullColor;
-	      ctx.beginPath();
-	      ctx.ellipse(0, 5, 36, 16, 0, 0, Math.PI * 2);
-	      ctx.fill();
-	      ctx.strokeStyle = "rgba(6, 18, 34, 0.72)";
-	      ctx.lineWidth = 2;
-	      ctx.stroke();
+      ctx.fillStyle = hullColor;
+      ctx.beginPath();
+      ctx.ellipse(0, 5, 36, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(6, 18, 34, 0.72)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-	      ctx.shadowBlur = 14;
-	      ctx.fillStyle = domeColor;
-	      ctx.beginPath();
-	      ctx.ellipse(0, -8, 20, 13, 0, Math.PI, 0, true);
-	      ctx.closePath();
-	      ctx.fill();
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = domeColor;
+      ctx.beginPath();
+      ctx.ellipse(0, -8, 20, 13, 0, Math.PI, 0, true);
+      ctx.closePath();
+      ctx.fill();
 
-	      const windowColors = ["#4ed3ff", "#ffd786", "#4ed3ff"];
-	      for (let i = -1; i <= 1; i += 1) {
-	        ctx.fillStyle = windowColors[i + 1];
-	        ctx.beginPath();
-	        ctx.arc(i * 13, 5, 4.3, 0, Math.PI * 2);
-	        ctx.fill();
-	      }
+      const windowColors = ["#4ed3ff", "#ffd786", "#4ed3ff"];
+      for (let i = -1; i <= 1; i += 1) {
+        ctx.fillStyle = windowColors[i + 1];
+        ctx.beginPath();
+        ctx.arc(i * 13, 5, 4.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-	      ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
-	      ctx.font = "14px 'Press Start 2P', monospace";
-	      ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
-	      ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
-	      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
-	      ctx.shadowBlur = 6;
-	      ctx.fillText(String(block.value), 0, 5);
-	      ctx.restore();
-	    };
-
+      ctx.fillStyle = BLOCK_STYLE.block.text.fillStyle;
+      ctx.font = "14px 'Press Start 2P', monospace";
+      ctx.textAlign = BLOCK_STYLE.block.text.textAlign;
+      ctx.textBaseline = BLOCK_STYLE.block.text.textBaseline;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+      ctx.shadowBlur = 6;
+      ctx.fillText(String(block.value), 0, 5);
+      ctx.restore();
+    };
 
     const drawBackground = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1350,10 +1441,11 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       ctx.fill();
     };
 
-	    const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
-	      if (!code) return;
+    const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
+      if (!code) return;
       sendMessage("/app/move", {
         type: "pair_advance",
+        sessionCode: code,
         playerId: localShipRef.current.playerId,
         x: 0,
         y: 0,
@@ -1396,7 +1488,10 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       return false;
     };
 
-    const handleBlockHit = (_bullet: BulletObject, block: NumberBlockObject): boolean => {
+    const handleBlockHit = (
+      _bullet: BulletObject,
+      block: NumberBlockObject,
+    ): boolean => {
       if (block.state === GameBlockState.ELIMINATED) {
         return false;
       }
@@ -1446,7 +1541,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         return true;
       }
 
-      const selectedProduct = nextSelectedBlocks[0].value * nextSelectedBlocks[1].value;
+      const selectedProduct = nextSelectedBlocks[0].value *
+        nextSelectedBlocks[1].value;
 
       // frontend to be authoritative
       if (selectedProduct === targetPair.product) {
@@ -1483,7 +1579,10 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
     const gameLoop = (timestamp: number) => {
       animationId = requestAnimationFrame(gameLoop);
 
-      if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current) {
+      if (
+        gameOverRef.current || penaltyGameOverRef.current ||
+        isGameFinishedRef.current
+      ) {
         return;
       }
 
@@ -1521,6 +1620,7 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
           lastMoveSendRef.current = nowMs;
           sendMessage("/app/move", {
             type: "move",
+            sessionCode: code,
             playerId: localShipRef.current.playerId,
             x: localShipRef.current.xPosition,
             y: localShipRef.current.yPosition,
@@ -1573,11 +1673,21 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       const remoteShipSprite = isLocalCreatorRef.current
         ? joinerShipSpriteRef.current
         : hostShipSpriteRef.current;
-      drawShip(localShipRef.current, localShipSprite, isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff");
-      drawShip(remoteShipRef.current, remoteShipSprite, isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f");
+      drawShip(
+        localShipRef.current,
+        localShipSprite,
+        isLocalCreatorRef.current ? "#ff4d4f" : "#3d85ff",
+      );
+      drawShip(
+        remoteShipRef.current,
+        remoteShipSprite,
+        isLocalCreatorRef.current ? "#3d85ff" : "#ff4d4f",
+      );
 
       const nextBullets: BulletObject[] = [];
-      bulletsRef.current = bulletsRef.current.filter((bullet) => !bullet.isOffScreen());
+      bulletsRef.current = bulletsRef.current.filter((bullet) =>
+        !bullet.isOffScreen()
+      );
 
       for (const bullet of bulletsRef.current) {
         bullet.update(deltaSeconds);
@@ -1633,8 +1743,8 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         }
       }
 
-	      bulletsRef.current = nextBullets;
-	    };
+      bulletsRef.current = nextBullets;
+    };
 
     animationId = requestAnimationFrame(gameLoop);
 
@@ -1644,12 +1754,21 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         isPausedRef.current = next;
         setIsPaused(next);
         if (code) {
-          sendMessage("/app/move", { type: next ? "pause" : "resume", playerId: localShipRef.current.playerId, x: 0, y: 0 });
+          sendMessage("/app/move", {
+            type: next ? "pause" : "resume",
+            sessionCode: code,
+            playerId: localShipRef.current.playerId,
+            x: 0,
+            y: 0,
+          });
         }
         return;
       }
 
-      if (gameOverRef.current || penaltyGameOverRef.current || isGameFinishedRef.current || isPausedRef.current) {
+      if (
+        gameOverRef.current || penaltyGameOverRef.current ||
+        isGameFinishedRef.current || isPausedRef.current
+      ) {
         return;
       }
 
@@ -1670,6 +1789,7 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         playSound(laserAudioRef.current);
         sendMessage("/app/shoot", {
           type: "shoot",
+          sessionCode: code,
           playerId: localShipRef.current.playerId,
           x,
           y,
@@ -1690,9 +1810,13 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       }
 
       // Send final position when player stops so remote snaps to correct spot
-      if ((wasLeft || wasRight) && !pressedKeysRef.current.left && !pressedKeysRef.current.right) {
+      if (
+        (wasLeft || wasRight) && !pressedKeysRef.current.left &&
+        !pressedKeysRef.current.right
+      ) {
         sendMessage("/app/move", {
           type: "move",
+          sessionCode: code,
           playerId: localShipRef.current.playerId,
           x: localShipRef.current.xPosition,
           y: localShipRef.current.yPosition,
@@ -1713,7 +1837,17 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       window.removeEventListener("keyup", handleKeyUp);
       cancelAnimationFrame(animationId);
     };
-  }, [code, completeGame, decreaseLife, increaseScore, playDestroyedSound, playSound, scheduleIncorrectReset, sendMessage, triggerGameOver]);
+  }, [
+    code,
+    completeGame,
+    decreaseLife,
+    increaseScore,
+    playDestroyedSound,
+    playSound,
+    scheduleIncorrectReset,
+    sendMessage,
+    triggerGameOver,
+  ]);
 
   const currentProblem = problemsRef.current[currentLevelRef.current];
   const currentPair = currentProblem?.pairs[currentPairIndexRef.current];
@@ -1739,7 +1873,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         {!isGameFinished && !isPenaltyGameOver && (
           <button
             type="button"
-            className={`game-control-button${isPaused ? " game-control-button--warning" : ""}`}
+            className={`game-control-button${
+              isPaused ? " game-control-button--warning" : ""
+            }`}
             onClick={handlePauseToggle}
             title="Pause / Resume (P)"
           >
@@ -1751,7 +1887,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
       <div className="game-stage-frame">
         <div
           className={`game-stage-frame__content${
-            isLoadingProblems && summaryState.status === "idle" ? " game-stage-frame__content--hidden" : ""
+            isLoadingProblems && summaryState.status === "idle"
+              ? " game-stage-frame__content--hidden"
+              : ""
           }`}
         >
           <div className="game-stage">
@@ -1767,7 +1905,9 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
                 <div className="game-stage-hud__metric">
                   <span className="game-stage-hud__label">Level</span>
                   <strong className="game-stage-hud__value">
-                    {problemsRef.current.length ? currentLevelRef.current + 1 : "--"}
+                    {problemsRef.current.length
+                      ? currentLevelRef.current + 1
+                      : "--"}
                   </strong>
                 </div>
                 <div className="game-stage-hud__metric">
@@ -1776,20 +1916,26 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
                 </div>
                 <div className="game-stage-hud__metric">
                   <span className="game-stage-hud__label">Lives</span>
-                  <strong className="game-stage-hud__value game-stage-hud__value--danger">{lifeUi}</strong>
+                  <strong className="game-stage-hud__value game-stage-hud__value--danger">
+                    {lifeUi}
+                  </strong>
                 </div>
               </div>
 
               <div className="game-stage-hud__target">
                 <span className="game-stage-hud__label">Target Product</span>
-                <strong className="game-stage-hud__target-value">{currentTarget}</strong>
+                <strong className="game-stage-hud__target-value">
+                  {currentTarget}
+                </strong>
               </div>
 
               <div className="game-stage-hud__cluster game-stage-hud__cluster--right">
                 <div className="game-stage-hud__metric">
                   <span className="game-stage-hud__label">TIME</span>
                   <strong className="game-stage-hud__value">
-                    {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
+                    {formatElapsedTime(
+                      finalElapsedSeconds ?? displayedElapsedSeconds,
+                    )}
                   </strong>
                 </div>
               </div>
@@ -1802,10 +1948,13 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
         {isPaused && !isGameFinished && !isPenaltyGameOver && (
           <div className="game-overlay">
             <div className="game-modal">
-              <div className="game-modal__kicker game-modal__kicker--warm">Pause Menu</div>
+              <div className="game-modal__kicker game-modal__kicker--warm">
+                Pause Menu
+              </div>
               <h2 className="game-modal__title">Systems on standby</h2>
               <p className="game-modal__subtitle">
-                Press <span className="game-inline-key">P</span> or use Resume to jump back in.
+                Press <span className="game-inline-key">P</span>{" "}
+                or use Resume to jump back in.
               </p>
 
               <div className="game-modal__actions">
@@ -1830,14 +1979,17 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
           </div>
         )}
 
-        {isGameFinished && !isPenaltyGameOver && !isLoadingProblems && summaryState.status === "idle" && (
+        {isGameFinished && !isPenaltyGameOver && !isLoadingProblems &&
+          summaryState.status === "idle" && (
           <div className="game-overlay">
             <div className="game-modal">
               <div className="game-modal__kicker">Stage Clear</div>
               <h2 className="game-modal__title">Target zone secured</h2>
               <p className="game-modal__subtitle">Final elapsed time</p>
               <div className="game-modal__time">
-                {formatElapsedTime(finalElapsedSeconds ?? displayedElapsedSeconds)}
+                {formatElapsedTime(
+                  finalElapsedSeconds ?? displayedElapsedSeconds,
+                )}
               </div>
 
               <div className="game-modal__actions">
@@ -1863,10 +2015,13 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
           </div>
         )}
 
-        {isPenaltyGameOver && !isLoadingProblems && summaryState.status === "idle" && (
+        {isPenaltyGameOver && !isLoadingProblems &&
+          summaryState.status === "idle" && (
           <div className="game-overlay">
             <div className="game-modal game-modal--danger">
-              <div className="game-modal__kicker game-modal__kicker--danger">Game Over</div>
+              <div className="game-modal__kicker game-modal__kicker--danger">
+                Game Over
+              </div>
               <h2 className="game-modal__title">Shared shields depleted</h2>
               <p className="game-modal__subtitle game-modal__subtitle--danger">
                 Your team lost all remaining lives before clearing the stage.
@@ -1908,56 +2063,76 @@ const syncPairProgressFromBlocks = useCallback((): boolean => {
 
       {isLoadingProblems && summaryState.status === "idle" && (
         <div className="game-overlay game-overlay--fullscreen">
-          <div className={`game-modal game-modal--wide${loadingError ? " game-modal--danger" : ""}`}>
-            <div className={`game-modal__kicker${loadingError ? " game-modal__kicker--danger" : ""}`}>
+          <div
+            className={`game-modal game-modal--wide${
+              loadingError ? " game-modal--danger" : ""
+            }`}
+          >
+            <div
+              className={`game-modal__kicker${
+                loadingError ? " game-modal__kicker--danger" : ""
+              }`}
+            >
               Math Invaders
             </div>
             <h2 className="game-modal__title">
-              {loadingError ? "Launch interrupted" : "Preparing the battle grid"}
+              {loadingError
+                ? "Launch interrupted"
+                : "Preparing the battle grid"}
             </h2>
-            <p className={`game-modal__subtitle game-modal__subtitle--compact${loadingError ? " game-modal__subtitle--danger" : ""}`}>
+            <p
+              className={`game-modal__subtitle game-modal__subtitle--compact${
+                loadingError ? " game-modal__subtitle--danger" : ""
+              }`}
+            >
               {loadingStatus}
             </p>
 
             <div className="game-loading-bar">
               <div
-                className={`game-loading-bar__fill${loadingError ? " game-loading-bar__fill--danger" : ""}`}
+                className={`game-loading-bar__fill${
+                  loadingError ? " game-loading-bar__fill--danger" : ""
+                }`}
                 style={{ width: `${loadingProgress}%` }}
               />
             </div>
 
-            <div className="game-loading-percent">{loadingProgress}% synced</div>
+            <div className="game-loading-percent">
+              {loadingProgress}% synced
+            </div>
 
-            {loadingError ? (
-              <div className="game-modal__actions">
-                <button
-                  type="button"
-                  className="game-button game-button--accent"
-                  onClick={() => window.location.reload()}
-                >
-                  Retry
-                </button>
-                <button
-                  type="button"
-                  className="game-button game-button--ghost"
-                  onClick={() => {
-                    window.location.href = leaveGameHref;
-                  }}
-                >
-                  Leave Game
-                </button>
-              </div>
-            ) : (
-              <div className="game-loading-dots" aria-hidden="true">
-                {[0, 1, 2].map((dot) => (
-                  <span
-                    key={dot}
-                    className="game-loading-dot"
-                    style={{ animationDelay: `${dot * 0.18}s` }}
-                  />
-                ))}
-              </div>
-            )}
+            {loadingError
+              ? (
+                <div className="game-modal__actions">
+                  <button
+                    type="button"
+                    className="game-button game-button--accent"
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </button>
+                  <button
+                    type="button"
+                    className="game-button game-button--ghost"
+                    onClick={() => {
+                      window.location.href = leaveGameHref;
+                    }}
+                  >
+                    Leave Game
+                  </button>
+                </div>
+              )
+              : (
+                <div className="game-loading-dots" aria-hidden="true">
+                  {[0, 1, 2].map((dot) => (
+                    <span
+                      key={dot}
+                      className="game-loading-dot"
+                      style={{ animationDelay: `${dot * 0.18}s` }}
+                    />
+                  ))}
+                </div>
+              )}
           </div>
         </div>
       )}
