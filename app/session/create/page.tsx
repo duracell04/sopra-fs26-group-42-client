@@ -192,7 +192,7 @@ export default function CreateSessionPage() {
               display: "flex", alignItems: "center", gap: 10,
               padding: "12px 16px", borderRadius: 8,
               backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
-              color: "#ff7875", fontWeight: 600, fontSize: 15,
+              color: "#000", fontWeight: 600, fontSize: 15,
             }}>
               <span style={{ fontSize: 18 }}>⚠</span>
               Error: {error}
@@ -244,7 +244,7 @@ export default function CreateSessionPage() {
               This lobby closes automatically after 5 minutes.
             </Text>
             {isExpired && (
-              <Text style={{ color: "#ff7875", marginTop: "12px", display: "block", fontWeight: 500 }}>
+              <Text style={{ color: "#000", marginTop: "12px", display: "block", fontWeight: 500 }}>
                 Session expired. Create a new session to continue.
               </Text>
             )}

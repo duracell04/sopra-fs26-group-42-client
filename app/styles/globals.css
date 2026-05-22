@@ -38,7 +38,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --app-error-dark-red: #cf3a2b;
+  --app-error-dark-red: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
