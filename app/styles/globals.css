@@ -38,6 +38,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --app-error-dark-red: #cf3a2b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -138,6 +139,16 @@ a {
   color: #ffb3b3;
   font-weight: 600;
   line-height: 1.45;
+}
+
+.ant-alert-error .ant-alert-message,
+.ant-form-item-explain-error,
+.ant-typography-danger,
+.profile-error-text,
+.game-error-banner,
+.game-modal__kicker--danger,
+.game-modal__subtitle--danger {
+  color: var(--app-error-dark-red) !important;
 }
 
 .card-container {
