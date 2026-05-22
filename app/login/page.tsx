@@ -53,18 +53,7 @@ const Login: React.FC = () => {
       <div className="login-card">
         <h1 className="login-title">Math Invaders</h1>
         {error && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "12px 16px",
-            borderRadius: 8,
-            backgroundColor: "#2a0a0a",
-            border: "1px solid #ff4d4f",
-            color: "#ff7875",
-            fontWeight: 600,
-            fontSize: 15,
-          }}>
+          <div className="session-simple-error-box" style={{ marginBottom: 16 }}>
             <span style={{ fontSize: 18 }}>⚠</span>
             Error: {error}
           </div>
