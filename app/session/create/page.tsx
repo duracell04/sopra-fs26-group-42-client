@@ -188,12 +188,7 @@ export default function CreateSessionPage() {
               </Text>
             </div>
 
-            <div style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "12px 16px", borderRadius: 8,
-              backgroundColor: "#2a0a0a", border: "1px solid #ff4d4f",
-              color: "#000", fontWeight: 600, fontSize: 15,
-            }}>
+            <div className="session-simple-error-box">
               <span style={{ fontSize: 18 }}>⚠</span>
               Error: {error}
             </div>
