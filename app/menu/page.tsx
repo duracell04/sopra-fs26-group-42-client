@@ -71,8 +71,6 @@ export default function MenuPage() {
 
         <Card className="menu-card menu-card--home">
           <Space orientation="vertical" size="large" style={{ width: "100%" }}>
-            <Text className="menu-panel-label">MENU</Text>
-
             <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
               <Button
 

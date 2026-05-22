@@ -1,39 +1,43 @@
 .menu-button--main {
-  font-size: 1.13rem !important;
+  font-size: 0.72rem !important;
   min-height: 54px;
-  font-weight: 700 !important;
+  font-weight: 400 !important;
 }
 
 .menu-button--create.ant-btn {
-  background: linear-gradient(90deg, #4fd1c5 0%, #4299e1 100%) !important;
-  border-color: #38b2ac !important;
-  color: #fff !important;
-  box-shadow: 0 8px 22px rgba(79, 209, 197, 0.18);
+  background: #9fd3ff !important;
+  border-color: #7ec4f7 !important;
+  color: #0a1628 !important;
+  box-shadow: 0 8px 22px rgba(159, 211, 255, 0.22);
 }
 .menu-button--create.ant-btn:hover,
 .menu-button--create.ant-btn:focus-visible {
-  background: linear-gradient(90deg, #38b2ac 0%, #3182ce 100%) !important;
-  border-color: #4299e1 !important;
+  background: #b8e0ff !important;
+  border-color: #9fd3ff !important;
+  color: #0a1628 !important;
 }
 .menu-button--create.ant-btn:active {
-  background: linear-gradient(90deg, #319795 0%, #2b6cb0 100%) !important;
-  border-color: #319795 !important;
+  background: #7ec4f7 !important;
+  border-color: #6ab8f0 !important;
+  color: #0a1628 !important;
 }
 
 .menu-button--join.ant-btn {
-  background: linear-gradient(90deg, #805ad5 0%, #63b3ed 100%) !important;
-  border-color: #6b46c1 !important;
-  color: #fff !important;
-  box-shadow: 0 8px 22px rgba(128, 90, 213, 0.18);
+  background: #9fd3ff !important;
+  border-color: #7ec4f7 !important;
+  color: #0a1628 !important;
+  box-shadow: 0 8px 22px rgba(159, 211, 255, 0.22);
 }
 .menu-button--join.ant-btn:hover,
 .menu-button--join.ant-btn:focus-visible {
-  background: linear-gradient(90deg, #6b46c1 0%, #4299e1 100%) !important;
-  border-color: #805ad5 !important;
+  background: #b8e0ff !important;
+  border-color: #9fd3ff !important;
+  color: #0a1628 !important;
 }
 .menu-button--join.ant-btn:active {
-  background: linear-gradient(90deg, #553c9a 0%, #3182ce 100%) !important;
-  border-color: #553c9a !important;
+  background: #7ec4f7 !important;
+  border-color: #6ab8f0 !important;
+  color: #0a1628 !important;
 }
 :root {
   --background: #ffffff;
@@ -356,34 +360,37 @@ a {
 .menu-button {
   min-height: 44px;
   border-radius: 10px !important;
-  font-size: 1rem !important;
-  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+  font-weight: 400 !important;
+  font-family: var(--font-pixel), monospace !important;
+  letter-spacing: 0.04em !important;
 }
 
 .menu-button.ant-btn {
-  border-color: rgba(133, 205, 255, 0.52) !important;
-  background: linear-gradient(180deg, #2f8fd6, #206dac) !important;
-  color: #f4fbff !important;
-  box-shadow: 0 8px 18px rgba(32, 109, 172, 0.36);
+  border-color: #7ec4f7 !important;
+  background: #9fd3ff !important;
+  color: #0a1628 !important;
+  box-shadow: 0 8px 18px rgba(159, 211, 255, 0.22);
 }
 
 .menu-button.ant-btn:hover,
 .menu-button.ant-btn:focus-visible {
-  border-color: rgba(159, 222, 255, 0.7) !important;
-  background: linear-gradient(180deg, #3e9de2, #2b7ab9) !important;
-  color: #ffffff !important;
+  border-color: #9fd3ff !important;
+  background: #b8e0ff !important;
+  color: #0a1628 !important;
 }
 
 .menu-button.ant-btn:active {
-  border-color: rgba(112, 191, 247, 0.78) !important;
-  background: linear-gradient(180deg, #287fbe, #1d6399) !important;
+  border-color: #6ab8f0 !important;
+  background: #7ec4f7 !important;
+  color: #0a1628 !important;
 }
 
 .menu-button.ant-btn:disabled,
 .menu-button.ant-btn[disabled] {
-  background: linear-gradient(180deg, #366f99, #2c5d82) !important;
-  border-color: rgba(120, 169, 201, 0.45) !important;
-  color: rgba(236, 247, 255, 0.72) !important;
+  background: #b8e0ff !important;
+  border-color: #9fd3ff !important;
+  color: rgba(10, 22, 40, 0.55) !important;
   box-shadow: none;
 }
 
