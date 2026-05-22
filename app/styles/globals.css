@@ -140,6 +140,10 @@ a {
   line-height: 1.45;
 }
 
+.ant-form-item-explain-error {
+  color: #ff4d4f !important;
+}
+
 .card-container {
   display: flex;
   justify-content: center;
