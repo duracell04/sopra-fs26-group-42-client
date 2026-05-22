@@ -331,7 +331,7 @@ function JoinSessionPageContent() {
               borderRadius: 8,
               backgroundColor: "#2a0a0a",
               border: "1px solid #ff4d4f",
-              color: "#ff7875",
+              color: "#000",
               fontWeight: 600,
               fontSize: 15,
             }}>
