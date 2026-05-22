@@ -918,7 +918,6 @@ function PlayTestContent() {
   // long enough for them to still receive at least one of ours.
   useEffect(() => {
     if (!problemsSentAck || !code) return;
-    let remaining = 20; // 20 × 500 ms = 10 s
     const send = () =>
       sendMessage("/app/move", {
         type: "game_ready_ack",
@@ -929,8 +928,7 @@ function PlayTestContent() {
       });
     send();
     const interval = setInterval(() => {
-      remaining -= 1;
-      if (remaining <= 0) {
+      if (!isLoadingRef.current) {
         clearInterval(interval);
         return;
       }
