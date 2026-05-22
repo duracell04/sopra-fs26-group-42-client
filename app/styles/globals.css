@@ -107,6 +107,14 @@ a {
   overflow: hidden;
 }
 
+.auth-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(18px, 3vw, 32px);
+  width: 100%;
+}
+
 .login-card,
 .register-card {
   background: rgba(255, 255, 255, 0.05);

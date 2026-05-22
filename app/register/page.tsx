@@ -43,8 +43,9 @@ const Register: React.FC = () => {
 
   return (
     <div className="register-container">
+      <div className="auth-shell">
+        <h1 className="menu-title-screen">Math Invaders</h1>
       <div className="register-card">
-        <h1 className="register-title">Create Account</h1>
         {error && (
           <div className="session-simple-error-box" style={{ marginBottom: 16 }}>
             <span style={{ fontSize: 18 }}>⚠</span>
@@ -104,6 +105,7 @@ const Register: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
+      </div>
       </div>
     </div>
   );

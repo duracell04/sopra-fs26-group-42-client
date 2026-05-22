@@ -50,8 +50,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
+      <div className="auth-shell">
+        <h1 className="menu-title-screen">Math Invaders</h1>
       <div className="login-card">
-        <h1 className="login-title">Math Invaders</h1>
         {error && (
           <div className="session-simple-error-box" style={{ marginBottom: 16 }}>
             <span style={{ fontSize: 18 }}>⚠</span>
@@ -91,6 +92,7 @@ const Login: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
+      </div>
       </div>
     </div>
   );
