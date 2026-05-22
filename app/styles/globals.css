@@ -38,7 +38,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --app-error-dark-red: #000000;
+  --app-error-text: #111111;
+  --app-error-bg: #ffd9d3;
+  --app-error-border: #c96a5f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -90,7 +92,6 @@ a {
 
 .login-container,
 .register-container {
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -131,12 +132,12 @@ a {
 
 .auth-error {
   margin-bottom: 16px;
-  border-color: rgba(255, 77, 79, 0.8);
-  background: rgba(42, 10, 10, 0.88);
+  border-color: var(--app-error-border);
+  background: var(--app-error-bg);
 }
 
 .auth-error .ant-alert-message {
-  color: #ffb3b3;
+  color: var(--app-error-text);
   font-weight: 600;
   line-height: 1.45;
 }
@@ -148,7 +149,7 @@ a {
 .game-error-banner,
 .game-modal__kicker--danger,
 .game-modal__subtitle--danger {
-  color: var(--app-error-dark-red) !important;
+  color: var(--app-error-text) !important;
 }
 
 .card-container {
@@ -582,6 +583,19 @@ a {
   background: #fff !important;
   border-color: #fff !important;
   color: #16213e !important;
+}
+
+.session-simple-error-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--app-error-bg);
+  border: 1px solid var(--app-error-border);
+  color: var(--app-error-text);
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .session-header {
@@ -1502,9 +1516,14 @@ a {
 }
 
 .game-modal--danger {
-  border-color: rgba(255, 122, 122, 0.24);
-  background:
-    linear-gradient(180deg, rgba(45, 15, 19, 0.95), rgba(20, 8, 10, 0.98));
+  border-color: var(--app-error-border);
+  background: linear-gradient(180deg, #ffe8e3, #ffd9d3);
+  color: var(--app-error-text);
+}
+
+.game-modal--danger .game-modal__title,
+.game-modal--danger .game-loading-percent {
+  color: var(--app-error-text);
 }
 
 .game-modal__close {
@@ -1697,9 +1716,9 @@ a {
   margin-top: 20px;
   padding: 13px 16px;
   border-radius: 14px;
-  background: rgba(255, 107, 107, 0.12);
-  border: 1px solid rgba(255, 122, 122, 0.2);
-  color: #ffb2b2;
+  background: var(--app-error-bg);
+  border: 1px solid var(--app-error-border);
+  color: var(--app-error-text);
   font-weight: 600;
   line-height: 1.5;
 }
