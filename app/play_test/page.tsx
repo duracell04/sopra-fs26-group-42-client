@@ -874,6 +874,7 @@ function PlayTestContent() {
   // WebSocket integration
   const { sendMessage } = useWebSocket(handleMessage, {
     enabled: Boolean(code),
+    sessionCode: code || undefined,
   });
 
   const handlePlayAgainReady = useCallback(() => {
@@ -885,7 +886,7 @@ function PlayTestContent() {
     localPlayAgainReadyRef.current = true;
     const total = 1 + remotePlayAgainReadyPlayersRef.current.size;
     setPlayAgainReadyCount(total);
-    sendMessage("/app/move", {
+    sendMessage(`/app/session/${code}/move`, {
       type: "play_again_ready",
       sessionCode: code,
       playerId: localShipRef.current.playerId,
@@ -902,7 +903,7 @@ function PlayTestContent() {
     isPausedRef.current = next;
     setIsPaused(next);
     if (code) {
-      sendMessage("/app/move", {
+      sendMessage(`/app/session/${code}/move`, {
         type: next ? "pause" : "resume",
         sessionCode: code,
         playerId: localShipRef.current.playerId,
@@ -919,7 +920,7 @@ function PlayTestContent() {
   useEffect(() => {
     if (!problemsSentAck || !code) return;
     const send = () =>
-      sendMessage("/app/move", {
+      sendMessage(`/app/session/${code}/move`, {
         type: "game_ready_ack",
         sessionCode: code,
         playerId: localShipRef.current.playerId,
@@ -1446,7 +1447,7 @@ function PlayTestContent() {
 
     const broadcastPairAdvance = (pairIndex: number, levelIndex: number) => {
       if (!code) return;
-      sendMessage("/app/move", {
+      sendMessage(`/app/session/${code}/move`, {
         type: "pair_advance",
         sessionCode: code,
         playerId: localShipRef.current.playerId,
@@ -1526,7 +1527,7 @@ function PlayTestContent() {
       block.state = GameBlockState.SELECTED;
       selectedBlockIdsRef.current.add(block.id);
 
-      sendMessage("/app/block/select", {
+      sendMessage(`/app/session/${code}/block/select`, {
         sessionCode: code,
         userId: getStoredUserId(),
         blockId: block.id,
@@ -1621,7 +1622,7 @@ function PlayTestContent() {
         const nowMs = performance.now();
         if (nowMs - lastMoveSendRef.current > 50) {
           lastMoveSendRef.current = nowMs;
-          sendMessage("/app/move", {
+          sendMessage(`/app/session/${code}/move`, {
             type: "move",
             sessionCode: code,
             playerId: localShipRef.current.playerId,
@@ -1757,7 +1758,7 @@ function PlayTestContent() {
         isPausedRef.current = next;
         setIsPaused(next);
         if (code) {
-          sendMessage("/app/move", {
+          sendMessage(`/app/session/${code}/move`, {
             type: next ? "pause" : "resume",
             sessionCode: code,
             playerId: localShipRef.current.playerId,
@@ -1790,7 +1791,7 @@ function PlayTestContent() {
           new BulletObject({ x, y, playerId: localShipRef.current.playerId }),
         );
         playSound(laserAudioRef.current);
-        sendMessage("/app/shoot", {
+        sendMessage(`/app/session/${code}/shoot`, {
           type: "shoot",
           sessionCode: code,
           playerId: localShipRef.current.playerId,
@@ -1817,7 +1818,7 @@ function PlayTestContent() {
         (wasLeft || wasRight) && !pressedKeysRef.current.left &&
         !pressedKeysRef.current.right
       ) {
-        sendMessage("/app/move", {
+        sendMessage(`/app/session/${code}/move`, {
           type: "move",
           sessionCode: code,
           playerId: localShipRef.current.playerId,

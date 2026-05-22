@@ -5,6 +5,7 @@ import { getApiDomain } from "@/utils/domain";
 
 type UseWebSocketOptions = {
   enabled?: boolean;
+  sessionCode?: string;
 };
 
 export function useWebSocket(
@@ -13,7 +14,7 @@ export function useWebSocket(
 ) {
   const clientRef = useRef<Client | null>(null);
   const onMessageRef = useRef(onMessage);
-  const { enabled = true } = options;
+  const { enabled = true, sessionCode } = options;
 
   useEffect(() => {
     onMessageRef.current = onMessage;
@@ -27,10 +28,11 @@ export function useWebSocket(
     }
 
     const wsUrl = `${getApiDomain()}/ws`;
+    const topic = sessionCode ? `/topic/game/${sessionCode}` : "/topic/game";
     const client = new Client({
       webSocketFactory: () => new SockJS(wsUrl),
       onConnect: () => {
-        client.subscribe("/topic/game", (message) => {
+        client.subscribe(topic, (message) => {
           const body = JSON.parse(message.body);
           onMessageRef.current(body);
         });
@@ -44,7 +46,7 @@ export function useWebSocket(
       client.deactivate();
       clientRef.current = null;
     };
-  }, [enabled]);
+  }, [enabled, sessionCode]);
 
   const sendMessage = useCallback((destination: string, body: unknown) => {
     if (clientRef.current?.connected) {
