@@ -6,7 +6,7 @@ import useLocalStorage from "@/hooks/useLocalStorage";
 import { clearStoredAuthSession } from "@/utils/authStorage";
 import { ApplicationError } from "@/types/error";
 import { User } from "@/types/user";
-import { Alert, Button, Form, Input } from "antd";
+import { Button, Form, Input } from "antd";
 import { useState } from "react";
 
 const isApplicationError = (err: unknown): err is ApplicationError =>
@@ -53,7 +53,21 @@ const Login: React.FC = () => {
       <div className="login-card">
         <h1 className="login-title">Math Invaders</h1>
         {error && (
-          <Alert className="auth-error" type="error" showIcon message={error} />
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "12px 16px",
+            borderRadius: 8,
+            backgroundColor: "#2a0a0a",
+            border: "1px solid #ff4d4f",
+            color: "#ff7875",
+            fontWeight: 600,
+            fontSize: 15,
+          }}>
+            <span style={{ fontSize: 18 }}>⚠</span>
+            Error: {error}
+          </div>
         )}
         <Form
           form={form}
