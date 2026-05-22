@@ -169,7 +169,7 @@ function JoinSessionPageContent() {
         { userId },
       );
       setSession(joinedSession);
-      router.replace(`/session/join?code=${trimmedCode}`);
+      router.push(`/session/waiting?code=${trimmedCode}`);
     } catch (err) {
       setSession(null);
       setError(formatErrorMessage(err, "Failed to join session."));
