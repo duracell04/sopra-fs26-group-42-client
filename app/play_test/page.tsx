@@ -377,6 +377,7 @@ function PlayTestContent() {
   );
   const [isGameFinished, setIsGameFinished] = useState(false);
   const gameOverRef = useRef(false);
+  const isLoadingRef = useRef(true);
 
   const problemsRef = useRef<MathProblem[]>([]);
   const currentLevelRef = useRef(0);
@@ -937,6 +938,10 @@ function PlayTestContent() {
     }, 500);
     return () => clearInterval(interval);
   }, [problemsSentAck, code, sendMessage]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoadingProblems;
+  }, [isLoadingProblems]);
 
   useEffect(() => {
     timerSourceMsRef.current = timerSourceMs;
@@ -1586,7 +1591,7 @@ function PlayTestContent() {
         return;
       }
 
-      if (isPausedRef.current) {
+      if (isPausedRef.current || isLoadingRef.current) {
         lastTimestamp = null;
         return;
       }
