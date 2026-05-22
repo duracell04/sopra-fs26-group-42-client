@@ -64,9 +64,6 @@ export default function MenuPage() {
           <Title level={1} className="menu-title-screen">
             Math Invaders
           </Title>
-          <Text className="menu-subtitle">
-            Team up with your co-pilot, lock in the right factors, and defend the galaxy from number spaceships.
-          </Text>
         </div>
 
         <Card className="menu-card menu-card--home">

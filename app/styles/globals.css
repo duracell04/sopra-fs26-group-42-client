@@ -896,9 +896,9 @@ a {
 }
 
 .user-status-badge--on {
-  background: rgba(117, 189, 157, 0.2);
-  color: #b8f0d9;
-  border: 1px solid rgba(117, 189, 157, 0.35);
+  background: rgba(159, 211, 255, 0.18);
+  color: #9fd3ff;
+  border: 1px solid rgba(159, 211, 255, 0.38);
 }
 
 .user-status-badge--off {
